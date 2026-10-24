@@ -182,59 +182,75 @@ export default function OverviewDashboard() {
 
       {/* Priority Inbound Call Triage Queue */}
       <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h2 className="text-base font-semibold text-[#edeae1] font-mono flex items-center gap-2">
-              <Clock className="h-4 w-4 text-[#8a9a5b]" />
-              Inbound Call Priority Queue (Ranked by Caller Urgency)
-            </h2>
-            <p className="text-xs text-[#9e9c96]">
-              AI dynamic ranking: attend top critical calls first to intervene in active cyber fraud and psychological coercion.
-            </p>
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h2 className="text-base font-semibold text-[#edeae1] font-mono flex items-center gap-2">
+                <Clock className="h-4 w-4 text-[#8a9a5b]" />
+                Inbound Call Priority Queue (Ranked by Caller Urgency)
+              </h2>
+              <p className="text-xs text-[#9e9c96]">
+                AI dynamic ranking: attend top critical calls first to intervene in active cyber fraud and psychological coercion.
+              </p>
+            </div>
           </div>
 
-          {/* Filter Chips */}
-          <div className="flex items-center gap-2 font-mono text-xs overflow-x-auto pb-1">
-            <button
-              onClick={() => setFilterCategory('ALL')}
-              className={`rounded px-2.5 py-1 border transition-all ${
-                filterCategory === 'ALL'
-                  ? 'border-[#8a9a5b] bg-[#7d8c52] text-[#161f00] font-bold'
-                  : 'border-[#35373e] bg-[#23252a] text-[#9e9c96]'
-              }`}
-            >
-              All Calls
-            </button>
-            <button
-              onClick={() => setFilterCategory('distressed_victim')}
-              className={`rounded px-2.5 py-1 border transition-all ${
-                filterCategory === 'distressed_victim'
-                  ? 'border-[#b84a44] bg-[#401311] text-[#d96f68] font-bold'
-                  : 'border-[#35373e] bg-[#23252a] text-[#9e9c96]'
-              }`}
-            >
-              Victims
-            </button>
-            <button
-              onClick={() => setFilterCategory('suspected_fraudster')}
-              className={`rounded px-2.5 py-1 border transition-all ${
-                filterCategory === 'suspected_fraudster'
-                  ? 'border-[#ffb964] bg-[#422006] text-[#ffb964] font-bold'
-                  : 'border-[#35373e] bg-[#23252a] text-[#9e9c96]'
-              }`}
-            >
-              Fraudsters
-            </button>
-            <button
-              onClick={() => setFilterCategory('informant')}
-              className={`rounded px-2.5 py-1 border transition-all ${
-                filterCategory === 'informant'
-                  ? 'border-[#5a8264] bg-[#1a2e1f] text-[#8a9a5b] font-bold'
-                  : 'border-[#35373e] bg-[#23252a] text-[#9e9c96]'
-              }`}
-            >
-              Informants
-            </button>
+          {/* Search & Filter Toolbar */}
+          <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 pt-2 border-t border-[#35373e]/40">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#71706b]" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search caller name, phone, keywords..."
+                className="w-full bg-[#121315] border border-[#35373e] text-[#edeae1] placeholder:text-[#71706b] text-xs pl-8 pr-3 py-1.5 rounded focus:outline-none focus:border-[#7d8c52]"
+              />
+            </div>
+
+            {/* Filter Chips */}
+            <div className="flex items-center gap-2 font-mono text-xs overflow-x-auto pb-1">
+              <button
+                onClick={() => setFilterCategory('ALL')}
+                className={`rounded px-2.5 py-1 border transition-all ${
+                  filterCategory === 'ALL'
+                    ? 'border-[#8a9a5b] bg-[#7d8c52] text-[#161f00] font-bold'
+                    : 'border-[#35373e] bg-[#23252a] text-[#9e9c96]'
+                }`}
+              >
+                All Calls
+              </button>
+              <button
+                onClick={() => setFilterCategory('distressed_victim')}
+                className={`rounded px-2.5 py-1 border transition-all ${
+                  filterCategory === 'distressed_victim'
+                    ? 'border-[#b84a44] bg-[#401311] text-[#d96f68] font-bold'
+                    : 'border-[#35373e] bg-[#23252a] text-[#9e9c96]'
+                }`}
+              >
+                Victims
+              </button>
+              <button
+                onClick={() => setFilterCategory('suspected_fraudster')}
+                className={`rounded px-2.5 py-1 border transition-all ${
+                  filterCategory === 'suspected_fraudster'
+                    ? 'border-[#ffb964] bg-[#422006] text-[#ffb964] font-bold'
+                    : 'border-[#35373e] bg-[#23252a] text-[#9e9c96]'
+                }`}
+              >
+                Fraudsters
+              </button>
+              <button
+                onClick={() => setFilterCategory('informant')}
+                className={`rounded px-2.5 py-1 border transition-all ${
+                  filterCategory === 'informant'
+                    ? 'border-[#5a8264] bg-[#1a2e1f] text-[#8a9a5b] font-bold'
+                    : 'border-[#35373e] bg-[#23252a] text-[#9e9c96]'
+                }`}
+              >
+                Informants
+              </button>
+            </div>
           </div>
         </div>
 

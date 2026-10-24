@@ -8,8 +8,8 @@ interface Params {
 export function escapeCsvField(val: any): string {
   if (val === undefined || val === null) return '""';
   let str = String(val).replace(/"/g, '""');
-  // Formula injection defense (TEST-024 / PRD-FR-027)
-  if (/^[=+\-@\t\r]/.test(str)) {
+  // Formula injection defense - detects formula triggers even if preceded by whitespace
+  if (/^\s*[=+\-@\t\r%|]/.test(str)) {
     str = "'" + str;
   }
   return `"${str}"`;
@@ -118,13 +118,36 @@ export async function GET(request: NextRequest, { params }: Params) {
         );
       }
 
+      // Add vocal indicators / speech emotion recognition metrics
+      for (const voc of caseData.vocalIndicators || []) {
+        rows.push(
+          [
+            caseData.docketNumber,
+            caseData.title,
+            caseData.operationName || '',
+            caseData.officerName || '',
+            caseData.status,
+            'VOCAL_INDICATOR',
+            voc.type || voc.metricName || 'SER',
+            voc.startTime ?? '',
+            voc.description || '',
+            `Score: ${voc.score ?? ''}`,
+            voc.isAdvisory ? 'advisory_only' : 'verified',
+            'SPEECH_EMOTION_RECOGNITION',
+          ]
+            .map(escapeCsvField)
+            .join(',')
+        );
+      }
+
       const csvContent = rows.join('\r\n');
+      const safeDocket = (caseData.docketNumber || caseData.id).replace(/[^a-zA-Z0-9_\-]/g, '_');
 
       return new Response(csvContent, {
         status: 200,
         headers: {
           'Content-Type': 'text/csv; charset=utf-8',
-          'Content-Disposition': `attachment; filename="case-${caseData.docketNumber}-dossier.csv"`,
+          'Content-Disposition': `attachment; filename="case-${safeDocket}-dossier.csv"`,
         },
       });
     }

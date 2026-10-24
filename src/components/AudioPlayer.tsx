@@ -43,6 +43,52 @@ export function AudioPlayer({
   const [isLoopingCue, setIsLoopingCue] = useState<boolean>(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const timelineRef = useRef<HTMLDivElement | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const oscillatorRef = useRef<OscillatorNode | null>(null);
+
+  // Synthesize soft vocal-band frequency when playing without external audio file
+  useEffect(() => {
+    if (isPlaying && !audioUrl && !isMuted && volume > 0) {
+      try {
+        const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+        if (AudioCtx) {
+          const ctx = new AudioCtx();
+          audioContextRef.current = ctx;
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(220, ctx.currentTime);
+          gain.gain.setValueAtTime(0.03 * volume, ctx.currentTime);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start();
+          oscillatorRef.current = osc;
+        }
+      } catch {
+        // AudioContext autoplay restrictions handled silently
+      }
+    } else {
+      if (oscillatorRef.current) {
+        try { oscillatorRef.current.stop(); } catch {}
+        oscillatorRef.current = null;
+      }
+      if (audioContextRef.current) {
+        try { audioContextRef.current.close(); } catch {}
+        audioContextRef.current = null;
+      }
+    }
+
+    return () => {
+      if (oscillatorRef.current) {
+        try { oscillatorRef.current.stop(); } catch {}
+        oscillatorRef.current = null;
+      }
+      if (audioContextRef.current) {
+        try { audioContextRef.current.close(); } catch {}
+        audioContextRef.current = null;
+      }
+    };
+  }, [isPlaying, audioUrl, isMuted, volume]);
 
   // Format time as MM:SS.mmm
   const formatTimeFull = (secs: number) => {
@@ -195,7 +241,7 @@ export function AudioPlayer({
             style={{ left: `${threatPercent}%` }}
           >
             <span className="h-1 w-1 rounded-full bg-[#d96f68] animate-pulse" />
-            <span>THREAT 04:12</span>
+            <span>THREAT {formatTimeFull(threatTimestamp).slice(0, 5)}</span>
           </div>
         </div>
       </div>
@@ -204,9 +250,9 @@ export function AudioPlayer({
       <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
         <div className="flex items-center gap-1">
           <button
-            onClick={() => onSeek(238.11)}
+            onClick={() => onSeek(Math.max(0, currentTime - 10))}
             className="rounded border border-[#35373e] bg-[#23252a] p-1.5 text-[#edeae1] hover:bg-[#2d2f36] transition-colors"
-            title="Previous Segment (03:58)"
+            title="Skip Back 10s"
           >
             <SkipBack className="h-3.5 w-3.5 text-[#9e9c96]" />
           </button>
@@ -242,9 +288,9 @@ export function AudioPlayer({
             <RotateCw className="h-3.5 w-3.5 text-[#9e9c96]" />
           </button>
           <button
-            onClick={() => onSeek(267.1)}
+            onClick={() => onSeek(Math.min(duration, currentTime + 10))}
             className="rounded border border-[#35373e] bg-[#23252a] p-1.5 text-[#edeae1] hover:bg-[#2d2f36] transition-colors"
-            title="Next Segment (04:27)"
+            title="Skip Forward 10s"
           >
             <SkipForward className="h-3.5 w-3.5 text-[#9e9c96]" />
           </button>

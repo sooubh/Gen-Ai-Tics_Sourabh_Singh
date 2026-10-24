@@ -369,6 +369,9 @@ class CaseStore {
     const existing = this.getCaseById(caseId);
     if (!existing || !existing.audioMetadata) return false;
 
+    // Idempotent: if already purged, return true immediately
+    if (existing.audioMetadata.purged) return true;
+
     // Delete local file from disk if it exists
     const { fs: nodeFs, path: nodePath } = getNodeModules();
     if (nodeFs && nodePath && existing.audioMetadata.storagePath) {
@@ -419,17 +422,23 @@ class CaseStore {
     }
     targetCase.reviews.push(fullReview);
 
-    // Apply updates based on targetType
+    // Apply updates based on targetType (supports canonical schema and legacy aliases)
     if (review.targetType === 'trigger') {
-      const trig = targetCase.triggers.find((t: EmergencyTrigger) => t.id === review.targetId);
+      const trig = (targetCase.triggers || []).find((t: EmergencyTrigger) => t.id === review.targetId);
       if (trig) {
-        trig.verificationStatus = review.action === 'confirm' ? 'confirmed' : 'dismissed';
+        trig.verificationStatus =
+          review.action === 'confirm'
+            ? 'confirmed'
+            : review.action === 'correct'
+            ? 'confirmed'
+            : 'dismissed';
         trig.verifiedBy = review.officerName;
         trig.verifiedAt = fullReview.timestamp;
         if (review.reason) trig.officerNotes = review.reason;
+        if (review.newValue) trig.explanation = review.newValue;
       }
-    } else if (review.targetType === 'finding') {
-      const ent = targetCase.entities.find((e: ExtractedEntity) => e.id === review.targetId);
+    } else if (review.targetType === 'finding' || review.targetType === 'entity') {
+      const ent = (targetCase.entities || []).find((e: ExtractedEntity) => e.id === review.targetId);
       if (ent) {
         ent.verificationStatus =
           review.action === 'confirm'
@@ -437,12 +446,15 @@ class CaseStore {
             : review.action === 'correct'
             ? 'corrected'
             : 'dismissed';
-        if (review.newValue) ent.normalizedValue = review.newValue;
+        if (review.newValue) {
+          ent.value = review.newValue;
+          ent.normalizedValue = review.newValue;
+        }
         ent.verifiedBy = review.officerName;
         ent.verifiedAt = fullReview.timestamp;
       }
-    } else if (review.targetType === 'transcript') {
-      const seg = targetCase.segments.find((s: TranscriptSegment) => s.id === review.targetId);
+    } else if (review.targetType === 'transcript' || review.targetType === 'transcript_segment') {
+      const seg = (targetCase.segments || []).find((s: TranscriptSegment) => s.id === review.targetId);
       if (seg) {
         if (review.newValue) {
           seg.editedText = review.newValue;

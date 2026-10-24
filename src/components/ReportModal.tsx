@@ -30,17 +30,30 @@ export function ReportModal({ isOpen, onClose, caseData }: ReportModalProps) {
     };
 
     const rows: string[] = [];
-    rows.push(['Report Type', 'VECNAVERSE Forensic Case Dossier'].map(sanitize).join(','));
+    rows.push(['Report Type', 'VECNAVERSE Cybercrime Triage & SER Dossier'].map(sanitize).join(','));
     rows.push(['Case ID', caseData.id].map(sanitize).join(','));
     rows.push(['Title', caseData.title].map(sanitize).join(','));
-    rows.push(['Officer', caseData.officerName].map(sanitize).join(','));
-    rows.push(['Classification', caseData.classificationStandard].map(sanitize).join(','));
+    rows.push(['Caller Name', caseData.callerName || 'Unknown'].map(sanitize).join(','));
+    rows.push(['Caller Phone', caseData.callerPhone || 'Unlisted'].map(sanitize).join(','));
+    rows.push(['Caller Category', caseData.callerCategory || 'unknown'].map(sanitize).join(','));
+    rows.push(['Triage Urgency Score', `${caseData.urgencyScore ?? 50}/100`].map(sanitize).join(','));
+    rows.push(['Urgency Level', caseData.urgencyLevel || 'MEDIUM'].map(sanitize).join(','));
+    if (caseData.emotionProfile) {
+      rows.push(['Primary Emotion', caseData.emotionProfile.primaryEmotion].map(sanitize).join(','));
+      rows.push(['Fear Metric', `${Math.round(caseData.emotionProfile.emotions.fear * 100)}%`].map(sanitize).join(','));
+      rows.push(['Distress Metric', `${Math.round(caseData.emotionProfile.emotions.distress * 100)}%`].map(sanitize).join(','));
+      rows.push(['Anger Metric', `${Math.round(caseData.emotionProfile.emotions.anger * 100)}%`].map(sanitize).join(','));
+      rows.push(['Nervousness Metric', `${Math.round(caseData.emotionProfile.emotions.nervousness * 100)}%`].map(sanitize).join(','));
+      rows.push(['Calm Metric', `${Math.round(caseData.emotionProfile.emotions.calm * 100)}%`].map(sanitize).join(','));
+    }
+    rows.push(['Officer', caseData.officerName || 'Det. S. Jenkins #4829'].map(sanitize).join(','));
+    rows.push(['Classification', caseData.classificationStandard || 'CJIS Tier 4 Enclave'].map(sanitize).join(','));
     rows.push(['Generated At', new Date().toISOString()].map(sanitize).join(','));
     rows.push('');
 
     rows.push(['--- EXTRACTED ENTITIES ---'].map(sanitize).join(','));
     rows.push(['Type', 'Spoken Form', 'Normalized / Detail', 'Confidence', 'Verification Status'].map(sanitize).join(','));
-    caseData.entities.forEach((ent) => {
+    (caseData.entities || []).forEach((ent) => {
       rows.push([
         ent.type,
         ent.value || ent.text || '',
@@ -53,7 +66,7 @@ export function ReportModal({ isOpen, onClose, caseData }: ReportModalProps) {
 
     rows.push(['--- EMERGENCY & THREAT TRIGGERS ---'].map(sanitize).join(','));
     rows.push(['Category', 'Severity', 'Quote', 'Time Offset', 'Confidence', 'Context', 'Status'].map(sanitize).join(','));
-    caseData.triggers.forEach((trig) => {
+    (caseData.triggers || []).forEach((trig) => {
       const timeOffsetStr = trig.timeOffset || (trig.timestamp !== undefined ? `${Math.floor(trig.timestamp / 60)}:${Math.floor(trig.timestamp % 60).toString().padStart(2, '0')}` : '00:00');
       rows.push([
         trig.category || trig.type || '',
@@ -69,7 +82,7 @@ export function ReportModal({ isOpen, onClose, caseData }: ReportModalProps) {
 
     rows.push(['--- ADVISORY VOCAL INDICATORS (NON-EVIDENTIARY) ---'].map(sanitize).join(','));
     rows.push(['Indicator Type', 'Score', 'Variance Level', 'Description', 'Disclaimer'].map(sanitize).join(','));
-    caseData.vocalIndicators.forEach((voc) => {
+    (caseData.vocalIndicators || []).forEach((voc) => {
       rows.push([
         voc.title || voc.metricName || voc.type,
         voc.score || voc.value || '',
@@ -215,10 +228,64 @@ export function ReportModal({ isOpen, onClose, caseData }: ReportModalProps) {
             </div>
           </div>
 
+          {/* Speech Emotion Recognition & Caller Triage */}
+          <div className="mb-6 rounded border border-[#35373e] bg-[#18191c] p-3 text-xs">
+            <h3 className="mb-2 font-mono text-xs font-semibold uppercase tracking-wider text-[#d96f68]">
+              2. Speech Emotion Recognition (SER) & Triage Telemetry
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs mb-3">
+              <div className="p-2 rounded bg-[#121315] border border-[#35373e]">
+                <span className="text-[10px] text-[#71706b] uppercase font-mono block">Caller Category</span>
+                <span className="font-mono font-bold text-[#edeae1] uppercase">
+                  {caseData.callerCategory ? caseData.callerCategory.replace('_', ' ') : 'Inbound Call'}
+                </span>
+              </div>
+              <div className="p-2 rounded bg-[#121315] border border-[#35373e]">
+                <span className="text-[10px] text-[#71706b] uppercase font-mono block">Urgency Score</span>
+                <span className="font-mono font-bold text-[#d96f68]">
+                  {caseData.urgencyScore ?? 50}/100 [{caseData.urgencyLevel || 'MEDIUM'}]
+                </span>
+              </div>
+              <div className="p-2 rounded bg-[#121315] border border-[#35373e]">
+                <span className="text-[10px] text-[#71706b] uppercase font-mono block">Primary Emotion</span>
+                <span className="font-mono font-bold text-[#edeae1] uppercase">
+                  {caseData.emotionProfile?.primaryEmotion || 'Analyzing'}
+                </span>
+              </div>
+              <div className="p-2 rounded bg-[#121315] border border-[#35373e]">
+                <span className="text-[10px] text-[#71706b] uppercase font-mono block">Caller Contact</span>
+                <span className="font-mono text-[#8a9a5b]">
+                  {caseData.callerPhone || 'Unlisted ANI'}
+                </span>
+              </div>
+            </div>
+
+            {caseData.emotionProfile && (
+              <div className="space-y-1.5 pt-2 border-t border-[#35373e]/50 font-mono text-[11px]">
+                <div className="flex items-center justify-between">
+                  <span className="text-[#d96f68]">Fear / Panic Hyperarousal:</span>
+                  <span className="font-bold">{Math.round(caseData.emotionProfile.emotions.fear * 100)}%</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[#ffb964]">Physiological Distress:</span>
+                  <span className="font-bold">{Math.round(caseData.emotionProfile.emotions.distress * 100)}%</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[#e06c75]">Agitation / Anger:</span>
+                  <span className="font-bold">{Math.round(caseData.emotionProfile.emotions.anger * 100)}%</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[#8a9a5b]">Baseline Calm:</span>
+                  <span className="font-bold">{Math.round(caseData.emotionProfile.emotions.calm * 100)}%</span>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Flagged Emergency & Threat Triggers */}
           <div className="mb-6">
             <h3 className="mb-2 font-mono text-xs font-semibold uppercase tracking-wider text-[#b84a44]">
-              2. Flagged Emergency & Threat Triggers
+              3. Flagged Emergency & Threat Triggers
             </h3>
             {caseData.triggers.length === 0 ? (
               <p className="text-xs text-[#9e9c96] italic">No high-risk triggers detected in analyzed audio.</p>

@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { store } from '@/lib/data/store';
 import { Case, TranscriptSegment } from '@/types';
-import { Header } from '@/components/Header';
 import { AudioPlayer } from '@/components/AudioPlayer';
 import { SynchronizedTranscript } from '@/components/SynchronizedTranscript';
 import { EntityList } from '@/components/EntityList';
@@ -39,6 +38,26 @@ export default function CaseDetailPage({ params }: PageProps) {
     setLoading(false);
   }, [caseId]);
 
+  // Active audio playback ticker
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (isPlaying && caseData) {
+      const maxDuration = caseData.audioMetadata?.durationSeconds || 185;
+      timer = setInterval(() => {
+        setCurrentTime((prev) => {
+          if (prev >= maxDuration) {
+            setIsPlaying(false);
+            return 0;
+          }
+          return Math.min(maxDuration, +(prev + 0.2).toFixed(2));
+        });
+      }, 200);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [isPlaying, caseData]);
+
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center bg-[#121315] text-[#edeae1]">
@@ -52,7 +71,6 @@ export default function CaseDetailPage({ params }: PageProps) {
   if (!caseData) {
     return (
       <div className="flex min-h-screen flex-col bg-[#121315] text-[#edeae1]">
-        <Header />
         <div className="mx-auto flex max-w-lg flex-1 flex-col items-center justify-center p-6 text-center">
           <AlertCircle className="mb-4 h-12 w-12 text-[#d96f68]" />
           <h2 className="mb-2 text-xl font-bold font-mono">Case Docket Not Found</h2>
@@ -78,6 +96,18 @@ export default function CaseDetailPage({ params }: PageProps) {
     setCurrentTime(seconds);
   };
 
+  const syncReviewApi = (reviewAction: { targetType: string; targetId: string; action: string; newValue?: string; reason?: string }) => {
+    fetch(`/api/cases/${caseData.id}/review`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ...reviewAction,
+        officerId: 'JENKINS-4829',
+        officerName: 'Det. S. Jenkins #4829',
+      }),
+    }).catch((err) => console.warn('Review API background sync failed:', err));
+  };
+
   const handleConfirmEntity = (entityId: string) => {
     store.recordReview(caseData.id, {
       caseId: caseData.id,
@@ -87,6 +117,7 @@ export default function CaseDetailPage({ params }: PageProps) {
       officerId: 'JENKINS-4829',
       officerName: 'Det. S. Jenkins #4829',
     });
+    syncReviewApi({ targetType: 'finding', targetId: entityId, action: 'confirm' });
     setCaseData(store.getCaseById(caseData.id));
   };
 
@@ -99,6 +130,7 @@ export default function CaseDetailPage({ params }: PageProps) {
       officerId: 'JENKINS-4829',
       officerName: 'Det. S. Jenkins #4829',
     });
+    syncReviewApi({ targetType: 'finding', targetId: entityId, action: 'dismiss' });
     setCaseData(store.getCaseById(caseData.id));
   };
 
@@ -111,6 +143,7 @@ export default function CaseDetailPage({ params }: PageProps) {
       officerId: 'JENKINS-4829',
       officerName: 'Det. S. Jenkins #4829',
     });
+    syncReviewApi({ targetType: 'trigger', targetId: triggerId, action: 'confirm' });
     setCaseData(store.getCaseById(caseData.id));
   };
 
@@ -123,6 +156,7 @@ export default function CaseDetailPage({ params }: PageProps) {
       officerId: 'JENKINS-4829',
       officerName: 'Det. S. Jenkins #4829',
     });
+    syncReviewApi({ targetType: 'trigger', targetId: triggerId, action: 'dismiss' });
     setCaseData(store.getCaseById(caseData.id));
   };
 
@@ -136,6 +170,7 @@ export default function CaseDetailPage({ params }: PageProps) {
       officerId: 'JENKINS-4829',
       officerName: 'Det. S. Jenkins #4829',
     });
+    syncReviewApi({ targetType: 'transcript', targetId: segmentId, action: 'correct', newValue: newText });
     setCaseData(store.getCaseById(caseData.id));
   };
 
@@ -167,8 +202,6 @@ export default function CaseDetailPage({ params }: PageProps) {
 
   return (
     <div className="flex min-h-screen flex-col bg-[#121315] text-[#edeae1]">
-      <Header />
-
       {/* Review Action Top Bar */}
       <CaseReviewBar
         caseData={caseData}

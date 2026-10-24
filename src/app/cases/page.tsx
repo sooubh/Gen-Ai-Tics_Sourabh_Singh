@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { store } from '@/lib/data/store';
 import { Case, CaseStatus, CallerCategory } from '@/types';
 import {
@@ -18,10 +19,18 @@ import {
   AlertOctagon,
 } from 'lucide-react';
 
-export default function CasesPage() {
+function CasesContent() {
+  const searchParams = useSearchParams();
   const [cases, setCases] = useState<Case[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+
+  useEffect(() => {
+    const q = searchParams.get('q');
+    if (q) {
+      setSearchTerm(q);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     loadCases();
@@ -218,5 +227,19 @@ export default function CasesPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function CasesPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="p-6 text-center font-mono text-xs text-[#9e9c96]">
+          Loading cybercrime call repository...
+        </div>
+      }
+    >
+      <CasesContent />
+    </Suspense>
   );
 }

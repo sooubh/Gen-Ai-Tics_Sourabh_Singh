@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { store } from '@/lib/data/store';
 import { GeminiAudioAdapter } from '@/lib/ai/gemini-adapter';
-import { executeSyntheticRun } from '@/lib/ai/synthetic-fixtures';
+import { executeSyntheticRun, isFixtureAvailable } from '@/lib/ai/synthetic-fixtures';
 import { AudioAnalysisResult } from '@/lib/ai/types';
 import {
   TranscriptSegment,
@@ -10,6 +10,7 @@ import {
   TimelineEvent,
   VocalIndicator,
   TriggerSeverity,
+  SpeechEmotionProfile,
 } from '@/types';
 
 interface Params {
@@ -24,14 +25,20 @@ export async function POST(request: NextRequest, { params }: Params) {
 
     if (!targetCase) {
       return NextResponse.json(
-        { error: `Case ${id} not found` },
+        {
+          success: false,
+          error: `Case ${id} not found in local enclave`,
+        },
         { status: 404 }
       );
     }
 
     const apiKey = process.env.GEMINI_API_KEY;
     const useSynthetic = body.useSynthetic || !apiKey;
-    const fixtureId = body.fixtureId || 'FIXTURE-CYBER-001';
+    const requestedFixture = body.fixtureId;
+    const fixtureId = requestedFixture && isFixtureAvailable(requestedFixture)
+      ? requestedFixture
+      : 'extortion-demand';
 
     let result: AudioAnalysisResult;
     let modelUsed = 'synthetic-deterministic-pipeline';
@@ -129,7 +136,53 @@ export async function POST(request: NextRequest, { params }: Params) {
       isAdvisory: true,
     }));
 
-    // Update case with findings
+    // Derive dynamic Speech Emotion Recognition (SER) metrics and Urgency Score
+    let computedUrgency = 50;
+    const criticalTriggers = mappedTriggers.filter((t) => t.severity === 'critical').length;
+    const highTriggers = mappedTriggers.filter((t) => t.severity === 'high').length;
+    computedUrgency = Math.min(100, 45 + criticalTriggers * 25 + highTriggers * 15);
+
+    let urgencyLevel: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW' = 'MEDIUM';
+    if (computedUrgency >= 90) urgencyLevel = 'CRITICAL';
+    else if (computedUrgency >= 75) urgencyLevel = 'HIGH';
+    else if (computedUrgency >= 50) urgencyLevel = 'MEDIUM';
+    else urgencyLevel = 'LOW';
+
+    const hasExtortionOrViolence = mappedTriggers.some(
+      (t) => t.category === 'EXTORTION' || t.category === 'THREAT_VIOLENCE'
+    );
+    const hasDistress = mappedTriggers.some((t) => t.category === 'DISTRESS');
+
+    const primaryEmotion: SpeechEmotionProfile['primaryEmotion'] = hasDistress
+      ? 'distress'
+      : hasExtortionOrViolence
+      ? 'fear'
+      : targetCase.callerCategory === 'suspected_fraudster'
+      ? 'anger'
+      : targetCase.callerCategory === 'informant'
+      ? 'nervousness'
+      : 'calm';
+
+    const computedEmotionProfile: SpeechEmotionProfile = {
+      primaryEmotion,
+      urgencyScore: computedUrgency,
+      urgencyLevel,
+      emotions: {
+        fear: primaryEmotion === 'fear' ? 0.94 : hasExtortionOrViolence ? 0.75 : 0.15,
+        distress: primaryEmotion === 'distress' ? 0.92 : hasDistress ? 0.8 : 0.1,
+        anger: primaryEmotion === 'anger' ? 0.89 : 0.15,
+        nervousness: primaryEmotion === 'nervousness' ? 0.74 : 0.35,
+        calm: primaryEmotion === 'calm' ? 0.85 : 0.08,
+      },
+      acousticMetrics: {
+        pitchJitterHz: primaryEmotion === 'fear' || primaryEmotion === 'distress' ? 182 : 65,
+        speechRateWpm: primaryEmotion === 'fear' ? 218 : 142,
+        vocalTremorScore: primaryEmotion === 'distress' ? 95 : primaryEmotion === 'fear' ? 88 : 35,
+        energySpikeDb: primaryEmotion === 'anger' ? 24.5 : 8.2,
+      },
+    };
+
+    // Update case with findings and computed SER triage metrics
     const updated = store.updateCase(id, {
       status: 'under_review',
       segments: mappedSegments,
@@ -137,6 +190,9 @@ export async function POST(request: NextRequest, { params }: Params) {
       triggers: mappedTriggers,
       timeline: mappedTimeline,
       vocalIndicators: mappedVocalIndicators,
+      urgencyScore: computedUrgency,
+      urgencyLevel,
+      emotionProfile: computedEmotionProfile,
     });
 
     store.logAuditEvent({

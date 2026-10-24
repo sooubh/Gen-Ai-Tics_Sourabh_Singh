@@ -14,7 +14,6 @@ import {
   Sliders,
   CheckCircle2,
 } from 'lucide-react';
-import ReportModal from './ReportModal';
 
 interface NavItem {
   name: string;
@@ -32,12 +31,20 @@ export function Sidebar() {
   const pathname = usePathname();
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [clearedToast, setClearedToast] = useState(false);
-  const [showReportModal, setShowReportModal] = useState(false);
 
   const handleClearSession = () => {
     setShowClearConfirm(false);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem('vecnaverse_cases');
+        localStorage.removeItem('vecnaverse_audit_logs');
+      } catch {}
+    }
     setClearedToast(true);
-    setTimeout(() => setClearedToast(false), 3000);
+    setTimeout(() => {
+      setClearedToast(false);
+      window.location.reload();
+    }, 1200);
   };
 
   const navItems: NavItem[] = [
@@ -278,11 +285,6 @@ export function Sidebar() {
           <CheckCircle2 className="w-4 h-4 text-[#5a8264]" />
           <span>Session cache securely purged. Enclave state reset.</span>
         </div>
-      )}
-
-      {/* Investigation Dossier Report Modal */}
-      {showReportModal && (
-        <ReportModal isOpen={showReportModal} onClose={() => setShowReportModal(false)} />
       )}
     </>
   );

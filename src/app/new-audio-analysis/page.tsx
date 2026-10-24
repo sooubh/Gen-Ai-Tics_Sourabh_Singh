@@ -85,6 +85,7 @@ const PRESET_SCENARIOS: PresetScenario[] = [
 
 export default function NewAudioAnalysisPage() {
   const router = useRouter();
+  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
   const [selectedScenario, setSelectedScenario] = useState<string>('digital-arrest');
   const [callerCategory, setCallerCategory] = useState<CallerCategory>('distressed_victim');
   const [callerName, setCallerName] = useState<string>('Sunita Mehra');
@@ -97,6 +98,15 @@ export default function NewAudioAnalysisPage() {
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [currentTime, setCurrentTime] = useState<number>(14);
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
+
+  const handleCustomFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedScenario('custom');
+      setCallTitle(`Inbound Call Audio: ${file.name}`);
+      setCallDescription(`Direct audio file upload (${(file.size / 1024 / 1024).toFixed(1)} MB) analyzed for speech distress markers.`);
+    }
+  };
 
   // Pipeline configuration toggles
   const [pipelineConfig, setPipelineConfig] = useState({
@@ -271,7 +281,17 @@ export default function NewAudioAnalysisPage() {
             </div>
 
             {/* Custom Upload Dropzone */}
-            <div className="rounded border border-dashed border-[#35373e] bg-[#121315] hover:bg-[#222327] hover:border-[#7d8c52]/60 p-4 flex flex-col items-center justify-center text-center transition-colors cursor-pointer">
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleCustomFileUpload}
+              accept="audio/*"
+              className="hidden"
+            />
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className="rounded border border-dashed border-[#35373e] bg-[#121315] hover:bg-[#222327] hover:border-[#7d8c52]/60 p-4 flex flex-col items-center justify-center text-center transition-colors cursor-pointer"
+            >
               <div className="flex items-center gap-2 text-xs">
                 <UploadCloud className="h-4 w-4 text-[#8a9a5b]" />
                 <span className="font-semibold text-[#8a9a5b] hover:underline">

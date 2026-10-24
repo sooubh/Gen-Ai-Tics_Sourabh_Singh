@@ -71,7 +71,7 @@ export function Header() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full bg-[#18191c] text-[#edeae1] placeholder:text-[#71706b] text-xs font-mono pl-9 pr-3 py-1.5 rounded border border-[#2d2f36] focus:outline-none focus:border-[#7d8c52] transition-colors"
-            placeholder="Search transcripts, case IDs, phone numbers, crypto addresses..."
+            placeholder="Search transcripts, caller names, phone numbers, emergency tags..."
             type="text"
           />
         </form>
@@ -141,7 +141,7 @@ export function Header() {
                       key={n.id}
                       onClick={() => {
                         setShowNotifications(false);
-                        if (n.caseId.includes('CY')) {
+                        if (n.caseId.startsWith('CALL-') || n.caseId.startsWith('CY-')) {
                           router.push(`/cases/${n.caseId}`);
                         } else {
                           router.push('/live-monitor');

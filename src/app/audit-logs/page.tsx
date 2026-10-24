@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Header } from '@/components/Header';
 import { store } from '@/lib/data/store';
 import { AuditLogEntry, Case } from '@/types';
 import {
@@ -41,8 +40,6 @@ export default function AuditLogsPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-[#121315] text-[#edeae1]">
-      <Header />
-
       <main className="flex-1 p-4 md:p-6 max-w-7xl mx-auto w-full space-y-6">
         {/* Title & Enclave Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#35373e] pb-4">
