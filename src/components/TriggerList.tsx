@@ -37,11 +37,13 @@ export function TriggerList({
             const isConfirmed = trig.verificationStatus === 'confirmed' || trig.status === 'confirmed';
             const isDismissed = trig.verificationStatus === 'dismissed' || trig.status === 'dismissed';
             const isCritical = trig.severity === 'critical';
+            const evidenceStartTime = trig.evidence?.startTime ?? trig.timestamp ?? trig.timeSeconds ?? 0;
 
             return (
               <div
                 key={trig.id}
-                className={`flex flex-col gap-2 rounded border p-3 transition-colors ${
+                onClick={() => onSeekToTrigger && onSeekToTrigger(evidenceStartTime)}
+                className={`flex flex-col gap-2 rounded border p-3 transition-colors cursor-pointer hover:border-[#8a9a5b]/60 ${
                   isConfirmed
                     ? 'border-[#5a8264]/50 bg-[#1c1f1c]'
                     : isDismissed
@@ -86,19 +88,23 @@ export function TriggerList({
                 <div className="flex items-center justify-between border-t border-[#35373e]/40 pt-1.5 text-[11px]">
                   <div className="flex items-center gap-2 font-mono text-[#9e9c96]">
                     <button
-                      onClick={() => onSeekToTrigger && onSeekToTrigger(trig.timestamp || trig.timeSeconds || 0)}
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onSeekToTrigger && onSeekToTrigger(evidenceStartTime);
+                      }}
                       className="flex items-center gap-1 text-[#8a9a5b] hover:underline"
                     >
                       <Clock className="h-3 w-3" />
                       <span>
-                        {trig.timeOffset || `${Math.floor((trig.timestamp || 0) / 60)}:${Math.floor((trig.timestamp || 0) % 60).toString().padStart(2, '0')}`}
+                        {trig.timeOffset || `${Math.floor(evidenceStartTime / 60)}:${Math.floor(evidenceStartTime % 60).toString().padStart(2, '0')}`}
                       </span>
                     </button>
                     <span>•</span>
                     <span>Conf: {trig.confidence}%</span>
                   </div>
 
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
                     {isConfirmed ? (
                       <span className="inline-flex items-center gap-1 rounded bg-[#5a8264]/20 px-2 py-0.5 font-mono text-[10px] text-[#7ea886] border border-[#5a8264]/40">
                         <Check className="h-3 w-3" />
@@ -111,6 +117,7 @@ export function TriggerList({
                     ) : (
                       <>
                         <button
+                          type="button"
                           onClick={() => onConfirmTrigger && onConfirmTrigger(trig.id)}
                           className="flex items-center gap-1 rounded bg-[#5a8264]/20 px-2 py-0.5 font-mono text-[10px] text-[#7ea886] hover:bg-[#5a8264]/30 border border-[#5a8264]/40 transition-colors"
                         >
@@ -118,6 +125,7 @@ export function TriggerList({
                           <span>Confirm</span>
                         </button>
                         <button
+                          type="button"
                           onClick={() => onDismissTrigger && onDismissTrigger(trig.id)}
                           className="flex items-center gap-1 rounded bg-[#23252a] px-2 py-0.5 font-mono text-[10px] text-[#9e9c96] hover:text-[#edeae1] border border-[#35373e] transition-colors"
                         >

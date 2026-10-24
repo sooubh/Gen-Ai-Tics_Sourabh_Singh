@@ -37,7 +37,9 @@ export class GeminiError extends Error {
 }
 
 export class GeminiConfigurationError extends GeminiError {
-  constructor(message: string = 'Gemini API key is not configured on the server') {
+  constructor(
+    message: string = 'Gemini API key is not configured on the server. Please add GEMINI_API_KEY to your .env.local file to analyze custom audio files, or use preset demo scenarios offline.'
+  ) {
     super(message, 'CONFIG_ERROR', 500);
     this.name = 'GeminiConfigurationError';
   }
@@ -379,7 +381,7 @@ export class GeminiAudioAdapter {
     // Guardrail: Ensure credentials exist before proceeding
     if (!this.client || !this.config.apiKey) {
       throw new GeminiConfigurationError(
-        'Gemini API key is not configured in server environment. Set GEMINI_API_KEY.'
+        'Gemini API key is not configured on the server. Please add GEMINI_API_KEY to your .env.local file to analyze custom audio files, or use preset demo scenarios offline.'
       );
     }
 
@@ -468,6 +470,19 @@ Analyze this audio file thoroughly according to all instructions and schema requ
         lastError = err as Error;
 
         // Classify safe error types
+        const isAuthOrKeyError =
+          ((err as { status?: number })?.status === 400 &&
+            /API_KEY_INVALID|key\s*not\s*valid|invalid\s*api\s*key|API key/i.test(String(err))) ||
+          (err as { status?: number })?.status === 401 ||
+          (err as { status?: number })?.status === 403 ||
+          /API_KEY_INVALID|key\s*not\s*valid|invalid\s*api\s*key/i.test(String(err));
+
+        if (isAuthOrKeyError) {
+          throw new GeminiConfigurationError(
+            'Invalid Gemini API key provided. Please verify GEMINI_API_KEY in your .env.local file, or use preset demo scenarios offline.'
+          );
+        }
+
         const isRateLimit =
           (err as { status?: number })?.status === 429 ||
           /rate\s*limit|quota|resource\s*exhausted|429/i.test(String(err));
@@ -516,6 +531,12 @@ Analyze this audio file thoroughly according to all instructions and schema requ
     filePath: string,
     options: AnalyzeAudioOptions = {}
   ): Promise<AudioAnalysisResult> {
+    if (!this.client || !this.config.apiKey) {
+      throw new GeminiConfigurationError(
+        'Gemini API key is not configured on the server. Please add GEMINI_API_KEY to your .env.local file to analyze custom audio files, or use preset demo scenarios offline.'
+      );
+    }
+
     const resolvedPath = resolveAudioFilePath(filePath);
     if (!resolvedPath) {
       throw new GeminiMediaError(`Audio file not found on disk at path: ${filePath}`);

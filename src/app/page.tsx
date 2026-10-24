@@ -28,8 +28,8 @@ export default function OverviewDashboard() {
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   useEffect(() => {
-    const res = store.getAllCases({ limit: 50 });
-    setCases(res.cases);
+    const loadedCases = store.getCases();
+    setCases(loadedCases);
   }, []);
 
   const getCategoryBadge = (category?: CallerCategory) => {

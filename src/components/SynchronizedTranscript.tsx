@@ -70,7 +70,8 @@ export function SynchronizedTranscript({
           return (
             <div
               key={seg.id}
-              className={`group flex flex-col gap-1.5 rounded p-3 transition-colors border ${
+              onClick={() => !isEditing && onSeek(seg.startTime)}
+              className={`group flex flex-col gap-1.5 rounded p-3 transition-colors border cursor-pointer hover:border-[#8a9a5b]/60 ${
                 isThreat
                   ? 'border-l-2 border-l-[#b84a44] border-y-[#35373e] border-r-[#35373e] bg-[#23252a] shadow-sm'
                   : isActive
@@ -111,9 +112,10 @@ export function SynchronizedTranscript({
                   )}
                 </div>
 
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                   {!isEditing && (
                     <button
+                      type="button"
                       onClick={() => startEdit(seg)}
                       className="rounded p-1 text-[#71706b] hover:bg-[#23252a] hover:text-[#edeae1] opacity-60 group-hover:opacity-100 transition-opacity"
                       title="Correct Transcript"
@@ -122,6 +124,7 @@ export function SynchronizedTranscript({
                     </button>
                   )}
                   <button
+                    type="button"
                     onClick={() => onSeek(seg.startTime)}
                     className="flex items-center gap-1 font-mono text-[11px] text-[#8a9a5b] hover:underline opacity-80 group-hover:opacity-100 transition-opacity ml-1"
                   >
@@ -133,7 +136,7 @@ export function SynchronizedTranscript({
 
               {/* Text content or edit input */}
               {isEditing ? (
-                <div className="mt-1 flex flex-col gap-1.5">
+                <div className="mt-1 flex flex-col gap-1.5" onClick={(e) => e.stopPropagation()}>
                   <textarea
                     value={editText}
                     onChange={(e) => setEditText(e.target.value)}

@@ -41,14 +41,21 @@ export function AudioPlayer({
   const [volume, setVolume] = useState<number>(0.8);
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const [isLoopingCue, setIsLoopingCue] = useState<boolean>(false);
+  const [audioError, setAudioError] = useState<boolean>(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const timelineRef = useRef<HTMLDivElement | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const oscillatorRef = useRef<OscillatorNode | null>(null);
 
-  // Synthesize soft vocal-band frequency when playing without external audio file
+  // Reset audio error state whenever audioUrl changes
   useEffect(() => {
-    if (isPlaying && !audioUrl && !isMuted && volume > 0) {
+    setAudioError(false);
+  }, [audioUrl]);
+
+  // Synthesize soft vocal-band frequency when playing without external audio file (or fallback)
+  useEffect(() => {
+    const shouldUseToneGenerator = isPlaying && (!audioUrl || audioError) && !isMuted && volume > 0;
+    if (shouldUseToneGenerator) {
       try {
         const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
         if (AudioCtx) {
@@ -88,7 +95,60 @@ export function AudioPlayer({
         audioContextRef.current = null;
       }
     };
-  }, [isPlaying, audioUrl, isMuted, volume]);
+  }, [isPlaying, audioUrl, audioError, isMuted, volume]);
+
+  // Real audio playback control: active play/pause effect
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio || !audioUrl || audioError) return;
+
+    if (isPlaying) {
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((err) => {
+          console.warn('Real audio playback not started:', err);
+        });
+      }
+    } else {
+      audio.pause();
+    }
+  }, [isPlaying, audioUrl, audioError]);
+
+  // Synchronize audio element currentTime when user seeks externally
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio || !audioUrl || audioError) return;
+
+    if (Math.abs(audio.currentTime - currentTime) > 0.4) {
+      audio.currentTime = currentTime;
+    }
+  }, [currentTime, audioUrl, audioError]);
+
+  // Volume & Mute synchronization
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.volume = isMuted ? 0 : volume;
+    audio.muted = isMuted;
+  }, [volume, isMuted]);
+
+  // Playback rate synchronization
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.playbackRate = playbackRate;
+  }, [playbackRate]);
+
+  // Pause real audio playback on unmount
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        try {
+          audioRef.current.pause();
+        } catch {}
+      }
+    };
+  }, []);
 
   // Format time as MM:SS.mmm
   const formatTimeFull = (secs: number) => {
@@ -128,14 +188,31 @@ export function AudioPlayer({
   return (
     <div className="rounded-lg border border-[#35373e] bg-[#18191c] p-3 shadow-sm flex flex-col gap-2.5">
       {/* Hidden audio element if real stream is available */}
-      {audioUrl && (
+      {audioUrl && !audioError && (
         <audio
           ref={audioRef}
           src={audioUrl}
+          onError={() => setAudioError(true)}
           onTimeUpdate={() => {
-            if (audioRef.current) onSeek(audioRef.current.currentTime);
+            if (audioRef.current) {
+              const cur = audioRef.current.currentTime;
+              if (isLoopingCue && threatTimestamp !== undefined) {
+                const loopStart = Math.max(0, threatTimestamp - 2);
+                const loopEnd = Math.min(duration, threatTimestamp + 3);
+                if (cur >= loopEnd || cur < loopStart) {
+                  audioRef.current.currentTime = loopStart;
+                  onSeek(loopStart);
+                  return;
+                }
+              }
+              onSeek(cur);
+            }
           }}
-          onEnded={onPlayToggle}
+          onEnded={() => {
+            if (isPlaying) {
+              onPlayToggle();
+            }
+          }}
         />
       )}
 

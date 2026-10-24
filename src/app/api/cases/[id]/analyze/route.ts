@@ -58,7 +58,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       // Real audio processing branch
       if (!apiKey) {
         const failureReason =
-          'Gemini API key is not configured on server (GEMINI_API_KEY). Provide API key or specify useSynthetic: true for offline demo mode.';
+          'Gemini API key is not configured on server (GEMINI_API_KEY). Please add GEMINI_API_KEY to your .env.local file to analyze custom audio files, or use preset demo scenarios for offline testing.';
         const timestamp = new Date().toISOString();
 
         const updated = store.updateCase(id, {
@@ -164,8 +164,19 @@ export async function POST(request: NextRequest, { params }: Params) {
         modelUsed = adapter.getModelId(body.model);
         analysisProvider = 'gemini';
       } catch (geminiErr: any) {
+        // Detect invalid or missing API key errors from GoogleGenAI SDK or network
+        const isApiKeyError =
+          geminiErr?.name === 'GeminiConfigurationError' ||
+          geminiErr?.status === 401 ||
+          geminiErr?.status === 403 ||
+          /API_KEY_INVALID|key\s*not\s*valid|invalid\s*api\s*key|api\s*key\s*is\s*not\s*configured/i.test(
+            String(geminiErr?.message || '')
+          );
+
         // NEVER silently mask Gemini failures with synthetic success!
-        const failureReason = geminiErr?.message || 'Gemini processing failed on audio file';
+        const failureReason = isApiKeyError
+          ? 'Gemini API key is invalid or not configured. Please add a valid GEMINI_API_KEY to your .env.local file to analyze custom audio files, or use preset demo scenarios for offline testing.'
+          : (geminiErr?.message || 'Gemini processing failed on audio file');
         const timestamp = new Date().toISOString();
 
         const updated = store.updateCase(id, {
@@ -207,7 +218,7 @@ export async function POST(request: NextRequest, { params }: Params) {
             analysisProvider: 'gemini',
             case: updated,
           },
-          { status: geminiErr.status || 502 }
+          { status: isApiKeyError ? 500 : (geminiErr.status || 502) }
         );
       }
     }

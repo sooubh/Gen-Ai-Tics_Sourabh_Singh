@@ -38,10 +38,17 @@ export default function CaseDetailPage({ params }: PageProps) {
     setLoading(false);
   }, [caseId]);
 
-  // Active audio playback ticker
+  const audioUrl =
+    caseData?.audioUrl ||
+    (caseData?.audioMetadata?.storagePath && !isSyntheticCase(caseData)
+      ? `/api/upload?path=${encodeURIComponent(caseData.audioMetadata.storagePath)}`
+      : undefined);
+  const hasRealAudio = Boolean(audioUrl);
+
+  // Active audio playback ticker for simulated demo without real audio
   useEffect(() => {
     let timer: NodeJS.Timeout;
-    if (isPlaying && caseData) {
+    if (isPlaying && caseData && !hasRealAudio) {
       const maxDuration = caseData.audioMetadata?.durationSeconds || 185;
       timer = setInterval(() => {
         setCurrentTime((prev) => {
@@ -56,7 +63,7 @@ export default function CaseDetailPage({ params }: PageProps) {
     return () => {
       if (timer) clearInterval(timer);
     };
-  }, [isPlaying, caseData]);
+  }, [isPlaying, caseData, hasRealAudio]);
 
   if (loading) {
     return (
@@ -108,6 +115,20 @@ export default function CaseDetailPage({ params }: PageProps) {
     }).catch((err) => console.warn('Review API background sync failed:', err));
   };
 
+  const refreshCaseData = (id: string) => {
+    const updated = store.getCaseById(id);
+    if (updated) {
+      setCaseData({
+        ...updated,
+        entities: [...(updated.entities || [])],
+        triggers: [...(updated.triggers || [])],
+        segments: [...(updated.segments || [])],
+        reviews: [...(updated.reviews || [])],
+        timeline: [...(updated.timeline || [])],
+      });
+    }
+  };
+
   const handleConfirmEntity = (entityId: string) => {
     store.recordReview(caseData.id, {
       caseId: caseData.id,
@@ -118,7 +139,7 @@ export default function CaseDetailPage({ params }: PageProps) {
       officerName: 'Det. S. Jenkins #4829',
     });
     syncReviewApi({ targetType: 'finding', targetId: entityId, action: 'confirm' });
-    setCaseData(store.getCaseById(caseData.id));
+    refreshCaseData(caseData.id);
   };
 
   const handleDismissEntity = (entityId: string) => {
@@ -131,7 +152,7 @@ export default function CaseDetailPage({ params }: PageProps) {
       officerName: 'Det. S. Jenkins #4829',
     });
     syncReviewApi({ targetType: 'finding', targetId: entityId, action: 'dismiss' });
-    setCaseData(store.getCaseById(caseData.id));
+    refreshCaseData(caseData.id);
   };
 
   const handleConfirmTrigger = (triggerId: string) => {
@@ -144,7 +165,7 @@ export default function CaseDetailPage({ params }: PageProps) {
       officerName: 'Det. S. Jenkins #4829',
     });
     syncReviewApi({ targetType: 'trigger', targetId: triggerId, action: 'confirm' });
-    setCaseData(store.getCaseById(caseData.id));
+    refreshCaseData(caseData.id);
   };
 
   const handleDismissTrigger = (triggerId: string) => {
@@ -157,7 +178,7 @@ export default function CaseDetailPage({ params }: PageProps) {
       officerName: 'Det. S. Jenkins #4829',
     });
     syncReviewApi({ targetType: 'trigger', targetId: triggerId, action: 'dismiss' });
-    setCaseData(store.getCaseById(caseData.id));
+    refreshCaseData(caseData.id);
   };
 
   const handleEditSegment = (segmentId: string, newText: string) => {
@@ -171,7 +192,7 @@ export default function CaseDetailPage({ params }: PageProps) {
       officerName: 'Det. S. Jenkins #4829',
     });
     syncReviewApi({ targetType: 'transcript', targetId: segmentId, action: 'correct', newValue: newText });
-    setCaseData(store.getCaseById(caseData.id));
+    refreshCaseData(caseData.id);
   };
 
   const handleValidateAll = () => {
@@ -187,13 +208,13 @@ export default function CaseDetailPage({ params }: PageProps) {
       details: 'Officer complete sign-off performed on case findings and transcript.',
       enclaveSecurityLevel: 'TOP SECRET // SCI',
     });
-    setCaseData(store.getCaseById(caseData.id));
+    refreshCaseData(caseData.id);
   };
 
   const handlePurgeAudio = () => {
     if (confirm('Permanently purge audio recording file for this case per CJIS retention policy?')) {
       store.purgeAudio(caseData.id);
-      setCaseData(store.getCaseById(caseData.id));
+      refreshCaseData(caseData.id);
     }
   };
 
@@ -278,6 +299,7 @@ export default function CaseDetailPage({ params }: PageProps) {
             filename={caseData.audioMetadata?.filename || 'evidence_recording.wav'}
             format={caseData.audioMetadata?.format || 'PCM 16-bit / 44.1 kHz'}
             threatTimestamp={firstThreat?.evidence?.startTime}
+            audioUrl={audioUrl}
           />
         </div>
 

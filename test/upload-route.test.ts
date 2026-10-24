@@ -294,8 +294,73 @@ describe('POST & GET /api/upload Endpoint Suite', () => {
 
       expect(getRes.status).toBe(200);
       expect(getRes.headers.get('content-type')).toBe('audio/wav');
+      expect(getRes.headers.get('accept-ranges')).toBe('bytes');
+      expect(getRes.headers.get('cache-control')).toBe('private, no-cache');
       const bodyBytes = Buffer.from(await getRes.arrayBuffer());
       expect(bodyBytes.length).toBe(wavBuffer.length);
+    });
+
+    it('handles HTTP Range requests returning 206 Partial Content for audio scrubbing', async () => {
+      const wavBuffer = createValidWavBuffer(44100, 1, 1.0);
+      const formData = new FormData();
+      formData.append('audio', new File([new Uint8Array(wavBuffer)], 'range_test.wav', { type: 'audio/wav' }));
+
+      const postReq = new NextRequest('http://localhost:3000/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      const postRes = await POST(postReq);
+      const postData = await postRes.json();
+      uploadedFilesToCleanup.push(postData.file.storagePath);
+
+      // Request initial chunk: first 500 bytes (0-499)
+      const rangeReq = new NextRequest(`http://localhost:3000/api/upload?path=${postData.file.storagePath}`, {
+        headers: { Range: 'bytes=0-499' },
+      });
+      const rangeRes = await GET(rangeReq);
+
+      expect(rangeRes.status).toBe(206);
+      expect(rangeRes.headers.get('content-range')).toBe(`bytes 0-499/${wavBuffer.length}`);
+      expect(rangeRes.headers.get('content-length')).toBe('500');
+      expect(rangeRes.headers.get('accept-ranges')).toBe('bytes');
+
+      const chunkBytes = Buffer.from(await rangeRes.arrayBuffer());
+      expect(chunkBytes.length).toBe(500);
+      expect(chunkBytes.equals(wavBuffer.subarray(0, 500))).toBe(true);
+
+      // Request middle-to-end chunk: bytes=1000-
+      const tailReq = new NextRequest(`http://localhost:3000/api/upload?path=${postData.file.storagePath}`, {
+        headers: { Range: 'bytes=1000-' },
+      });
+      const tailRes = await GET(tailReq);
+
+      expect(tailRes.status).toBe(206);
+      expect(tailRes.headers.get('content-range')).toBe(`bytes 1000-${wavBuffer.length - 1}/${wavBuffer.length}`);
+      const tailBytes = Buffer.from(await tailRes.arrayBuffer());
+      expect(tailBytes.length).toBe(wavBuffer.length - 1000);
+      expect(tailBytes.equals(wavBuffer.subarray(1000))).toBe(true);
+    });
+
+    it('returns HTTP 416 Range Not Satisfiable for out-of-bounds ranges', async () => {
+      const wavBuffer = createValidWavBuffer(44100, 1, 0.5);
+      const formData = new FormData();
+      formData.append('audio', new File([new Uint8Array(wavBuffer)], 'range_oob.wav', { type: 'audio/wav' }));
+
+      const postReq = new NextRequest('http://localhost:3000/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      const postRes = await POST(postReq);
+      const postData = await postRes.json();
+      uploadedFilesToCleanup.push(postData.file.storagePath);
+
+      const invalidRangeReq = new NextRequest(`http://localhost:3000/api/upload?path=${postData.file.storagePath}`, {
+        headers: { Range: 'bytes=9999999-10000000' },
+      });
+      const invalidRangeRes = await GET(invalidRangeReq);
+
+      expect(invalidRangeRes.status).toBe(416);
+      expect(invalidRangeRes.headers.get('content-range')).toBe(`bytes */${wavBuffer.length}`);
     });
 
     it('returns 404 for non-existent file query', async () => {
@@ -305,9 +370,17 @@ describe('POST & GET /api/upload Endpoint Suite', () => {
     });
 
     it('returns 400 when attempting path traversal attack on GET', async () => {
-      const getReq = new NextRequest('http://localhost:3000/api/upload?file=../../package.json');
-      const getRes = await GET(getReq);
-      expect(getRes.status).toBe(400);
+      const getReq1 = new NextRequest('http://localhost:3000/api/upload?file=../../package.json');
+      const getRes1 = await GET(getReq1);
+      expect(getRes1.status).toBe(400);
+
+      const getReq2 = new NextRequest('http://localhost:3000/api/upload?path=..%2f..%2fsecret.txt');
+      const getRes2 = await GET(getReq2);
+      expect(getRes2.status).toBe(400);
+
+      const getReq3 = new NextRequest('http://localhost:3000/api/upload?file=test%00.wav');
+      const getRes3 = await GET(getReq3);
+      expect(getRes3.status).toBe(400);
     });
   });
 });

@@ -122,4 +122,23 @@ describe('AI Pipeline & Synthetic Fixture Engine (PRD-FR-003, PRD-FR-009, PRD-FR
       GeminiMediaError
     );
   });
+
+  describe('User-Friendly Gemini Missing-Key Messaging', () => {
+    it('throws GeminiConfigurationError with actionable guidance when analyzeAudioBuffer is called without an API key', async () => {
+      const adapterNoKey = new GeminiAudioAdapter({ apiKey: '' });
+      const dummyBuffer = Buffer.from('RIFF....WAVE');
+
+      await expect(adapterNoKey.analyzeAudioBuffer(dummyBuffer)).rejects.toThrowError(
+        'Gemini API key is not configured on the server. Please add GEMINI_API_KEY to your .env.local file to analyze custom audio files, or use preset demo scenarios offline.'
+      );
+    });
+
+    it('throws GeminiConfigurationError with actionable guidance when analyzeAudioFile is called without an API key', async () => {
+      const adapterNoKey = new GeminiAudioAdapter({ apiKey: '' });
+
+      await expect(adapterNoKey.analyzeAudioFile('package.json')).rejects.toThrowError(
+        'Gemini API key is not configured on the server. Please add GEMINI_API_KEY to your .env.local file to analyze custom audio files, or use preset demo scenarios offline.'
+      );
+    });
+  });
 });

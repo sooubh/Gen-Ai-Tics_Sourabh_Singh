@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -17,6 +17,10 @@ import {
   ShieldAlert,
   AlertTriangle,
   RefreshCw,
+  Play,
+  Pause,
+  Volume2,
+  VolumeX,
 } from 'lucide-react';
 import { store } from '@/lib/data/store';
 import { CallerCategory } from '@/types';
@@ -100,6 +104,17 @@ export default function NewAudioAnalysisPage() {
   );
 
   const [customAudioFile, setCustomAudioFile] = useState<File | null>(null);
+  const [customAudioUrl, setCustomAudioUrl] = useState<string | null>(null);
+  const [previewDuration, setPreviewDuration] = useState<number>(165); // default digital-arrest duration
+  const [previewCurrentTime, setPreviewCurrentTime] = useState<number>(0);
+  const [isPreviewPlaying, setIsPreviewPlaying] = useState<boolean>(false);
+  const [isPreviewMuted, setIsPreviewMuted] = useState<boolean>(false);
+  const [isGeminiKeyMissing, setIsGeminiKeyMissing] = useState<boolean>(false);
+
+  const previewAudioRef = useRef<HTMLAudioElement | null>(null);
+  const presetAudioCtxRef = useRef<AudioContext | null>(null);
+  const presetOscRef = useRef<OscillatorNode | null>(null);
+
   const [pipelineState, setPipelineState] = useState<PipelineState>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [failedCaseId, setFailedCaseId] = useState<string | null>(null);
@@ -113,11 +128,127 @@ export default function NewAudioAnalysisPage() {
     urgencyClassification: true,
   });
 
+  // Cleanup object URLs and audio contexts on unmount
+  useEffect(() => {
+    return () => {
+      if (customAudioUrl) {
+        URL.revokeObjectURL(customAudioUrl);
+      }
+      if (presetOscRef.current) {
+        try { presetOscRef.current.stop(); } catch {}
+      }
+      if (presetAudioCtxRef.current) {
+        try { presetAudioCtxRef.current.close(); } catch {}
+      }
+    };
+  }, [customAudioUrl]);
+
+  const formatDuration = (seconds: number) => {
+    if (!seconds || isNaN(seconds) || seconds <= 0) return '00:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (!bytes) return '0 B';
+    if (bytes < 1024 * 1024) {
+      return `${(bytes / 1024).toFixed(1)} KB`;
+    }
+    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+  };
+
+  // Preset audio playback simulation with Web Audio synthesis
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (selectedScenario !== 'custom' && isPreviewPlaying) {
+      const activeScenario = PRESET_SCENARIOS.find((s) => s.id === selectedScenario) || PRESET_SCENARIOS[0];
+      const maxDur = activeScenario.durationSeconds;
+
+      if (!isPreviewMuted) {
+        try {
+          const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+          if (AudioCtx && !presetAudioCtxRef.current) {
+            const ctx = new AudioCtx();
+            presetAudioCtxRef.current = ctx;
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(320, ctx.currentTime);
+            gain.gain.setValueAtTime(0.02, ctx.currentTime);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start();
+            presetOscRef.current = osc;
+          }
+        } catch {}
+      }
+
+      timer = setInterval(() => {
+        setPreviewCurrentTime((prev) => {
+          if (prev >= maxDur) {
+            setIsPreviewPlaying(false);
+            return 0;
+          }
+          return Math.min(maxDur, +(prev + 0.2).toFixed(2));
+        });
+      }, 200);
+    } else {
+      if (presetOscRef.current) {
+        try { presetOscRef.current.stop(); } catch {}
+        presetOscRef.current = null;
+      }
+      if (presetAudioCtxRef.current) {
+        try { presetAudioCtxRef.current.close(); } catch {}
+        presetAudioCtxRef.current = null;
+      }
+    }
+
+    return () => {
+      if (timer) clearInterval(timer);
+      if (presetOscRef.current) {
+        try { presetOscRef.current.stop(); } catch {}
+        presetOscRef.current = null;
+      }
+      if (presetAudioCtxRef.current) {
+        try { presetAudioCtxRef.current.close(); } catch {}
+        presetAudioCtxRef.current = null;
+      }
+    };
+  }, [selectedScenario, isPreviewPlaying, isPreviewMuted]);
+
+  const handleTogglePreviewPlay = () => {
+    if (selectedScenario === 'custom' && previewAudioRef.current) {
+      if (isPreviewPlaying) {
+        previewAudioRef.current.pause();
+        setIsPreviewPlaying(false);
+      } else {
+        previewAudioRef.current
+          .play()
+          .then(() => setIsPreviewPlaying(true))
+          .catch((err) => {
+            console.warn('Custom audio playback error:', err);
+            setIsPreviewPlaying(false);
+          });
+      }
+    } else {
+      setIsPreviewPlaying(!isPreviewPlaying);
+    }
+  };
+
+  const handlePreviewSeek = (seconds: number) => {
+    setPreviewCurrentTime(seconds);
+    if (selectedScenario === 'custom' && previewAudioRef.current) {
+      previewAudioRef.current.currentTime = seconds;
+    }
+  };
+
   const handleCustomFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setErrorMessage(null);
+    setIsGeminiKeyMissing(false);
     setFailedCaseId(null);
 
     // Browser-side file size validation (< 100MB)
@@ -146,16 +277,35 @@ export default function NewAudioAnalysisPage() {
       return;
     }
 
+    if (customAudioUrl) {
+      URL.revokeObjectURL(customAudioUrl);
+    }
+    const newUrl = URL.createObjectURL(file);
+    setCustomAudioUrl(newUrl);
     setCustomAudioFile(file);
+    setIsPreviewPlaying(false);
+    setPreviewCurrentTime(0);
+    setPreviewDuration(0);
     setSelectedScenario('custom');
     setCallTitle(`Inbound Call Audio: ${file.name}`);
-    setCallDescription(`Direct audio file upload (${(file.size / (1024 * 1024)).toFixed(1)} MB) analyzed for speech distress markers.`);
+    setCallDescription(`Direct audio file upload (${formatFileSize(file.size)}) analyzed for speech distress markers.`);
   };
 
   const handleSelectScenario = (scenario: PresetScenario) => {
+    if (customAudioUrl) {
+      URL.revokeObjectURL(customAudioUrl);
+      setCustomAudioUrl(null);
+    }
+    if (previewAudioRef.current) {
+      previewAudioRef.current.pause();
+    }
+    setIsPreviewPlaying(false);
+    setPreviewCurrentTime(0);
+    setPreviewDuration(scenario.durationSeconds);
     setSelectedScenario(scenario.id);
     setCustomAudioFile(null);
     setErrorMessage(null);
+    setIsGeminiKeyMissing(false);
     setFailedCaseId(null);
     setCallerCategory(scenario.callerCategory);
     setCallerName(scenario.callerName);
@@ -259,15 +409,31 @@ export default function NewAudioAnalysisPage() {
         } catch (aiNetErr: any) {
           setPipelineState('error');
           setFailedCaseId(newCase.id);
-          setErrorMessage(`Audio uploaded successfully (SHA-256: ${uploadedFile.sha256Hash.slice(0, 12)}...), but analysis service call failed: ${aiNetErr?.message}.`);
+          const msg = aiNetErr?.message || '';
+          if (msg.includes('GEMINI_API_KEY') || msg.includes('API key')) {
+            setIsGeminiKeyMissing(true);
+            setErrorMessage(
+              'Notice: Real Gemini audio analysis requires GEMINI_API_KEY in .env.local. You can listen to your uploaded audio above, or switch to one of the Preset Demo Scenarios below to evaluate the complete case workspace.'
+            );
+          } else {
+            setErrorMessage(`Audio uploaded successfully (SHA-256: ${uploadedFile.sha256Hash.slice(0, 12)}...), but analysis service call failed: ${msg}.`);
+          }
           return; // DO NOT NAVIGATE
         }
 
         if (!analyzeRes.ok) {
           const aiErrData = await analyzeRes.json().catch(() => null);
+          const rawErr = aiErrData?.error || aiErrData?.failureReason || '';
           setPipelineState('error');
           setFailedCaseId(newCase.id);
-          setErrorMessage(aiErrData?.error || `Speech emotion analysis failed with status ${analyzeRes.status}: ${analyzeRes.statusText}.`);
+          if (rawErr.includes('GEMINI_API_KEY') || rawErr.includes('API key')) {
+            setIsGeminiKeyMissing(true);
+            setErrorMessage(
+              'Notice: Real Gemini audio analysis requires GEMINI_API_KEY in .env.local. You can listen to your uploaded audio above, or switch to one of the Preset Demo Scenarios below to evaluate the complete case workspace.'
+            );
+          } else {
+            setErrorMessage(rawErr || `Speech emotion analysis failed with status ${analyzeRes.status}: ${analyzeRes.statusText}.`);
+          }
           return; // DO NOT NAVIGATE
         }
 
@@ -393,17 +559,47 @@ export default function NewAudioAnalysisPage() {
         </div>
       </div>
 
-      {/* Error Banner (if any) */}
+      {/* Error / Notice Banner */}
       {pipelineState === 'error' && errorMessage && (
-        <div className="mx-6 mt-4 p-4 rounded-lg border border-[#b84a44] bg-[#401311]/80 text-xs text-[#edeae1] flex items-start justify-between gap-3 shadow-lg animate-in fade-in">
+        <div className={`mx-6 mt-4 p-4 rounded-lg border text-xs text-[#edeae1] flex items-start justify-between gap-3 shadow-lg animate-in fade-in ${
+          isGeminiKeyMissing
+            ? 'border-[#ffb964]/60 bg-[#2a1a05]'
+            : 'border-[#b84a44] bg-[#401311]/80'
+        }`}>
           <div className="flex items-start gap-2.5">
-            <AlertCircle className="h-5 w-5 text-[#d96f68] flex-shrink-0 mt-0.5" />
-            <div className="flex flex-col gap-1">
-              <span className="font-bold text-[#d96f68] font-mono uppercase text-[11px] tracking-wide">
-                Ingestion & Analysis Failure
+            {isGeminiKeyMissing ? (
+              <AlertTriangle className="h-5 w-5 text-[#ffb964] flex-shrink-0 mt-0.5" />
+            ) : (
+              <AlertCircle className="h-5 w-5 text-[#d96f68] flex-shrink-0 mt-0.5" />
+            )}
+            <div className="flex flex-col gap-1.5">
+              <span className={`font-bold font-mono uppercase text-[11px] tracking-wide ${
+                isGeminiKeyMissing ? 'text-[#ffb964]' : 'text-[#d96f68]'
+              }`}>
+                {isGeminiKeyMissing ? 'Notice: Real Gemini Audio Analysis Requires GEMINI_API_KEY' : 'Ingestion & Analysis Failure'}
               </span>
-              <p className="text-[#edeae1] leading-relaxed">{errorMessage}</p>
-              {failedCaseId && (
+              <p className="text-[#edeae1] leading-relaxed">
+                {isGeminiKeyMissing
+                  ? 'Notice: Real Gemini audio analysis requires GEMINI_API_KEY in .env.local. You can listen to your uploaded audio above, or switch to one of the Preset Demo Scenarios below to evaluate the complete case workspace.'
+                  : errorMessage}
+              </p>
+              {isGeminiKeyMissing && (
+                <div className="mt-2 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleSelectScenario(PRESET_SCENARIOS[0]);
+                      setPipelineState('idle');
+                      setErrorMessage(null);
+                      setIsGeminiKeyMissing(false);
+                    }}
+                    className="px-3 py-1.5 rounded bg-[#ffb964] text-[#121315] font-mono text-xs font-bold hover:bg-[#ffcf87] transition-all flex items-center gap-1.5 shadow-sm"
+                  >
+                    <span>Switch to Preset Demo Scenario</span>
+                  </button>
+                </div>
+              )}
+              {failedCaseId && !isGeminiKeyMissing && (
                 <div className="mt-1">
                   <Link
                     href={`/cases/${failedCaseId}`}
@@ -419,6 +615,7 @@ export default function NewAudioAnalysisPage() {
             onClick={() => {
               setPipelineState('idle');
               setErrorMessage(null);
+              setIsGeminiKeyMissing(false);
             }}
             className="text-[#9e9c96] hover:text-[#edeae1] p-1 rounded"
             title="Dismiss error"
@@ -532,6 +729,162 @@ export default function NewAudioAnalysisPage() {
                 Direct multipart upload with magic-byte validation and real SHA-256 custody hashing to private storage enclave
               </p>
             </div>
+
+            {/* Inline Audio Preview Player & Telemetry */}
+            {(() => {
+              const activeScenario = PRESET_SCENARIOS.find((s) => s.id === selectedScenario) || PRESET_SCENARIOS[0];
+              const activeDuration = selectedScenario === 'custom'
+                ? (previewDuration > 0 ? previewDuration : (customAudioFile ? 120 : 0))
+                : activeScenario.durationSeconds;
+              const activeFileName = selectedScenario === 'custom'
+                ? (customAudioFile?.name || 'custom_upload.wav')
+                : activeScenario.fileName;
+              const activeFileSize = selectedScenario === 'custom'
+                ? (customAudioFile ? formatFileSize(customAudioFile.size) : '0 MB')
+                : '24.5 MB';
+
+              return (
+                <div className="rounded-lg border border-[#35373e] bg-[#121315] p-3.5 flex flex-col gap-3">
+                  {/* Hidden audio element for custom file playback */}
+                  {customAudioUrl && (
+                    <audio
+                      ref={previewAudioRef}
+                      src={customAudioUrl}
+                      muted={isPreviewMuted}
+                      onLoadedMetadata={(e) => {
+                        const dur = e.currentTarget.duration;
+                        if (dur && !isNaN(dur) && dur > 0) {
+                          setPreviewDuration(dur);
+                        }
+                      }}
+                      onTimeUpdate={(e) => {
+                        setPreviewCurrentTime(e.currentTarget.currentTime);
+                      }}
+                      onEnded={() => {
+                        setIsPreviewPlaying(false);
+                        setPreviewCurrentTime(0);
+                      }}
+                    />
+                  )}
+
+                  {/* Preview Header & Telemetry */}
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#35373e]/40 pb-2">
+                    <div className="flex items-center gap-2">
+                      <FileAudio className={`h-4 w-4 ${selectedScenario === 'custom' ? 'text-[#8a9a5b]' : 'text-[#ffb964]'}`} />
+                      <span className="font-semibold text-xs text-[#edeae1]">
+                        {selectedScenario === 'custom'
+                          ? 'Uploaded Audio Preview & Verification'
+                          : 'Preset Demo Audio Preview'}
+                      </span>
+                      <span
+                        className={`font-mono text-[9px] font-bold px-1.5 py-0.2 rounded uppercase ${
+                          selectedScenario === 'custom'
+                            ? 'bg-[#1a2e1f] text-[#8a9a5b] border border-[#5a8264]/40'
+                            : 'bg-[#422006] text-[#ffb964] border border-[#ffb964]/40'
+                        }`}
+                      >
+                        {selectedScenario === 'custom' ? 'Client Audio Stream' : 'Benchmark Demo Stream'}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 font-mono text-xs">
+                      <span className="font-semibold text-[#8a9a5b]">
+                        {formatDuration(previewCurrentTime)}
+                      </span>
+                      <span className="text-[#71706b]">/</span>
+                      <span className="text-[#9e9c96]">
+                        {formatDuration(activeDuration)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* File / Scenario details pills */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-mono">
+                    <div className="rounded bg-[#18191c] p-2 border border-[#35373e]/50">
+                      <span className="text-[10px] text-[#71706b] block">File Name</span>
+                      <span className="text-[#edeae1] font-semibold truncate block" title={activeFileName}>
+                        {activeFileName}
+                      </span>
+                    </div>
+                    <div className="rounded bg-[#18191c] p-2 border border-[#35373e]/50">
+                      <span className="text-[10px] text-[#71706b] block">File Size</span>
+                      <span className="text-[#edeae1] font-semibold block">
+                        {activeFileSize}
+                      </span>
+                    </div>
+                    <div className="rounded bg-[#18191c] p-2 border border-[#35373e]/50">
+                      <span className="text-[10px] text-[#71706b] block">Duration</span>
+                      <span className="text-[#8a9a5b] font-bold block">
+                        {formatDuration(activeDuration)}
+                      </span>
+                    </div>
+                    <div className="rounded bg-[#18191c] p-2 border border-[#35373e]/50">
+                      <span className="text-[10px] text-[#71706b] block">Mode</span>
+                      <span className="text-[#ffb964] font-semibold truncate block">
+                        {selectedScenario === 'custom' ? 'Local File' : 'Preset Stream'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Progress Slider & Controls */}
+                  <div className="flex flex-col gap-2 pt-1">
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={handleTogglePreviewPlay}
+                        className="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-full bg-[#7d8c52] text-[#161f00] hover:bg-[#8a9a5b] transition-all shadow-sm"
+                        title={isPreviewPlaying ? 'Pause Audio Preview' : 'Play Audio Preview'}
+                      >
+                        {isPreviewPlaying ? (
+                          <Pause className="h-4 w-4 fill-current" />
+                        ) : (
+                          <Play className="h-4 w-4 fill-current ml-0.5" />
+                        )}
+                      </button>
+
+                      <div className="flex-1 relative flex items-center">
+                        <input
+                          type="range"
+                          min={0}
+                          max={activeDuration || 100}
+                          step={0.1}
+                          value={previewCurrentTime}
+                          onChange={(e) => handlePreviewSeek(parseFloat(e.target.value))}
+                          className="w-full h-1.5 bg-[#23252a] rounded-lg appearance-none cursor-pointer accent-[#7d8c52]"
+                        />
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setIsPreviewMuted(!isPreviewMuted)}
+                        className="text-[#9e9c96] hover:text-[#edeae1] p-1 transition-colors"
+                        title={isPreviewMuted ? 'Unmute' : 'Mute'}
+                      >
+                        {isPreviewMuted ? (
+                          <VolumeX className="h-4 w-4 text-[#d96f68]" />
+                        ) : (
+                          <Volume2 className="h-4 w-4 text-[#8a9a5b]" />
+                        )}
+                      </button>
+                    </div>
+
+                    <div className="flex items-center justify-between text-[10px] font-mono text-[#71706b]">
+                      <span className="flex items-center gap-1.5">
+                        <span
+                          className={`h-1.5 w-1.5 rounded-full ${
+                            isPreviewPlaying ? 'bg-[#8a9a5b] animate-ping' : 'bg-[#71706b]'
+                          }`}
+                        />
+                        {isPreviewPlaying
+                          ? (selectedScenario === 'custom' ? 'Playing custom local recording...' : 'Playing preset audio simulation...')
+                          : 'Playback Paused — Click Play to listen before running analysis'}
+                      </span>
+                      <span>{Math.round(((previewCurrentTime / (activeDuration || 1)) * 100))}% elapsed</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
 
           {/* Caller Details & Incident Configuration */}

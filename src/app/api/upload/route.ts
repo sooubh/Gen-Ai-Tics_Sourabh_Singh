@@ -284,6 +284,62 @@ export async function GET(req: NextRequest) {
     const ext = path.extname(safePath).toLowerCase();
     const contentType = EXT_TO_MIME_FALLBACK[ext] || 'audio/wav';
 
+    // HTTP Range request support for audio streaming and scrubbing
+    const rangeHeader = req.headers.get('range');
+    if (rangeHeader && rangeHeader.startsWith('bytes=')) {
+      const parts = rangeHeader.replace(/^bytes=/, '').split('-');
+      const startStr = parts[0]?.trim();
+      const endStr = parts[1]?.trim();
+
+      let start: number;
+      let end: number;
+
+      if (!startStr && endStr) {
+        // Suffix byte range: e.g. bytes=-500 (last 500 bytes)
+        const suffixLength = parseInt(endStr, 10);
+        if (isNaN(suffixLength) || suffixLength <= 0) {
+          return new NextResponse(null, {
+            status: 416,
+            headers: {
+              'Content-Range': `bytes */${buffer.length}`,
+              'Accept-Ranges': 'bytes',
+            },
+          });
+        }
+        start = Math.max(0, buffer.length - suffixLength);
+        end = buffer.length - 1;
+      } else {
+        start = startStr ? parseInt(startStr, 10) : 0;
+        end = endStr ? parseInt(endStr, 10) : buffer.length - 1;
+      }
+
+      if (isNaN(start) || start < 0 || start >= buffer.length || (!isNaN(end) && start > end)) {
+        return new NextResponse(null, {
+          status: 416,
+          headers: {
+            'Content-Range': `bytes */${buffer.length}`,
+            'Accept-Ranges': 'bytes',
+          },
+        });
+      }
+
+      if (isNaN(end) || end >= buffer.length) {
+        end = buffer.length - 1;
+      }
+
+      const chunk = buffer.subarray(start, end + 1);
+      return new NextResponse(new Uint8Array(chunk), {
+        status: 206,
+        headers: {
+          'Content-Type': contentType,
+          'Content-Range': `bytes ${start}-${end}/${buffer.length}`,
+          'Content-Length': chunk.length.toString(),
+          'Accept-Ranges': 'bytes',
+          'Cache-Control': 'private, no-cache',
+        },
+      });
+    }
+
     return new NextResponse(new Uint8Array(buffer), {
       status: 200,
       headers: {

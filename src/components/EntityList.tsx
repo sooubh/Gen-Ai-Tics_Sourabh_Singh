@@ -57,13 +57,21 @@ export function EntityList({
           <p className="text-xs text-[#9e9c96] italic p-2">No named entities detected yet.</p>
         ) : (
           entities.map((ent) => {
-            const isConfirmed = ent.verificationStatus === 'confirmed' || ent.status === 'verified';
+            const isConfirmed = ent.verificationStatus === 'confirmed' || ent.status === 'confirmed' || ent.status === 'verified';
             const isDismissed = ent.verificationStatus === 'dismissed' || ent.status === 'dismissed';
+            const evidenceStartTime = ent.evidence?.startTime ?? ent.timestamp;
 
             return (
               <div
                 key={ent.id}
+                onClick={() => {
+                  if (evidenceStartTime !== undefined && onSeekToEntity) {
+                    onSeekToEntity(evidenceStartTime);
+                  }
+                }}
                 className={`flex items-start justify-between gap-2 rounded border p-2.5 transition-colors ${
+                  evidenceStartTime !== undefined ? 'cursor-pointer hover:border-[#8a9a5b]/60' : ''
+                } ${
                   isConfirmed
                     ? 'border-[#5a8264]/40 bg-[#1c1f1c]'
                     : isDismissed
@@ -91,15 +99,19 @@ export function EntityList({
                     )}
                     <div className="flex items-center gap-2 mt-1 font-mono text-[10px] text-[#71706b]">
                       <span>Conf: {ent.confidence}%</span>
-                      {ent.timestamp !== undefined && (
+                      {evidenceStartTime !== undefined && (
                         <>
                           <span>•</span>
                           <button
-                            onClick={() => onSeekToEntity && onSeekToEntity(ent.timestamp)}
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onSeekToEntity && onSeekToEntity(evidenceStartTime);
+                            }}
                             className="text-[#8a9a5b] hover:underline"
                           >
-                            Seek @ {Math.floor(ent.timestamp / 60)}:
-                            {Math.floor(ent.timestamp % 60).toString().padStart(2, '0')}
+                            Seek @ {Math.floor(evidenceStartTime / 60)}:
+                            {Math.floor(evidenceStartTime % 60).toString().padStart(2, '0')}
                           </button>
                         </>
                       )}
@@ -108,7 +120,7 @@ export function EntityList({
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center gap-1 flex-shrink-0 ml-2">
+                <div className="flex items-center gap-1 flex-shrink-0 ml-2" onClick={(e) => e.stopPropagation()}>
                   {isConfirmed ? (
                     <span className="inline-flex items-center gap-1 rounded bg-[#5a8264]/20 px-1.5 py-0.5 font-mono text-[10px] text-[#7ea886] border border-[#5a8264]/40">
                       <ShieldCheck className="h-3 w-3" />
@@ -121,6 +133,7 @@ export function EntityList({
                   ) : (
                     <>
                       <button
+                        type="button"
                         onClick={() => onConfirmEntity && onConfirmEntity(ent.id)}
                         className="rounded p-1 text-[#5a8264] hover:bg-[#5a8264]/20 border border-[#5a8264]/30 transition-colors"
                         title="Confirm Entity"
@@ -128,6 +141,7 @@ export function EntityList({
                         <Check className="h-3.5 w-3.5" />
                       </button>
                       <button
+                        type="button"
                         onClick={() => onDismissEntity && onDismissEntity(ent.id)}
                         className="rounded p-1 text-[#b84a44] hover:bg-[#b84a44]/20 border border-[#b84a44]/30 transition-colors"
                         title="Dismiss Entity"

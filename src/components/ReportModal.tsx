@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Case, DISCLAIMER_LEGAL_EVIDENCE, DISCLAIMER_ADVISORY_VOCAL_METRICS } from '@/types';
+import { isSyntheticCase } from '@/lib/data/store';
 import { Printer, Download, X, Shield, FileText, CheckCircle2, AlertTriangle } from 'lucide-react';
 
 interface ReportModalProps {
@@ -13,6 +14,47 @@ interface ReportModalProps {
 export function ReportModal({ isOpen, onClose, caseData }: ReportModalProps) {
   if (!isOpen || !caseData) return null;
 
+  const isDemo = isSyntheticCase(caseData) || caseData.isSyntheticDemo === true || caseData.latestRun?.isSyntheticDemo === true;
+
+  const verifiedEntities = (caseData.entities || []).filter(
+    (e) =>
+      e.verificationStatus === 'verified' ||
+      e.verificationStatus === 'confirmed' ||
+      e.verificationStatus === 'corrected' ||
+      e.status === 'verified'
+  );
+  const verifiedEntitiesCount = verifiedEntities.length;
+
+  const confirmedTriggers = (caseData.triggers || []).filter(
+    (t) =>
+      t.verificationStatus === 'confirmed' ||
+      t.verificationStatus === 'verified' ||
+      t.verificationStatus === 'corrected' ||
+      t.status === 'confirmed'
+  );
+  const confirmedTriggersCount = confirmedTriggers.length;
+
+  const auditOfficer =
+    caseData.officerName ||
+    caseData.assignedOfficerName ||
+    caseData.investigatingOfficer ||
+    'Det. S. Jenkins #4829';
+
+  const audioDurationStr = caseData.audioMetadata?.durationSeconds
+    ? `${Math.floor(caseData.audioMetadata.durationSeconds / 60)}:${Math.floor(caseData.audioMetadata.durationSeconds % 60).toString().padStart(2, '0')}`
+    : caseData.audioDuration || '18:45';
+
+  const audioFormatStr =
+    caseData.audioMetadata?.format ||
+    caseData.audioMetadata?.mimeType ||
+    caseData.audioFormat ||
+    'WAV / PCM 16-bit';
+
+  const audioHashStr =
+    caseData.audioMetadata?.sha256Hash ||
+    caseData.chainOfCustodyHash ||
+    'SHA256: 8a4f09c2...d7e1';
+
   const handlePrint = () => {
     window.print();
   };
@@ -22,8 +64,8 @@ export function ReportModal({ isOpen, onClose, caseData }: ReportModalProps) {
     const sanitize = (text: string | number | undefined | null) => {
       if (text === undefined || text === null) return '""';
       let str = String(text).replace(/"/g, '""');
-      // Neutralize CSV formula characters: =, +, -, @, \t, \r
-      if (/^[=+\-@\t\r]/.test(str)) {
+      // Neutralize CSV formula characters: =, +, -, @, \t, \r, %, | (even if preceded by whitespace)
+      if (/^\s*[=+\-@\t\r%|]/.test(str)) {
         str = "'" + str;
       }
       return `"${str}"`;
@@ -32,12 +74,29 @@ export function ReportModal({ isOpen, onClose, caseData }: ReportModalProps) {
     const rows: string[] = [];
     rows.push(['Report Type', 'VECNAVERSE Cybercrime Triage & SER Dossier'].map(sanitize).join(','));
     rows.push(['Case ID', caseData.id].map(sanitize).join(','));
-    rows.push(['Title', caseData.title].map(sanitize).join(','));
-    rows.push(['Caller Name', caseData.callerName || 'Unknown'].map(sanitize).join(','));
-    rows.push(['Caller Phone', caseData.callerPhone || 'Unlisted'].map(sanitize).join(','));
+    rows.push(['Docket Number', caseData.docketNumber || `#${caseData.id}`].map(sanitize).join(','));
+    rows.push(['Incident Title', caseData.title].map(sanitize).join(','));
     rows.push(['Caller Category', caseData.callerCategory || 'unknown'].map(sanitize).join(','));
+    rows.push(['Caller Name', caseData.callerName || 'Unknown / Not Recorded'].map(sanitize).join(','));
+    rows.push(['Caller Phone', caseData.callerPhone || 'Unlisted ANI'].map(sanitize).join(','));
+    rows.push(['Audio Duration', audioDurationStr].map(sanitize).join(','));
+    rows.push(['Audio Format', audioFormatStr].map(sanitize).join(','));
+    rows.push(['Audio SHA256 Hash', audioHashStr].map(sanitize).join(','));
+    rows.push(['Status', caseData.status].map(sanitize).join(','));
     rows.push(['Triage Urgency Score', `${caseData.urgencyScore ?? 50}/100`].map(sanitize).join(','));
     rows.push(['Urgency Level', caseData.urgencyLevel || 'MEDIUM'].map(sanitize).join(','));
+    rows.push(['Verified Entities Count', String(verifiedEntitiesCount)].map(sanitize).join(','));
+    rows.push(['Confirmed Triggers Count', String(confirmedTriggersCount)].map(sanitize).join(','));
+    rows.push(['Audit Officer', auditOfficer].map(sanitize).join(','));
+    rows.push([
+      'Statutory Disclaimer',
+      'VECNAVERSE is an investigative assistance platform. Speech emotion indicators and AI-extracted triggers are advisory and require officer verification.',
+    ].map(sanitize).join(','));
+
+    if (isDemo) {
+      rows.push(['Dataset Provenance', 'DEMO FIXTURE / EVALUATION DATA'].map(sanitize).join(','));
+    }
+
     if (caseData.emotionProfile) {
       rows.push(['Primary Emotion', caseData.emotionProfile.primaryEmotion].map(sanitize).join(','));
       rows.push(['Fear Metric', `${Math.round(caseData.emotionProfile.emotions.fear * 100)}%`].map(sanitize).join(','));
@@ -46,12 +105,11 @@ export function ReportModal({ isOpen, onClose, caseData }: ReportModalProps) {
       rows.push(['Nervousness Metric', `${Math.round(caseData.emotionProfile.emotions.nervousness * 100)}%`].map(sanitize).join(','));
       rows.push(['Calm Metric', `${Math.round(caseData.emotionProfile.emotions.calm * 100)}%`].map(sanitize).join(','));
     }
-    rows.push(['Officer', caseData.officerName || 'Det. S. Jenkins #4829'].map(sanitize).join(','));
     rows.push(['Classification', caseData.classificationStandard || 'CJIS Tier 4 Enclave'].map(sanitize).join(','));
     rows.push(['Generated At', new Date().toISOString()].map(sanitize).join(','));
     rows.push('');
 
-    rows.push(['--- EXTRACTED ENTITIES ---'].map(sanitize).join(','));
+    rows.push(['--- EXTRACTED & VERIFIED ENTITIES ---'].map(sanitize).join(','));
     rows.push(['Type', 'Spoken Form', 'Normalized / Detail', 'Confidence', 'Verification Status'].map(sanitize).join(','));
     (caseData.entities || []).forEach((ent) => {
       rows.push([
@@ -80,6 +138,24 @@ export function ReportModal({ isOpen, onClose, caseData }: ReportModalProps) {
     });
     rows.push('');
 
+    rows.push(['--- SYNCHRONIZED FORENSIC TRANSCRIPT EXCERPT ---'].map(sanitize).join(','));
+    rows.push(['Speaker', 'Time Offset', 'Transcript Content', 'Confidence'].map(sanitize).join(','));
+    (caseData.segments || []).forEach((seg) => {
+      const speakerName = typeof seg.speaker === 'string'
+        ? seg.speaker
+        : (seg.speaker?.provisionalLabel || seg.speaker?.speakerId || 'Speaker');
+      const timeStr = seg.startTime !== undefined
+        ? `${Math.floor(seg.startTime / 60)}:${Math.floor(seg.startTime % 60).toString().padStart(2, '0')}`
+        : '';
+      rows.push([
+        speakerName,
+        timeStr,
+        seg.editedText || seg.text || '',
+        `${seg.confidence || 95}%`,
+      ].map(sanitize).join(','));
+    });
+    rows.push('');
+
     rows.push(['--- ADVISORY VOCAL INDICATORS (NON-EVIDENTIARY) ---'].map(sanitize).join(','));
     rows.push(['Indicator Type', 'Score', 'Variance Level', 'Description', 'Disclaimer'].map(sanitize).join(','));
     (caseData.vocalIndicators || []).forEach((voc) => {
@@ -93,21 +169,49 @@ export function ReportModal({ isOpen, onClose, caseData }: ReportModalProps) {
     });
 
     const csvContent = 'data:text/csv;charset=utf-8,' + encodeURIComponent(rows.join('\n'));
+    const safeDocket = (caseData.docketNumber || caseData.id).replace(/[^a-zA-Z0-9_\-]/g, '_');
     const link = document.createElement('a');
     link.setAttribute('href', csvContent);
-    link.setAttribute('download', `VECNAVERSE_${caseData.id}_Dossier.csv`);
+    link.setAttribute('download', `case-${safeDocket}-dossier.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
   const handleExportJSON = () => {
-    const jsonStr = JSON.stringify(caseData, null, 2);
+    const jsonStr = JSON.stringify(
+      {
+        exportMetadata: {
+          exportedAt: new Date().toISOString(),
+          docketNumber: caseData.docketNumber || `#${caseData.id}`,
+          incidentTitle: caseData.title,
+          callerCategory: caseData.callerCategory,
+          callerName: caseData.callerName,
+          callerPhone: caseData.callerPhone,
+          urgencyScore: caseData.urgencyScore,
+          audioMetadata: {
+            duration: audioDurationStr,
+            format: audioFormatStr,
+            sha256Hash: audioHashStr,
+          },
+          verifiedEntitiesCount,
+          confirmedTriggersCount,
+          auditOfficer,
+          isSyntheticDemo: isDemo,
+          disclaimer:
+            'VECNAVERSE is an investigative assistance platform. Speech emotion indicators and AI-extracted triggers are advisory and require officer verification.',
+        },
+        case: caseData,
+      },
+      null,
+      2
+    );
     const blob = new Blob([jsonStr], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
+    const safeDocket = (caseData.docketNumber || caseData.id).replace(/[^a-zA-Z0-9_\-]/g, '_');
     const link = document.createElement('a');
     link.href = url;
-    link.download = `VECNAVERSE_${caseData.id}_Dossier.json`;
+    link.download = `case-${safeDocket}-dossier.json`;
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -122,13 +226,18 @@ export function ReportModal({ isOpen, onClose, caseData }: ReportModalProps) {
               <FileText className="h-5 w-5" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <span className="font-mono text-xs font-semibold text-[#8a9a5b]">
                   {caseData.docketNumber || `#${caseData.id}`}
                 </span>
                 <span className="rounded bg-[#23252a] px-2 py-0.5 text-[10px] font-medium text-[#9e9c96] border border-[#35373e]">
                   INVESTIGATION DOSSIER
                 </span>
+                {isDemo && (
+                  <span className="rounded bg-[#ffb964]/20 px-2 py-0.5 text-[10px] font-bold text-[#ffb964] border border-[#ffb964]/50 font-mono tracking-wider">
+                    DEMO FIXTURE / EVALUATION DATA
+                  </span>
+                )}
               </div>
               <h2 className="text-base font-semibold text-[#edeae1]">{caseData.title}</h2>
             </div>
@@ -137,26 +246,30 @@ export function ReportModal({ isOpen, onClose, caseData }: ReportModalProps) {
             <button
               onClick={handlePrint}
               className="flex items-center gap-1.5 rounded bg-[#23252a] px-3 py-1.5 text-xs font-medium text-[#edeae1] hover:bg-[#2d2f36] border border-[#35373e] transition-colors"
+              title="Print / Save as PDF"
             >
               <Printer className="h-3.5 w-3.5 text-[#9e9c96]" />
-              <span>Print Dossier</span>
+              <span>Print / Save as PDF</span>
             </button>
             <button
               onClick={handleExportCSV}
               className="flex items-center gap-1.5 rounded bg-[#23252a] px-3 py-1.5 text-xs font-medium text-[#edeae1] hover:bg-[#2d2f36] border border-[#35373e] transition-colors"
+              title="Download CSV Export"
             >
               <Download className="h-3.5 w-3.5 text-[#9e9c96]" />
-              <span>Export CSV</span>
+              <span>Download CSV Export</span>
             </button>
             <button
               onClick={handleExportJSON}
               className="flex items-center gap-1.5 rounded bg-[#23252a] px-3 py-1.5 text-xs font-medium text-[#edeae1] hover:bg-[#2d2f36] border border-[#35373e] transition-colors"
+              title="Export JSON"
             >
               <Download className="h-3.5 w-3.5 text-[#9e9c96]" />
               <span>Export JSON</span>
             </button>
             <button
               onClick={onClose}
+              aria-label="Close"
               className="rounded p-1.5 text-[#9e9c96] hover:bg-[#23252a] hover:text-[#edeae1] transition-colors"
             >
               <X className="h-5 w-5" />
@@ -167,7 +280,7 @@ export function ReportModal({ isOpen, onClose, caseData }: ReportModalProps) {
         {/* Modal Printable Content */}
         <div className="flex-1 overflow-y-auto p-6 text-sm text-[#edeae1]" id="printable-dossier">
           {/* Official Enclave Banner */}
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded border border-[#35373e] bg-[#18191c] p-4">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-4 rounded border border-[#35373e] bg-[#18191c] p-4">
             <div>
               <div className="flex items-center gap-2">
                 <Shield className="h-4 w-4 text-[#8a9a5b]" />
@@ -183,29 +296,48 @@ export function ReportModal({ isOpen, onClose, caseData }: ReportModalProps) {
               <div className="font-mono font-medium text-[#8a9a5b]">
                 {caseData.classificationStandard || 'FedRAMP High / CJIS Tier 4'}
               </div>
-              <div className="text-[#9e9c96]">Officer: {caseData.officerName}</div>
+              <div className="text-[#9e9c96]">Audit Officer: {auditOfficer}</div>
               <div className="text-[#71706b]">Generated: {new Date().toLocaleString()}</div>
             </div>
           </div>
 
+          {/* Demo Fixture Badge Banner */}
+          {isDemo && (
+            <div className="mb-4 rounded border border-[#ffb964]/50 bg-[#ffb964]/10 p-2.5 text-xs text-[#ffb964] flex flex-wrap items-center justify-between gap-2 font-mono">
+              <span className="font-bold tracking-wider">DEMO FIXTURE / EVALUATION DATA</span>
+              <span className="text-[11px] text-[#ffb964]/80">
+                Simulated Evaluation Fixture — Non-Evidentiary Demonstration Material
+              </span>
+            </div>
+          )}
+
           {/* Legal / Non-Evidentiary Disclaimer */}
-          <div className="mb-6 rounded border border-[#b87a28]/40 bg-[#b87a28]/10 p-3 text-xs text-[#ffb964] flex items-start gap-2">
+          <div className="mb-6 rounded border border-[#b87a28]/40 bg-[#b87a28]/10 p-3.5 text-xs text-[#ffb964] flex items-start gap-2.5">
             <AlertTriangle className="h-4 w-4 flex-shrink-0 text-[#ffb964] mt-0.5" />
-            <div>
-              <span className="font-bold">LEGAL & ETHICAL NOTICE:</span> {DISCLAIMER_LEGAL_EVIDENCE}{' '}
-              {DISCLAIMER_ADVISORY_VOCAL_METRICS}
+            <div className="space-y-1">
+              <span className="font-bold tracking-wide block">LEGAL & ETHICAL NOTICE:</span>
+              <p className="font-semibold leading-relaxed">
+                VECNAVERSE is an investigative assistance platform. Speech emotion indicators and AI-extracted triggers are advisory and require officer verification.
+              </p>
+              <p className="text-[11px] text-[#ffb964]/80 leading-relaxed">
+                {DISCLAIMER_LEGAL_EVIDENCE} {DISCLAIMER_ADVISORY_VOCAL_METRICS}
+              </p>
             </div>
           </div>
 
-          {/* Case Overview */}
+          {/* 1. Case & Audio Evidence Metadata */}
           <div className="mb-6">
             <h3 className="mb-2 font-mono text-xs font-semibold uppercase tracking-wider text-[#8a9a5b]">
               1. Case & Audio Evidence Metadata
             </h3>
-            <div className="grid grid-cols-2 gap-2 rounded border border-[#35373e] bg-[#18191c] p-3 text-xs md:grid-cols-4">
+            <div className="grid grid-cols-2 gap-2 rounded border border-[#35373e] bg-[#18191c] p-3 text-xs md:grid-cols-3">
               <div>
                 <span className="text-[#9e9c96]">Docket Number:</span>
-                <p className="font-mono font-semibold text-[#edeae1]">{caseData.docketNumber}</p>
+                <p className="font-mono font-semibold text-[#edeae1]">{caseData.docketNumber || `#${caseData.id}`}</p>
+              </div>
+              <div>
+                <span className="text-[#9e9c96]">Incident Title:</span>
+                <p className="font-semibold text-[#edeae1] truncate">{caseData.title}</p>
               </div>
               <div>
                 <span className="text-[#9e9c96]">Status:</span>
@@ -213,31 +345,43 @@ export function ReportModal({ isOpen, onClose, caseData }: ReportModalProps) {
               </div>
               <div>
                 <span className="text-[#9e9c96]">Audio Duration:</span>
-                <p className="font-mono text-[#edeae1]">
-                  {caseData.audioMetadata?.durationSeconds
-                    ? `${Math.floor(caseData.audioMetadata.durationSeconds / 60)}:${Math.floor(caseData.audioMetadata.durationSeconds % 60).toString().padStart(2, '0')}`
-                    : caseData.audioDuration || '18:45'}
-                </p>
+                <p className="font-mono text-[#edeae1]">{audioDurationStr}</p>
               </div>
               <div>
-                <span className="text-[#9e9c96]">Chain of Custody:</span>
-                <p className="font-mono text-[10px] text-[#edeae1] truncate">
-                  {caseData.audioMetadata?.sha256Hash || caseData.chainOfCustodyHash || 'SHA256: 8a4f09c2...d7e1'}
+                <span className="text-[#9e9c96]">Audio Format:</span>
+                <p className="font-mono text-[#edeae1]">{audioFormatStr}</p>
+              </div>
+              <div>
+                <span className="text-[#9e9c96]">SHA-256 Hash:</span>
+                <p className="font-mono text-[10px] text-[#edeae1] truncate" title={audioHashStr}>
+                  {audioHashStr}
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Speech Emotion Recognition & Caller Triage */}
+          {/* 2. Caller Information & SER Triage Telemetry */}
           <div className="mb-6 rounded border border-[#35373e] bg-[#18191c] p-3 text-xs">
             <h3 className="mb-2 font-mono text-xs font-semibold uppercase tracking-wider text-[#d96f68]">
-              2. Speech Emotion Recognition (SER) & Triage Telemetry
+              2. Caller Information & Speech Emotion Recognition (SER) Telemetry
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs mb-3">
               <div className="p-2 rounded bg-[#121315] border border-[#35373e]">
+                <span className="text-[10px] text-[#71706b] uppercase font-mono block">Caller Name</span>
+                <span className="font-mono font-bold text-[#edeae1]">
+                  {caseData.callerName || 'Unknown / Not Recorded'}
+                </span>
+              </div>
+              <div className="p-2 rounded bg-[#121315] border border-[#35373e]">
+                <span className="text-[10px] text-[#71706b] uppercase font-mono block">Caller Phone</span>
+                <span className="font-mono text-[#8a9a5b]">
+                  {caseData.callerPhone || 'Unlisted ANI'}
+                </span>
+              </div>
+              <div className="p-2 rounded bg-[#121315] border border-[#35373e]">
                 <span className="text-[10px] text-[#71706b] uppercase font-mono block">Caller Category</span>
                 <span className="font-mono font-bold text-[#edeae1] uppercase">
-                  {caseData.callerCategory ? caseData.callerCategory.replace('_', ' ') : 'Inbound Call'}
+                  {caseData.callerCategory ? caseData.callerCategory.replace(/_/g, ' ') : 'UNKNOWN'}
                 </span>
               </div>
               <div className="p-2 rounded bg-[#121315] border border-[#35373e]">
@@ -246,22 +390,14 @@ export function ReportModal({ isOpen, onClose, caseData }: ReportModalProps) {
                   {caseData.urgencyScore ?? 50}/100 [{caseData.urgencyLevel || 'MEDIUM'}]
                 </span>
               </div>
-              <div className="p-2 rounded bg-[#121315] border border-[#35373e]">
-                <span className="text-[10px] text-[#71706b] uppercase font-mono block">Primary Emotion</span>
-                <span className="font-mono font-bold text-[#edeae1] uppercase">
-                  {caseData.emotionProfile?.primaryEmotion || 'Analyzing'}
-                </span>
-              </div>
-              <div className="p-2 rounded bg-[#121315] border border-[#35373e]">
-                <span className="text-[10px] text-[#71706b] uppercase font-mono block">Caller Contact</span>
-                <span className="font-mono text-[#8a9a5b]">
-                  {caseData.callerPhone || 'Unlisted ANI'}
-                </span>
-              </div>
             </div>
 
             {caseData.emotionProfile && (
               <div className="space-y-1.5 pt-2 border-t border-[#35373e]/50 font-mono text-[11px]">
+                <div className="flex items-center justify-between">
+                  <span className="text-[#9e9c96]">Primary Detected Emotion:</span>
+                  <span className="font-bold text-[#edeae1] uppercase">{caseData.emotionProfile.primaryEmotion}</span>
+                </div>
                 <div className="flex items-center justify-between">
                   <span className="text-[#d96f68]">Fear / Panic Hyperarousal:</span>
                   <span className="font-bold">{Math.round(caseData.emotionProfile.emotions.fear * 100)}%</span>
@@ -282,47 +418,79 @@ export function ReportModal({ isOpen, onClose, caseData }: ReportModalProps) {
             )}
           </div>
 
-          {/* Flagged Emergency & Threat Triggers */}
+          {/* 3. Confirmed & Flagged Emergency Triggers */}
           <div className="mb-6">
-            <h3 className="mb-2 font-mono text-xs font-semibold uppercase tracking-wider text-[#b84a44]">
-              3. Flagged Emergency & Threat Triggers
-            </h3>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-mono text-xs font-semibold uppercase tracking-wider text-[#b84a44]">
+                3. Confirmed & Flagged Emergency Triggers
+              </h3>
+              <span className="rounded bg-[#5a8264]/20 px-2 py-0.5 text-[10px] font-mono font-semibold text-[#7ea886] border border-[#5a8264]/40">
+                {confirmedTriggersCount} Confirmed / {caseData.triggers?.length || 0} Total
+              </span>
+            </div>
             {caseData.triggers.length === 0 ? (
-              <p className="text-xs text-[#9e9c96] italic">No high-risk triggers detected in analyzed audio.</p>
+              <p className="text-xs text-[#9e9c96] italic">No high-risk emergency triggers detected in analyzed audio.</p>
             ) : (
               <div className="space-y-2">
-                {caseData.triggers.map((trig) => (
-                  <div
-                    key={trig.id}
-                    className="rounded border border-[#b84a44]/40 bg-[#401311]/20 p-3 text-xs"
-                  >
-                    <div className="flex items-center justify-between pb-1">
-                      <span className="font-mono font-bold text-[#d96f68]">
-                        {trig.title || trig.category || trig.type}
-                      </span>
-                      <span className="rounded bg-[#401311] px-1.5 py-0.5 font-mono text-[10px] text-[#d96f68] border border-[#b84a44]/40">
-                        {trig.severity.toUpperCase()}
-                      </span>
+                {caseData.triggers.map((trig) => {
+                  const isConfirmed =
+                    trig.verificationStatus === 'confirmed' ||
+                    trig.verificationStatus === 'verified' ||
+                    trig.verificationStatus === 'corrected' ||
+                    trig.status === 'confirmed';
+                  return (
+                    <div
+                      key={trig.id}
+                      className={`rounded border p-3 text-xs ${
+                        isConfirmed
+                          ? 'border-[#5a8264]/50 bg-[#1e2a22]/30'
+                          : 'border-[#b84a44]/40 bg-[#401311]/20'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between pb-1">
+                        <span className="font-mono font-bold text-[#d96f68]">
+                          {trig.title || trig.category || trig.type}
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="rounded bg-[#401311] px-1.5 py-0.5 font-mono text-[10px] text-[#d96f68] border border-[#b84a44]/40">
+                            {trig.severity.toUpperCase()}
+                          </span>
+                          <span
+                            className={`rounded px-1.5 py-0.5 font-mono text-[10px] font-semibold ${
+                              isConfirmed
+                                ? 'bg-[#5a8264]/20 text-[#7ea886] border border-[#5a8264]/40'
+                                : 'bg-[#b87a28]/20 text-[#ffb964] border border-[#b87a28]/40'
+                            }`}
+                          >
+                            {isConfirmed ? 'CONFIRMED' : 'PENDING REVIEW'}
+                          </span>
+                        </div>
+                      </div>
+                      <p className="font-serif italic text-[#edeae1] my-1">"{trig.quote}"</p>
+                      <div className="flex items-center justify-between text-[11px] text-[#9e9c96] pt-1 border-t border-[#35373e]/50">
+                        <span>Offset: {trig.timeOffset || `${trig.timestamp}s`}</span>
+                        <span>Confidence: {trig.confidence}%</span>
+                        <span className="font-medium text-[#8a9a5b]">
+                          Officer Status: {trig.verificationStatus || trig.status || 'unverified'}
+                        </span>
+                      </div>
                     </div>
-                    <p className="font-serif italic text-[#edeae1] my-1">"{trig.quote}"</p>
-                    <div className="flex items-center justify-between text-[11px] text-[#9e9c96] pt-1 border-t border-[#35373e]/50">
-                      <span>Offset: {trig.timeOffset || `${trig.timestamp}s`}</span>
-                      <span>Confidence: {trig.confidence}%</span>
-                      <span className="font-medium text-[#8a9a5b]">
-                        Status: {trig.verificationStatus || trig.status}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
 
-          {/* Extracted Named Entities */}
+          {/* 4. Verified & Extracted Entities */}
           <div className="mb-6">
-            <h3 className="mb-2 font-mono text-xs font-semibold uppercase tracking-wider text-[#8a9a5b]">
-              3. Spoken Entity Extractions
-            </h3>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-mono text-xs font-semibold uppercase tracking-wider text-[#8a9a5b]">
+                4. Verified & Extracted Entities
+              </h3>
+              <span className="rounded bg-[#5a8264]/20 px-2 py-0.5 text-[10px] font-mono font-semibold text-[#7ea886] border border-[#5a8264]/40">
+                {verifiedEntitiesCount} Verified / {caseData.entities?.length || 0} Total
+              </span>
+            </div>
             <div className="overflow-x-auto rounded border border-[#35373e]">
               <table className="w-full text-left text-xs">
                 <thead className="bg-[#18191c] text-[#9e9c96] border-b border-[#35373e]">
@@ -331,36 +499,49 @@ export function ReportModal({ isOpen, onClose, caseData }: ReportModalProps) {
                     <th className="p-2">Spoken Entity</th>
                     <th className="p-2">Forensic Detail / Normalization</th>
                     <th className="p-2">Confidence</th>
-                    <th className="p-2 text-right">Verification</th>
+                    <th className="p-2 text-right">Verification Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#35373e] bg-[#23252a]">
-                  {caseData.entities.map((ent) => (
-                    <tr key={ent.id} className="hover:bg-[#2d2f36]/40">
-                      <td className="p-2 font-mono text-[#8a9a5b]">{ent.type}</td>
-                      <td className="p-2 font-semibold text-[#edeae1]">{ent.value || ent.text}</td>
-                      <td className="p-2 text-[#9e9c96]">{ent.normalizedValue || ent.detail || '—'}</td>
-                      <td className="p-2 font-mono">{ent.confidence}%</td>
-                      <td className="p-2 text-right">
-                        <span className="inline-flex items-center gap-1 rounded bg-[#5a8264]/20 px-1.5 py-0.5 text-[10px] text-[#7ea886]">
-                          <CheckCircle2 className="h-3 w-3" />
-                          {ent.verificationStatus || ent.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
+                  {(caseData.entities || []).map((ent) => {
+                    const isVerified =
+                      ent.verificationStatus === 'verified' ||
+                      ent.verificationStatus === 'confirmed' ||
+                      ent.verificationStatus === 'corrected' ||
+                      ent.status === 'verified';
+                    return (
+                      <tr key={ent.id} className="hover:bg-[#2d2f36]/40">
+                        <td className="p-2 font-mono text-[#8a9a5b]">{ent.type}</td>
+                        <td className="p-2 font-semibold text-[#edeae1]">{ent.value || ent.text}</td>
+                        <td className="p-2 text-[#9e9c96]">{ent.normalizedValue || ent.detail || '—'}</td>
+                        <td className="p-2 font-mono">{ent.confidence}%</td>
+                        <td className="p-2 text-right">
+                          <span
+                            className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-semibold ${
+                              isVerified
+                                ? 'bg-[#5a8264]/20 text-[#7ea886] border border-[#5a8264]/40'
+                                : 'bg-[#23252a] text-[#9e9c96] border border-[#35373e]'
+                            }`}
+                          >
+                            {isVerified && <CheckCircle2 className="h-3 w-3" />}
+                            {ent.verificationStatus || ent.status || 'unverified'}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
           </div>
 
-          {/* Synchronized Transcript Excerpt */}
+          {/* 5. Synchronized Forensic Transcript Excerpt */}
           <div className="mb-6">
             <h3 className="mb-2 font-mono text-xs font-semibold uppercase tracking-wider text-[#8a9a5b]">
-              4. Synchronized Forensic Transcript
+              5. Synchronized Forensic Transcript Excerpt
             </h3>
-            <div className="space-y-2 rounded border border-[#35373e] bg-[#18191c] p-3">
-              {caseData.segments.map((seg) => (
+            <div className="space-y-2 rounded border border-[#35373e] bg-[#18191c] p-3 max-h-80 overflow-y-auto">
+              {(caseData.segments || []).map((seg) => (
                 <div key={seg.id} className="rounded bg-[#23252a] p-2.5 text-xs border border-[#35373e]">
                   <div className="flex items-center justify-between text-[#9e9c96] font-mono text-[11px] mb-1">
                     <span className="font-semibold text-[#edeae1]">
@@ -380,11 +561,11 @@ export function ReportModal({ isOpen, onClose, caseData }: ReportModalProps) {
             </div>
           </div>
 
-          {/* Timeline Summary */}
+          {/* 6. Timeline Summary */}
           {caseData.timeline && caseData.timeline.length > 0 && (
             <div className="mb-6">
               <h3 className="mb-2 font-mono text-xs font-semibold uppercase tracking-wider text-[#8a9a5b]">
-                5. Incident Chronological Timeline
+                6. Incident Chronological Timeline
               </h3>
               <div className="space-y-2 border-l-2 border-[#8a9a5b] pl-3 ml-1">
                 {caseData.timeline.map((event) => (
@@ -406,9 +587,9 @@ export function ReportModal({ isOpen, onClose, caseData }: ReportModalProps) {
               Sworn Officer Attestation
             </h4>
             <p className="text-[#9e9c96] leading-relaxed">
-              I, <strong className="text-[#edeae1]">{caseData.officerName}</strong>, hereby certify that I have
+              I, <strong className="text-[#edeae1]">{auditOfficer}</strong>, hereby certify that I have
               reviewed the automated acoustic and linguistic outputs generated by VECNAVERSE for Docket{' '}
-              <strong className="text-[#edeae1]">{caseData.docketNumber}</strong>. I have verified material findings
+              <strong className="text-[#edeae1]">{caseData.docketNumber || `#${caseData.id}`}</strong>. I have verified material findings
               against source recordings and confirmed the accuracy of the factual findings documented herein.
             </p>
             <div className="mt-4 flex items-center justify-between border-t border-[#35373e] pt-3 text-[11px] text-[#71706b]">
@@ -422,12 +603,28 @@ export function ReportModal({ isOpen, onClose, caseData }: ReportModalProps) {
         {/* Modal Footer */}
         <div className="flex items-center justify-between border-t border-[#35373e] bg-[#18191c] p-3 text-xs text-[#9e9c96]">
           <span>Classification: CJIS Tier 4 / TS-SCI</span>
-          <button
-            onClick={onClose}
-            className="rounded bg-[#23252a] px-4 py-1.5 font-medium text-[#edeae1] hover:bg-[#2d2f36] border border-[#35373e] transition-colors"
-          >
-            Close
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleExportCSV}
+              className="flex items-center gap-1.5 rounded bg-[#23252a] px-3 py-1.5 text-xs font-medium text-[#edeae1] hover:bg-[#2d2f36] border border-[#35373e] transition-colors"
+            >
+              <Download className="h-3.5 w-3.5 text-[#9e9c96]" />
+              <span>Download CSV Export</span>
+            </button>
+            <button
+              onClick={handlePrint}
+              className="flex items-center gap-1.5 rounded bg-[#23252a] px-3 py-1.5 text-xs font-medium text-[#edeae1] hover:bg-[#2d2f36] border border-[#35373e] transition-colors"
+            >
+              <Printer className="h-3.5 w-3.5 text-[#9e9c96]" />
+              <span>Print / Save as PDF</span>
+            </button>
+            <button
+              onClick={onClose}
+              className="rounded bg-[#23252a] px-4 py-1.5 font-medium text-[#edeae1] hover:bg-[#2d2f36] border border-[#35373e] transition-colors"
+            >
+              Close
+            </button>
+          </div>
         </div>
       </div>
     </div>

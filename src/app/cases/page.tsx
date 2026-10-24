@@ -37,11 +37,22 @@ function CasesContent() {
   }, [selectedCategory, searchTerm]);
 
   const loadCases = () => {
-    const res = store.getAllCases({
-      callerCategory: selectedCategory === 'all' ? undefined : selectedCategory,
-      search: searchTerm.trim() || undefined,
-    });
-    setCases(res.cases);
+    let list = store.getCases();
+    if (selectedCategory !== 'all') {
+      list = list.filter((c) => c.callerCategory === selectedCategory);
+    }
+    if (searchTerm.trim()) {
+      const q = searchTerm.toLowerCase();
+      list = list.filter(
+        (c) =>
+          c.id.toLowerCase().includes(q) ||
+          c.title.toLowerCase().includes(q) ||
+          c.docketNumber.toLowerCase().includes(q) ||
+          (c.callerName ? c.callerName.toLowerCase().includes(q) : false) ||
+          (c.callerPhone ? c.callerPhone.toLowerCase().includes(q) : false)
+      );
+    }
+    setCases(list);
   };
 
   const getCategoryBadge = (category?: CallerCategory) => {

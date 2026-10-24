@@ -150,6 +150,10 @@ class CaseStore {
     }
   }
 
+  public getCases(): Case[] {
+    return [...this.cases];
+  }
+
   public getAllCases(options?: {
     status?: CaseStatus;
     callerCategory?: string;
