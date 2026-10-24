@@ -1,0 +1,47 @@
+{
+  "name": "gen-ai-tics_sourabh_singh",
+  "version": "1.0.0",
+  "description": "> **Status:** Planning documentation only. No application implementation is included in this documentation pack.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test": "vitest run"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sooubh/Gen-Ai-Tics_Sourabh_Singh.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sooubh/Gen-Ai-Tics_Sourabh_Singh/issues"
+  },
+  "homepage": "https://github.com/sooubh/Gen-Ai-Tics_Sourabh_Singh#readme",
+  "dependencies": {
+    "@google/genai": "^2.31.0",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.61.0",
+    "next": "^16.4.3",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "tailwind-merge": "^3.7.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^26.6.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "autoprefixer": "^10.6.1",
+    "postcss": "^8.5.31",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.5"
+  }
+}

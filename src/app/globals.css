@@ -1,0 +1,90 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-space-grotesk: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-inter: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-jetbrains-mono: 'JetBrains Mono', monospace;
+  }
+
+  html {
+    color-scheme: dark;
+    background-color: #121315;
+    color: #edeae1;
+  }
+
+  body {
+    background-color: #121315;
+    color: #edeae1;
+    font-family: var(--font-inter);
+    overscroll-behavior: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Custom subtle scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #121315;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #2d2f36;
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #35373e;
+  }
+}
+
+/* Tabular figures for telemetry & IDs */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Material symbols outlined helper */
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 20px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Print Stylesheet for Investigation Dossier Reports */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  aside, header, nav, .no-print, button {
+    display: none !important;
+  }
+  .pl-72 {
+    padding-left: 0 !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+  [class*="bg-"] {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    border-color: #cccccc !important;
+  }
+  [class*="text-"] {
+    color: #111111 !important;
+  }
+  [class*="border-"] {
+    border-color: #dddddd !important;
+  }
+}
