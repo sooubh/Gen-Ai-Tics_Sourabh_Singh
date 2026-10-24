@@ -563,3 +563,942 @@ This is an architecture proposal only; no product source files were added.
 ## Implementation gate
 
 Before building, demonstrate a real recorded transcription request on approved synthetic audio, test live auth/session/codec where enabled, decide the vocal-cue feature gate, verify private Storage/RLS and prove configured audio expiry/deletion.
+
+
+## Expanded architecture verification matrix
+
+For each boundary, test layers prove different things. Unit tests do not prove RLS, a real provider request or browser session behavior. Keep evidence and status separate.
+
+### ARCH-VERIFY-01-UNIT — Boundary validation
+- **Boundary under test:** Reject malformed route body and unknown fields
+- **Expected verification:** Input-schema unit test
+- **Level:** Pure schema/domain/state tests
+- **Evidence:** No network or live credentials required.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-01-INTEGRATION — Boundary validation
+- **Boundary under test:** Reject malformed route body and unknown fields
+- **Expected verification:** Input-schema unit test
+- **Level:** Test DB/storage/provider adapter boundaries
+- **Evidence:** Use isolated credentials and synthetic fixture.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-01-E2E — Boundary validation
+- **Boundary under test:** Reject malformed route body and unknown fields
+- **Expected verification:** Input-schema unit test
+- **Level:** End-user workflow and durable state
+- **Evidence:** Use named fixture and recorded build/environment.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-02-UNIT — Authentication
+- **Boundary under test:** Resolve actor from trusted session
+- **Expected verification:** Anonymous/expired API test
+- **Level:** Pure schema/domain/state tests
+- **Evidence:** No network or live credentials required.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-02-INTEGRATION — Authentication
+- **Boundary under test:** Resolve actor from trusted session
+- **Expected verification:** Anonymous/expired API test
+- **Level:** Test DB/storage/provider adapter boundaries
+- **Evidence:** Use isolated credentials and synthetic fixture.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-02-E2E — Authentication
+- **Boundary under test:** Resolve actor from trusted session
+- **Expected verification:** Anonymous/expired API test
+- **Level:** End-user workflow and durable state
+- **Evidence:** Use named fixture and recorded build/environment.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-03-UNIT — Authorization
+- **Boundary under test:** Scope every child query to parent case
+- **Expected verification:** Two-user negative test
+- **Level:** Pure schema/domain/state tests
+- **Evidence:** No network or live credentials required.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-03-INTEGRATION — Authorization
+- **Boundary under test:** Scope every child query to parent case
+- **Expected verification:** Two-user negative test
+- **Level:** Test DB/storage/provider adapter boundaries
+- **Evidence:** Use isolated credentials and synthetic fixture.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-03-E2E — Authorization
+- **Boundary under test:** Scope every child query to parent case
+- **Expected verification:** Two-user negative test
+- **Level:** End-user workflow and durable state
+- **Evidence:** Use named fixture and recorded build/environment.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-04-UNIT — RLS
+- **Boundary under test:** Enforce row ownership at database
+- **Expected verification:** Fresh-project policy test
+- **Level:** Pure schema/domain/state tests
+- **Evidence:** No network or live credentials required.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-04-INTEGRATION — RLS
+- **Boundary under test:** Enforce row ownership at database
+- **Expected verification:** Fresh-project policy test
+- **Level:** Test DB/storage/provider adapter boundaries
+- **Evidence:** Use isolated credentials and synthetic fixture.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-04-E2E — RLS
+- **Boundary under test:** Enforce row ownership at database
+- **Expected verification:** Fresh-project policy test
+- **Level:** End-user workflow and durable state
+- **Evidence:** Use named fixture and recorded build/environment.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-05-UNIT — Private bucket
+- **Boundary under test:** Deny public and wrong-user media read
+- **Expected verification:** Actual Storage test
+- **Level:** Pure schema/domain/state tests
+- **Evidence:** No network or live credentials required.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-05-INTEGRATION — Private bucket
+- **Boundary under test:** Deny public and wrong-user media read
+- **Expected verification:** Actual Storage test
+- **Level:** Test DB/storage/provider adapter boundaries
+- **Evidence:** Use isolated credentials and synthetic fixture.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-05-E2E — Private bucket
+- **Boundary under test:** Deny public and wrong-user media read
+- **Expected verification:** Actual Storage test
+- **Level:** End-user workflow and durable state
+- **Evidence:** Use named fixture and recorded build/environment.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-06-UNIT — Upload grant
+- **Boundary under test:** Server creates narrow object path/TTL
+- **Expected verification:** Wrong path and expiry test
+- **Level:** Pure schema/domain/state tests
+- **Evidence:** No network or live credentials required.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-06-INTEGRATION — Upload grant
+- **Boundary under test:** Server creates narrow object path/TTL
+- **Expected verification:** Wrong path and expiry test
+- **Level:** Test DB/storage/provider adapter boundaries
+- **Evidence:** Use isolated credentials and synthetic fixture.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-06-E2E — Upload grant
+- **Boundary under test:** Server creates narrow object path/TTL
+- **Expected verification:** Wrong path and expiry test
+- **Level:** End-user workflow and durable state
+- **Evidence:** Use named fixture and recorded build/environment.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-07-UNIT — Upload finalize
+- **Boundary under test:** Check actual object and metadata
+- **Expected verification:** Missing/mismatched object test
+- **Level:** Pure schema/domain/state tests
+- **Evidence:** No network or live credentials required.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-07-INTEGRATION — Upload finalize
+- **Boundary under test:** Check actual object and metadata
+- **Expected verification:** Missing/mismatched object test
+- **Level:** Test DB/storage/provider adapter boundaries
+- **Evidence:** Use isolated credentials and synthetic fixture.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-07-E2E — Upload finalize
+- **Boundary under test:** Check actual object and metadata
+- **Expected verification:** Missing/mismatched object test
+- **Level:** End-user workflow and durable state
+- **Evidence:** Use named fixture and recorded build/environment.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-08-UNIT — Run isolation
+- **Boundary under test:** One source may have distinct runs
+- **Expected verification:** Reanalysis repository test
+- **Level:** Pure schema/domain/state tests
+- **Evidence:** No network or live credentials required.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-08-INTEGRATION — Run isolation
+- **Boundary under test:** One source may have distinct runs
+- **Expected verification:** Reanalysis repository test
+- **Level:** Test DB/storage/provider adapter boundaries
+- **Evidence:** Use isolated credentials and synthetic fixture.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-08-E2E — Run isolation
+- **Boundary under test:** One source may have distinct runs
+- **Expected verification:** Reanalysis repository test
+- **Level:** End-user workflow and durable state
+- **Evidence:** Use named fixture and recorded build/environment.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-09-UNIT — Segment normalization
+- **Boundary under test:** Normalize and validate time offsets
+- **Expected verification:** Negative/out-of-range offset test
+- **Level:** Pure schema/domain/state tests
+- **Evidence:** No network or live credentials required.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-09-INTEGRATION — Segment normalization
+- **Boundary under test:** Normalize and validate time offsets
+- **Expected verification:** Negative/out-of-range offset test
+- **Level:** Test DB/storage/provider adapter boundaries
+- **Evidence:** Use isolated credentials and synthetic fixture.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-09-E2E — Segment normalization
+- **Boundary under test:** Normalize and validate time offsets
+- **Expected verification:** Negative/out-of-range offset test
+- **Level:** End-user workflow and durable state
+- **Evidence:** Use named fixture and recorded build/environment.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-10-UNIT — Finding normalization
+- **Boundary under test:** Reject unsupported category/fields
+- **Expected verification:** Unknown enum test
+- **Level:** Pure schema/domain/state tests
+- **Evidence:** No network or live credentials required.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-10-INTEGRATION — Finding normalization
+- **Boundary under test:** Reject unsupported category/fields
+- **Expected verification:** Unknown enum test
+- **Level:** Test DB/storage/provider adapter boundaries
+- **Evidence:** Use isolated credentials and synthetic fixture.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-10-E2E — Finding normalization
+- **Boundary under test:** Reject unsupported category/fields
+- **Expected verification:** Unknown enum test
+- **Level:** End-user workflow and durable state
+- **Evidence:** Use named fixture and recorded build/environment.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-11-UNIT — Evidence link
+- **Boundary under test:** Same-run evidence only
+- **Expected verification:** Cross-run foreign ref test
+- **Level:** Pure schema/domain/state tests
+- **Evidence:** No network or live credentials required.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-11-INTEGRATION — Evidence link
+- **Boundary under test:** Same-run evidence only
+- **Expected verification:** Cross-run foreign ref test
+- **Level:** Test DB/storage/provider adapter boundaries
+- **Evidence:** Use isolated credentials and synthetic fixture.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-11-E2E — Evidence link
+- **Boundary under test:** Same-run evidence only
+- **Expected verification:** Cross-run foreign ref test
+- **Level:** End-user workflow and durable state
+- **Evidence:** Use named fixture and recorded build/environment.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-12-UNIT — Provider adapter
+- **Boundary under test:** Shield domain from SDK response type
+- **Expected verification:** Adapter contract fixture
+- **Level:** Pure schema/domain/state tests
+- **Evidence:** No network or live credentials required.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-12-INTEGRATION — Provider adapter
+- **Boundary under test:** Shield domain from SDK response type
+- **Expected verification:** Adapter contract fixture
+- **Level:** Test DB/storage/provider adapter boundaries
+- **Evidence:** Use isolated credentials and synthetic fixture.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-12-E2E — Provider adapter
+- **Boundary under test:** Shield domain from SDK response type
+- **Expected verification:** Adapter contract fixture
+- **Level:** End-user workflow and durable state
+- **Evidence:** Use named fixture and recorded build/environment.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-13-UNIT — Provider errors
+- **Boundary under test:** Normalize 400/429/timeout/5xx
+- **Expected verification:** Fault injection
+- **Level:** Pure schema/domain/state tests
+- **Evidence:** No network or live credentials required.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-13-INTEGRATION — Provider errors
+- **Boundary under test:** Normalize 400/429/timeout/5xx
+- **Expected verification:** Fault injection
+- **Level:** Test DB/storage/provider adapter boundaries
+- **Evidence:** Use isolated credentials and synthetic fixture.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-13-E2E — Provider errors
+- **Boundary under test:** Normalize 400/429/timeout/5xx
+- **Expected verification:** Fault injection
+- **Level:** End-user workflow and durable state
+- **Evidence:** Use named fixture and recorded build/environment.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-14-UNIT — Idempotency
+- **Boundary under test:** Duplicate operation key doesn't create duplicate work
+- **Expected verification:** Replay test
+- **Level:** Pure schema/domain/state tests
+- **Evidence:** No network or live credentials required.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-14-INTEGRATION — Idempotency
+- **Boundary under test:** Duplicate operation key doesn't create duplicate work
+- **Expected verification:** Replay test
+- **Level:** Test DB/storage/provider adapter boundaries
+- **Evidence:** Use isolated credentials and synthetic fixture.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-14-E2E — Idempotency
+- **Boundary under test:** Duplicate operation key doesn't create duplicate work
+- **Expected verification:** Replay test
+- **Level:** End-user workflow and durable state
+- **Evidence:** Use named fixture and recorded build/environment.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-15-UNIT — Concurrency
+- **Boundary under test:** Stale finding version returns conflict
+- **Expected verification:** Parallel review test
+- **Level:** Pure schema/domain/state tests
+- **Evidence:** No network or live credentials required.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-15-INTEGRATION — Concurrency
+- **Boundary under test:** Stale finding version returns conflict
+- **Expected verification:** Parallel review test
+- **Level:** Test DB/storage/provider adapter boundaries
+- **Evidence:** Use isolated credentials and synthetic fixture.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-15-E2E — Concurrency
+- **Boundary under test:** Stale finding version returns conflict
+- **Expected verification:** Parallel review test
+- **Level:** End-user workflow and durable state
+- **Evidence:** Use named fixture and recorded build/environment.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-16-UNIT — Review history
+- **Boundary under test:** Append actor/time/old-new state
+- **Expected verification:** Audit reconciliation
+- **Level:** Pure schema/domain/state tests
+- **Evidence:** No network or live credentials required.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-16-INTEGRATION — Review history
+- **Boundary under test:** Append actor/time/old-new state
+- **Expected verification:** Audit reconciliation
+- **Level:** Test DB/storage/provider adapter boundaries
+- **Evidence:** Use isolated credentials and synthetic fixture.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-16-E2E — Review history
+- **Boundary under test:** Append actor/time/old-new state
+- **Expected verification:** Audit reconciliation
+- **Level:** End-user workflow and durable state
+- **Evidence:** Use named fixture and recorded build/environment.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-17-UNIT — Transcript correction
+- **Boundary under test:** Preserve model text and reviewed text
+- **Expected verification:** Revision test
+- **Level:** Pure schema/domain/state tests
+- **Evidence:** No network or live credentials required.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-17-INTEGRATION — Transcript correction
+- **Boundary under test:** Preserve model text and reviewed text
+- **Expected verification:** Revision test
+- **Level:** Test DB/storage/provider adapter boundaries
+- **Evidence:** Use isolated credentials and synthetic fixture.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-17-E2E — Transcript correction
+- **Boundary under test:** Preserve model text and reviewed text
+- **Expected verification:** Revision test
+- **Level:** End-user workflow and durable state
+- **Evidence:** Use named fixture and recorded build/environment.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-18-UNIT — Timeline
+- **Boundary under test:** Stable time sorting and untimed bucket
+- **Expected verification:** Equal/missing timestamp test
+- **Level:** Pure schema/domain/state tests
+- **Evidence:** No network or live credentials required.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-18-INTEGRATION — Timeline
+- **Boundary under test:** Stable time sorting and untimed bucket
+- **Expected verification:** Equal/missing timestamp test
+- **Level:** Test DB/storage/provider adapter boundaries
+- **Evidence:** Use isolated credentials and synthetic fixture.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-18-E2E — Timeline
+- **Boundary under test:** Stable time sorting and untimed bucket
+- **Expected verification:** Equal/missing timestamp test
+- **Level:** End-user workflow and durable state
+- **Evidence:** Use named fixture and recorded build/environment.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-19-UNIT — Report snapshot
+- **Boundary under test:** Use selected run only
+- **Expected verification:** Report/DB reconciliation
+- **Level:** Pure schema/domain/state tests
+- **Evidence:** No network or live credentials required.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-19-INTEGRATION — Report snapshot
+- **Boundary under test:** Use selected run only
+- **Expected verification:** Report/DB reconciliation
+- **Level:** Test DB/storage/provider adapter boundaries
+- **Evidence:** Use isolated credentials and synthetic fixture.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-19-E2E — Report snapshot
+- **Boundary under test:** Use selected run only
+- **Expected verification:** Report/DB reconciliation
+- **Level:** End-user workflow and durable state
+- **Evidence:** Use named fixture and recorded build/environment.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-20-UNIT — CSV serializer
+- **Boundary under test:** Escape formula-like untrusted text
+- **Expected verification:** Malicious cell test
+- **Level:** Pure schema/domain/state tests
+- **Evidence:** No network or live credentials required.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-20-INTEGRATION — CSV serializer
+- **Boundary under test:** Escape formula-like untrusted text
+- **Expected verification:** Malicious cell test
+- **Level:** Test DB/storage/provider adapter boundaries
+- **Evidence:** Use isolated credentials and synthetic fixture.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-20-E2E — CSV serializer
+- **Boundary under test:** Escape formula-like untrusted text
+- **Expected verification:** Malicious cell test
+- **Level:** End-user workflow and durable state
+- **Evidence:** Use named fixture and recorded build/environment.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-21-UNIT — Retention worker
+- **Boundary under test:** Delete Storage object and verify absence
+- **Expected verification:** Actual test object check
+- **Level:** Pure schema/domain/state tests
+- **Evidence:** No network or live credentials required.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-21-INTEGRATION — Retention worker
+- **Boundary under test:** Delete Storage object and verify absence
+- **Expected verification:** Actual test object check
+- **Level:** Test DB/storage/provider adapter boundaries
+- **Evidence:** Use isolated credentials and synthetic fixture.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-21-E2E — Retention worker
+- **Boundary under test:** Delete Storage object and verify absence
+- **Expected verification:** Actual test object check
+- **Level:** End-user workflow and durable state
+- **Evidence:** Use named fixture and recorded build/environment.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-22-UNIT — Orphan cleanup
+- **Boundary under test:** Grace period protects in-progress upload
+- **Expected verification:** Dry-run and active upload test
+- **Level:** Pure schema/domain/state tests
+- **Evidence:** No network or live credentials required.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-22-INTEGRATION — Orphan cleanup
+- **Boundary under test:** Grace period protects in-progress upload
+- **Expected verification:** Dry-run and active upload test
+- **Level:** Test DB/storage/provider adapter boundaries
+- **Evidence:** Use isolated credentials and synthetic fixture.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-22-E2E — Orphan cleanup
+- **Boundary under test:** Grace period protects in-progress upload
+- **Expected verification:** Dry-run and active upload test
+- **Level:** End-user workflow and durable state
+- **Evidence:** Use named fixture and recorded build/environment.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-23-UNIT — Remote provider file
+- **Boundary under test:** Independent provider lifecycle tracking
+- **Expected verification:** Provider policy/cleanup test
+- **Level:** Pure schema/domain/state tests
+- **Evidence:** No network or live credentials required.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-23-INTEGRATION — Remote provider file
+- **Boundary under test:** Independent provider lifecycle tracking
+- **Expected verification:** Provider policy/cleanup test
+- **Level:** Test DB/storage/provider adapter boundaries
+- **Evidence:** Use isolated credentials and synthetic fixture.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-23-E2E — Remote provider file
+- **Boundary under test:** Independent provider lifecycle tracking
+- **Expected verification:** Provider policy/cleanup test
+- **Level:** End-user workflow and durable state
+- **Evidence:** Use named fixture and recorded build/environment.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-24-UNIT — Rate limiter
+- **Boundary under test:** Server enforces per-user and project caps
+- **Expected verification:** Direct HTTP burst
+- **Level:** Pure schema/domain/state tests
+- **Evidence:** No network or live credentials required.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-24-INTEGRATION — Rate limiter
+- **Boundary under test:** Server enforces per-user and project caps
+- **Expected verification:** Direct HTTP burst
+- **Level:** Test DB/storage/provider adapter boundaries
+- **Evidence:** Use isolated credentials and synthetic fixture.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-24-E2E — Rate limiter
+- **Boundary under test:** Server enforces per-user and project caps
+- **Expected verification:** Direct HTTP burst
+- **Level:** End-user workflow and durable state
+- **Evidence:** Use named fixture and recorded build/environment.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-25-UNIT — Resource bounds
+- **Boundary under test:** Cap output bytes, counts and text
+- **Expected verification:** Oversized response test
+- **Level:** Pure schema/domain/state tests
+- **Evidence:** No network or live credentials required.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-25-INTEGRATION — Resource bounds
+- **Boundary under test:** Cap output bytes, counts and text
+- **Expected verification:** Oversized response test
+- **Level:** Test DB/storage/provider adapter boundaries
+- **Evidence:** Use isolated credentials and synthetic fixture.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-25-E2E — Resource bounds
+- **Boundary under test:** Cap output bytes, counts and text
+- **Expected verification:** Oversized response test
+- **Level:** End-user workflow and durable state
+- **Evidence:** Use named fixture and recorded build/environment.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-26-UNIT — Live event dedup
+- **Boundary under test:** Merge interim/final events by tested key
+- **Expected verification:** Duplicate event fixture
+- **Level:** Pure schema/domain/state tests
+- **Evidence:** No network or live credentials required.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-26-INTEGRATION — Live event dedup
+- **Boundary under test:** Merge interim/final events by tested key
+- **Expected verification:** Duplicate event fixture
+- **Level:** Test DB/storage/provider adapter boundaries
+- **Evidence:** Use isolated credentials and synthetic fixture.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-26-E2E — Live event dedup
+- **Boundary under test:** Merge interim/final events by tested key
+- **Expected verification:** Duplicate event fixture
+- **Level:** End-user workflow and durable state
+- **Evidence:** Use named fixture and recorded build/environment.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-27-UNIT — Live close guard
+- **Boundary under test:** Reject late event outside finalization rules
+- **Expected verification:** Post-stop event test
+- **Level:** Pure schema/domain/state tests
+- **Evidence:** No network or live credentials required.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-27-INTEGRATION — Live close guard
+- **Boundary under test:** Reject late event outside finalization rules
+- **Expected verification:** Post-stop event test
+- **Level:** Test DB/storage/provider adapter boundaries
+- **Evidence:** Use isolated credentials and synthetic fixture.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-27-E2E — Live close guard
+- **Boundary under test:** Reject late event outside finalization rules
+- **Expected verification:** Post-stop event test
+- **Level:** End-user workflow and durable state
+- **Evidence:** Use named fixture and recorded build/environment.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-28-UNIT — Session state machine
+- **Boundary under test:** Permit only documented transitions
+- **Expected verification:** Transition unit tests
+- **Level:** Pure schema/domain/state tests
+- **Evidence:** No network or live credentials required.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-28-INTEGRATION — Session state machine
+- **Boundary under test:** Permit only documented transitions
+- **Expected verification:** Transition unit tests
+- **Level:** Test DB/storage/provider adapter boundaries
+- **Evidence:** Use isolated credentials and synthetic fixture.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-28-E2E — Session state machine
+- **Boundary under test:** Permit only documented transitions
+- **Expected verification:** Transition unit tests
+- **Level:** End-user workflow and durable state
+- **Evidence:** Use named fixture and recorded build/environment.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-29-UNIT — Session cleanup
+- **Boundary under test:** Stop captures/close socket and persist state
+- **Expected verification:** Browser stop/reload test
+- **Level:** Pure schema/domain/state tests
+- **Evidence:** No network or live credentials required.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-29-INTEGRATION — Session cleanup
+- **Boundary under test:** Stop captures/close socket and persist state
+- **Expected verification:** Browser stop/reload test
+- **Level:** Test DB/storage/provider adapter boundaries
+- **Evidence:** Use isolated credentials and synthetic fixture.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-29-E2E — Session cleanup
+- **Boundary under test:** Stop captures/close socket and persist state
+- **Expected verification:** Browser stop/reload test
+- **Level:** End-user workflow and durable state
+- **Evidence:** Use named fixture and recorded build/environment.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-30-UNIT — Capabilities
+- **Boundary under test:** Server flags control experimental functions
+- **Expected verification:** Client-flag tampering test
+- **Level:** Pure schema/domain/state tests
+- **Evidence:** No network or live credentials required.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-30-INTEGRATION — Capabilities
+- **Boundary under test:** Server flags control experimental functions
+- **Expected verification:** Client-flag tampering test
+- **Level:** Test DB/storage/provider adapter boundaries
+- **Evidence:** Use isolated credentials and synthetic fixture.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-30-E2E — Capabilities
+- **Boundary under test:** Server flags control experimental functions
+- **Expected verification:** Client-flag tampering test
+- **Level:** End-user workflow and durable state
+- **Evidence:** Use named fixture and recorded build/environment.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-31-UNIT — Config preflight
+- **Boundary under test:** Missing key/model/bucket prevents feature
+- **Expected verification:** Safe missing-config test
+- **Level:** Pure schema/domain/state tests
+- **Evidence:** No network or live credentials required.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-31-INTEGRATION — Config preflight
+- **Boundary under test:** Missing key/model/bucket prevents feature
+- **Expected verification:** Safe missing-config test
+- **Level:** Test DB/storage/provider adapter boundaries
+- **Evidence:** Use isolated credentials and synthetic fixture.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-31-E2E — Config preflight
+- **Boundary under test:** Missing key/model/bucket prevents feature
+- **Expected verification:** Safe missing-config test
+- **Level:** End-user workflow and durable state
+- **Evidence:** Use named fixture and recorded build/environment.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-32-UNIT — Structured logs
+- **Boundary under test:** Record metadata only
+- **Expected verification:** Search for fixture text
+- **Level:** Pure schema/domain/state tests
+- **Evidence:** No network or live credentials required.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-32-INTEGRATION — Structured logs
+- **Boundary under test:** Record metadata only
+- **Expected verification:** Search for fixture text
+- **Level:** Test DB/storage/provider adapter boundaries
+- **Evidence:** Use isolated credentials and synthetic fixture.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-32-E2E — Structured logs
+- **Boundary under test:** Record metadata only
+- **Expected verification:** Search for fixture text
+- **Level:** End-user workflow and durable state
+- **Evidence:** Use named fixture and recorded build/environment.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-33-UNIT — Client cache
+- **Boundary under test:** Clear protected data after logout
+- **Expected verification:** Browser logout test
+- **Level:** Pure schema/domain/state tests
+- **Evidence:** No network or live credentials required.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-33-INTEGRATION — Client cache
+- **Boundary under test:** Clear protected data after logout
+- **Expected verification:** Browser logout test
+- **Level:** Test DB/storage/provider adapter boundaries
+- **Evidence:** Use isolated credentials and synthetic fixture.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-33-E2E — Client cache
+- **Boundary under test:** Clear protected data after logout
+- **Expected verification:** Browser logout test
+- **Level:** End-user workflow and durable state
+- **Evidence:** Use named fixture and recorded build/environment.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-34-UNIT — Search scope
+- **Boundary under test:** Authorized per-case query
+- **Expected verification:** Cross-case text leak test
+- **Level:** Pure schema/domain/state tests
+- **Evidence:** No network or live credentials required.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-34-INTEGRATION — Search scope
+- **Boundary under test:** Authorized per-case query
+- **Expected verification:** Cross-case text leak test
+- **Level:** Test DB/storage/provider adapter boundaries
+- **Evidence:** Use isolated credentials and synthetic fixture.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-34-E2E — Search scope
+- **Boundary under test:** Authorized per-case query
+- **Expected verification:** Cross-case text leak test
+- **Level:** End-user workflow and durable state
+- **Evidence:** Use named fixture and recorded build/environment.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-35-UNIT — Pagination
+- **Boundary under test:** Bounded stable cursor/page
+- **Expected verification:** Boundary pagination test
+- **Level:** Pure schema/domain/state tests
+- **Evidence:** No network or live credentials required.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-35-INTEGRATION — Pagination
+- **Boundary under test:** Bounded stable cursor/page
+- **Expected verification:** Boundary pagination test
+- **Level:** Test DB/storage/provider adapter boundaries
+- **Evidence:** Use isolated credentials and synthetic fixture.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-35-E2E — Pagination
+- **Boundary under test:** Bounded stable cursor/page
+- **Expected verification:** Boundary pagination test
+- **Level:** End-user workflow and durable state
+- **Evidence:** Use named fixture and recorded build/environment.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-36-UNIT — Output schema
+- **Boundary under test:** Runtime parse all provider responses
+- **Expected verification:** Malformed provider fixture
+- **Level:** Pure schema/domain/state tests
+- **Evidence:** No network or live credentials required.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-36-INTEGRATION — Output schema
+- **Boundary under test:** Runtime parse all provider responses
+- **Expected verification:** Malformed provider fixture
+- **Level:** Test DB/storage/provider adapter boundaries
+- **Evidence:** Use isolated credentials and synthetic fixture.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-36-E2E — Output schema
+- **Boundary under test:** Runtime parse all provider responses
+- **Expected verification:** Malformed provider fixture
+- **Level:** End-user workflow and durable state
+- **Evidence:** Use named fixture and recorded build/environment.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-37-UNIT — Model metadata
+- **Boundary under test:** Record model/prompt/schema version
+- **Expected verification:** Saved run introspection
+- **Level:** Pure schema/domain/state tests
+- **Evidence:** No network or live credentials required.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-37-INTEGRATION — Model metadata
+- **Boundary under test:** Record model/prompt/schema version
+- **Expected verification:** Saved run introspection
+- **Level:** Test DB/storage/provider adapter boundaries
+- **Evidence:** Use isolated credentials and synthetic fixture.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-37-E2E — Model metadata
+- **Boundary under test:** Record model/prompt/schema version
+- **Expected verification:** Saved run introspection
+- **Level:** End-user workflow and durable state
+- **Evidence:** Use named fixture and recorded build/environment.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-38-UNIT — Feature-off workflow
+- **Boundary under test:** Recorded pipeline works with live/cue off
+- **Expected verification:** Feature-flag E2E
+- **Level:** Pure schema/domain/state tests
+- **Evidence:** No network or live credentials required.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-38-INTEGRATION — Feature-off workflow
+- **Boundary under test:** Recorded pipeline works with live/cue off
+- **Expected verification:** Feature-flag E2E
+- **Level:** Test DB/storage/provider adapter boundaries
+- **Evidence:** Use isolated credentials and synthetic fixture.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-38-E2E — Feature-off workflow
+- **Boundary under test:** Recorded pipeline works with live/cue off
+- **Expected verification:** Feature-flag E2E
+- **Level:** End-user workflow and durable state
+- **Evidence:** Use named fixture and recorded build/environment.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-39-UNIT — Deployment limits
+- **Boundary under test:** Large media doesn't proxy through unsupported request body
+- **Expected verification:** Test payload path
+- **Level:** Pure schema/domain/state tests
+- **Evidence:** No network or live credentials required.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-39-INTEGRATION — Deployment limits
+- **Boundary under test:** Large media doesn't proxy through unsupported request body
+- **Expected verification:** Test payload path
+- **Level:** Test DB/storage/provider adapter boundaries
+- **Evidence:** Use isolated credentials and synthetic fixture.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-39-E2E — Deployment limits
+- **Boundary under test:** Large media doesn't proxy through unsupported request body
+- **Expected verification:** Test payload path
+- **Level:** End-user workflow and durable state
+- **Evidence:** Use named fixture and recorded build/environment.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-40-UNIT — Migrations
+- **Boundary under test:** Schema and policies deploy from clean state
+- **Expected verification:** Fresh DB smoke test
+- **Level:** Pure schema/domain/state tests
+- **Evidence:** No network or live credentials required.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-40-INTEGRATION — Migrations
+- **Boundary under test:** Schema and policies deploy from clean state
+- **Expected verification:** Fresh DB smoke test
+- **Level:** Test DB/storage/provider adapter boundaries
+- **Evidence:** Use isolated credentials and synthetic fixture.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-40-E2E — Migrations
+- **Boundary under test:** Schema and policies deploy from clean state
+- **Expected verification:** Fresh DB smoke test
+- **Level:** End-user workflow and durable state
+- **Evidence:** Use named fixture and recorded build/environment.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-41-UNIT — Health route
+- **Boundary under test:** No secret values/model bill per ping
+- **Expected verification:** Readiness test
+- **Level:** Pure schema/domain/state tests
+- **Evidence:** No network or live credentials required.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-41-INTEGRATION — Health route
+- **Boundary under test:** No secret values/model bill per ping
+- **Expected verification:** Readiness test
+- **Level:** Test DB/storage/provider adapter boundaries
+- **Evidence:** Use isolated credentials and synthetic fixture.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-41-E2E — Health route
+- **Boundary under test:** No secret values/model bill per ping
+- **Expected verification:** Readiness test
+- **Level:** End-user workflow and durable state
+- **Evidence:** Use named fixture and recorded build/environment.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-42-UNIT — Logging request ID
+- **Boundary under test:** Correlate route and provider stage
+- **Expected verification:** Request correlation test
+- **Level:** Pure schema/domain/state tests
+- **Evidence:** No network or live credentials required.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-42-INTEGRATION — Logging request ID
+- **Boundary under test:** Correlate route and provider stage
+- **Expected verification:** Request correlation test
+- **Level:** Test DB/storage/provider adapter boundaries
+- **Evidence:** Use isolated credentials and synthetic fixture.
+- **Status:** Pending until test executed.
+
+### ARCH-VERIFY-42-E2E — Logging request ID
+- **Boundary under test:** Correlate route and provider stage
+- **Expected verification:** Request correlation test
+- **Level:** End-user workflow and durable state
+- **Evidence:** Use named fixture and recorded build/environment.
+- **Status:** Pending until test executed.
+
+## Architecture invariants
+
+- Route handlers validate input before invoking costly operations.
+- Service methods accept trusted actor context separately from request payload.
+- All persistent writes occur through a transaction or explicit state transition where correctness depends on several records.
+- Child entities are scoped through their parent record and run relationships.
+- Provider response data is converted to domain DTOs at the adapter boundary.
+- Media URLs are temporary transport capabilities, not permanent identifiers.
+- Analysis run states are durable and auditable.
+- Review state uses versioning or transaction semantics to avoid silent clobbering.
+- Stage retry is narrow and cannot reset unrelated successful output.
+- Logs are a separate security boundary; don't rely on UI hiding to protect sensitive values.
+- Database RLS supplements API checks; neither replaces the other.
+- A feature flag is not security unless checked server-side.
+- The web UI must reflect persisted states, not speculative timers.
+- Cleanup is an operation with its own success/failure lifecycle.
+- Any split worker/queue requires a measurable runtime justification and a new operational plan.
+
+## Service ownership map
+
+| Concern | Authoritative owner | Consumers |
+|---|---|---|
+| User identity | Authentication session | API guard, audit history |
+| Case access | Server authorization + RLS | Case service, storage grant service |
+| Audio object lifetime | Retention policy + Storage confirmation | Player UI, case status, operations |
+| Run status | Analysis-run repository | Dashboard, report builder, retries |
+| Transcript source text | Model output record | Evidence navigation, review UI |
+| Officer correction | Review/correction repository | Transcript display, report |
+| Finding review state | Finding/review service | Timeline, overview, report |
+| Model capability | Server-side config and evaluation evidence | UI, API handlers, preflight |
+| Export content | Report snapshot/allowlist | CSV/print rendering |
+| Failure diagnosis | Safe error mapper and request ID | UI, operations logging |
+
+## API contract review checklist
+
+- [ ] Route uses schema validation.
+- [ ] Actor comes from trusted auth context.
+- [ ] Resource access checked before returning details.
+- [ ] Request size, media limits and query limits apply.
+- [ ] State transition is checked server-side.
+- [ ] Idempotency/replay behavior is defined for mutation.
+- [ ] Provider failures map to stable error classes.
+- [ ] Partial/empty/failure responses are different.
+- [ ] No secret or raw provider payload is returned.
+- [ ] Operation logs carry safe request ID.
+- [ ] Integration test checks persisted outcome.
+- [ ] Negative authorization test exists.
+
+## Reference boundary
+
+Architecture verification supports planning, not proof of compliance. All Passed statuses require actual output from the named environment/commit.
