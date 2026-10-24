@@ -75,22 +75,24 @@ Official docs can change. Before implementing, verify current model availability
 
 ## Documentation Inventory (verified)
 
-This inventory is generated from the contents currently accessible in the repository; line counts include blank lines and Markdown formatting.
+Inventory is refreshed from the files accessible in the repository. Blank lines and Markdown markup are counted.
 
-| File | Lines | Characters | Status |
-|---|---:|---:|---|
-| [01-product-requirements.md](docs/01-product-requirements.md) | 1398 | 65534 | Found |
-| [02-architecture-tech-stack.md](docs/02-architecture-tech-stack.md) | 1505 | 69847 | Found |
-| [03-dashboard-ux.md](docs/03-dashboard-ux.md) | 910 | 32159 | Found |
-| [04-ai-audio-pipelines.md](docs/04-ai-audio-pipelines.md) | — | — | Missing — investigate |
-| [05-data-model-api-contracts.md](docs/05-data-model-api-contracts.md) | 755 | 25552 | Found |
-| [06-security-privacy-retention.md](docs/06-security-privacy-retention.md) | — | — | Missing — investigate |
-| [07-testing-acceptance.md](docs/07-testing-acceptance.md) | 2551 | 111790 | Found |
-| [08-delivery-workstreams.md](docs/08-delivery-workstreams.md) | 448 | 18861 | Found |
-| [09-deployment-operations.md](docs/09-deployment-operations.md) | 336 | 14977 | Found |
-| [10-demo-evaluation.md](docs/10-demo-evaluation.md) | 1148 | 50017 | Found |
-| [11-traceability-decision-log.md](docs/11-traceability-decision-log.md) | — | — | Missing — investigate |
+| File | Lines | Characters |
+|---|---:|---:|
+| [01-product-requirements.md](docs/01-product-requirements.md) | 1398 | 65534 |
+| [02-architecture-tech-stack.md](docs/02-architecture-tech-stack.md) | 1505 | 69847 |
+| [03-dashboard-ux.md](docs/03-dashboard-ux.md) | 910 | 32159 |
+| [04-ai-audio-pipelines.md](docs/04-ai-audio-pipelines.md) | 109 | 3237 |
+| [05-data-model-api-contracts.md](docs/05-data-model-api-contracts.md) | 755 | 25552 |
+| [06-security-privacy-retention.md](docs/06-security-privacy-retention.md) | 667 | 27082 |
+| [07-testing-acceptance.md](docs/07-testing-acceptance.md) | 2551 | 111790 |
+| [08-delivery-workstreams.md](docs/08-delivery-workstreams.md) | 1102 | 42675 |
+| [09-deployment-operations.md](docs/09-deployment-operations.md) | 336 | 14977 |
+| [10-demo-evaluation.md](docs/10-demo-evaluation.md) | 1148 | 50017 |
+| [11-traceability-decision-log.md](docs/11-traceability-decision-log.md) | 134 | 3266 |
 
-**Total documentation lines (11 docs): 9051**
+**Planning document subtotal (11 files): 10615 lines**
 
-Counts are descriptive only. They do not mean features are implemented or tests passed.
+**Total Markdown line count including README: 10712 lines**
+
+Counts describe documentation size only. They do not mean product behavior is implemented or a test has passed.
