@@ -34,6 +34,7 @@ import {
   SpeechEmotionProfile,
 } from '@/types';
 import { INITIAL_CASES } from './initial-cases';
+import { OfficerSession } from '@/lib/auth/session';
 
 interface LocalDbSchema {
   cases: Case[];
@@ -133,7 +134,16 @@ class CaseStore {
           cases: this.cases,
           auditLogs: this.auditLogs,
         };
-        nodeFs.writeFileSync(dbFile, JSON.stringify(data, null, 2), 'utf-8');
+        const tmpFile = nodePath.join(dataDir, `db.tmp.${process.pid}.${Date.now()}`);
+        nodeFs.writeFileSync(tmpFile, JSON.stringify(data, null, 2), 'utf-8');
+        try {
+          nodeFs.renameSync(tmpFile, dbFile);
+        } catch {
+          nodeFs.writeFileSync(dbFile, JSON.stringify(data, null, 2), 'utf-8');
+          if (nodeFs.existsSync(tmpFile)) {
+            try { nodeFs.unlinkSync(tmpFile); } catch {}
+          }
+        }
       } catch (err) {
         console.warn('Failed to persist local DB file (running in-memory):', err);
       }
@@ -207,25 +217,33 @@ class CaseStore {
     return found || null;
   }
 
-  public createCase(data: {
-    title: string;
-    operationName?: string;
-    description?: string;
-    priority?: Case['priority'];
-    officerName?: string;
-    taskForce?: string;
-    classificationStandard?: string;
-    callerCategory?: CallerCategory;
-    callerName?: string;
-    callerPhone?: string;
-    urgencyScore?: number;
-    urgencyLevel?: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
-    emotionProfile?: SpeechEmotionProfile;
-    audioMetadata?: AudioMetadata;
-  }): Case {
+  public createCase(
+    data: {
+      title: string;
+      operationName?: string;
+      description?: string;
+      priority?: Case['priority'];
+      officerName?: string;
+      taskForce?: string;
+      classificationStandard?: string;
+      callerCategory?: CallerCategory;
+      callerName?: string;
+      callerPhone?: string;
+      urgencyScore?: number;
+      urgencyLevel?: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+      emotionProfile?: SpeechEmotionProfile;
+      audioMetadata?: AudioMetadata;
+      isSyntheticDemo?: boolean;
+      fixtureId?: string;
+    },
+    officerSession?: OfficerSession | { officerId?: string; officerName?: string }
+  ): Case {
     const caseNum = Math.floor(1000 + Math.random() * 9000);
     const newId = `CALL-2026-${caseNum}`;
     const now = new Date().toISOString();
+
+    const officerId = (officerSession as any)?.user?.id || (officerSession as any)?.officerId || 'JENKINS-4829';
+    const officerName = (officerSession as any)?.user?.name || (officerSession as any)?.officerName || data.officerName || 'Det. S. Jenkins #4829';
 
     const newCase: Case = {
       id: newId,
@@ -272,8 +290,9 @@ class CaseStore {
         storagePath: '/uploads/audio/INBOUND_CALL_STREAM.wav',
         purged: false,
       },
-      officerId: 'JENKINS-4829',
-      officerName: data.officerName || 'Inspector S. Verma #4829',
+      officerId,
+      officerName,
+      leadInvestigatorId: officerId,
       taskForce: data.taskForce || 'Cybercrime Quick Reaction Team (QRT)',
       classificationStandard: data.classificationStandard || 'FedRAMP High / CJIS Tier 4',
       securityEnclave: 'TOP SECRET // SCI',
@@ -289,20 +308,22 @@ class CaseStore {
           timestamp: 0,
           timeLabel: '00:00',
           title: 'Emergency Call Received',
-          description: `Call intake registered by ${data.officerName || 'Inspector S. Verma #4829'}`,
+          description: `Call intake registered by ${officerName}`,
           category: 'call_start',
         },
       ],
       notes: [],
       reviews: [],
+      isSyntheticDemo: data.isSyntheticDemo ?? false,
+      fixtureId: data.fixtureId,
     };
 
     this.cases.unshift(newCase);
     this.logAuditEvent({
       action: 'CASE_CREATED',
-      actorId: 'JENKINS-4829',
-      actorName: 'Det. S. Jenkins #4829',
-      officer: 'Det. S. Jenkins #4829',
+      actorId: officerId,
+      actorName: officerName,
+      officer: officerName,
       resourceType: 'case',
       resourceId: newId,
       details: `Docket #${newId} created: "${data.title}"`,
@@ -313,11 +334,35 @@ class CaseStore {
     return newCase;
   }
 
-  public updateCase(id: string, updates: Partial<Case>): Case | null {
+  public updateCase(
+    id: string,
+    updates: Partial<Case>,
+    officerSession?: OfficerSession | { officerId?: string; officerName?: string }
+  ): Case | null {
     const existing = this.getCaseById(id);
     if (!existing) return null;
 
-    Object.assign(existing, updates, { updatedAt: new Date().toISOString() });
+    const safeUpdates = { ...updates };
+    delete (safeUpdates as any).id;
+    delete (safeUpdates as any).docketNumber;
+    delete (safeUpdates as any).createdAt;
+
+    Object.assign(existing, safeUpdates, { updatedAt: new Date().toISOString() });
+
+    const actorId = (officerSession as any)?.user?.id || (officerSession as any)?.officerId || 'JENKINS-4829';
+    const actorName = (officerSession as any)?.user?.name || (officerSession as any)?.officerName || 'Det. S. Jenkins #4829';
+
+    this.logAuditEvent({
+      action: 'CASE_UPDATED',
+      actorId,
+      actorName,
+      officer: actorName,
+      resourceType: 'case',
+      resourceId: existing.id,
+      details: `Case #${existing.id} updated by authorized officer: [${Object.keys(safeUpdates).join(', ')}]`,
+      enclaveSecurityLevel: existing.securityEnclave || 'TOP SECRET // SCI',
+    });
+
     this.persist();
     return existing;
   }
@@ -365,55 +410,105 @@ class CaseStore {
     return existing;
   }
 
-  public purgeAudio(caseId: string): boolean {
+  public purgeAudio(
+    caseId: string,
+    officerSession?: OfficerSession | { officerId?: string; officerName?: string }
+  ): boolean {
     const existing = this.getCaseById(caseId);
     if (!existing || !existing.audioMetadata) return false;
 
     // Idempotent: if already purged, return true immediately
     if (existing.audioMetadata.purged) return true;
 
-    // Delete local file from disk if it exists
+    // Delete local file from disk if it exists and verify deletion against filesystem
     const { fs: nodeFs, path: nodePath } = getNodeModules();
     if (nodeFs && nodePath && existing.audioMetadata.storagePath) {
       const fullPath = nodePath.isAbsolute(existing.audioMetadata.storagePath)
         ? existing.audioMetadata.storagePath
         : nodePath.join(process.cwd(), existing.audioMetadata.storagePath.replace(/^\//, ''));
-      try {
-        if (nodeFs.existsSync(fullPath)) {
+
+      // If file exists, attempt deletion and verify deletion on filesystem
+      if (nodeFs.existsSync(fullPath)) {
+        try {
           nodeFs.unlinkSync(fullPath);
+        } catch (unlinkErr: any) {
+          console.error(`[Store] Audio purge failed: could not unlink ${fullPath}:`, unlinkErr);
+          const actorId = (officerSession as any)?.user?.id || (officerSession as any)?.officerId || 'JENKINS-4829';
+          const actorName = (officerSession as any)?.user?.name || (officerSession as any)?.officerName || 'Det. S. Jenkins #4829';
+          this.logAuditEvent({
+            action: 'AUDIO_PURGE_FAILED',
+            actorId,
+            actorName,
+            officer: actorName,
+            resourceType: 'audio',
+            resourceId: caseId,
+            details: `Storage unlink failed: ${unlinkErr.message}. Record unpurged.`,
+            enclaveSecurityLevel: existing.securityEnclave || 'TOP SECRET // SCI',
+          });
+          throw new Error(`Storage file deletion failed for case #${caseId}: ${unlinkErr.message}`);
         }
-      } catch (err) {
-        console.warn('Could not delete audio file from disk:', err);
+
+        // Mandatory storage verification: file MUST NOT exist after unlink
+        if (nodeFs.existsSync(fullPath)) {
+          console.error('[Store] Audio purge failed: file still exists on disk after unlink:', fullPath);
+          const actorId = (officerSession as any)?.user?.id || (officerSession as any)?.officerId || 'JENKINS-4829';
+          const actorName = (officerSession as any)?.user?.name || (officerSession as any)?.officerName || 'Det. S. Jenkins #4829';
+          this.logAuditEvent({
+            action: 'AUDIO_PURGE_UNVERIFIED',
+            actorId,
+            actorName,
+            officer: actorName,
+            resourceType: 'audio',
+            resourceId: caseId,
+            details: `Storage deletion unverified: file still detected at ${fullPath}. Record unpurged.`,
+            enclaveSecurityLevel: existing.securityEnclave || 'TOP SECRET // SCI',
+          });
+          throw new Error(`Storage file deletion unconfirmed for case #${caseId}: file still detected on storage.`);
+        }
       }
     }
 
+    // Deletion verified (or file never existed). Mark purged and clear path.
     existing.audioMetadata.purged = true;
     existing.audioMetadata.storagePath = '';
     existing.updatedAt = new Date().toISOString();
 
+    const actorId = (officerSession as any)?.user?.id || (officerSession as any)?.officerId || 'JENKINS-4829';
+    const actorName = (officerSession as any)?.user?.name || (officerSession as any)?.officerName || 'Det. S. Jenkins #4829';
+
     this.logAuditEvent({
       action: 'AUDIO_PURGED',
-      actorId: 'JENKINS-4829',
-      actorName: 'Det. S. Jenkins #4829',
-      officer: 'Det. S. Jenkins #4829',
+      actorId,
+      actorName,
+      officer: actorName,
       resourceType: 'audio',
       resourceId: caseId,
-      details: `Audio for case #${existing.id} purged in compliance with retention policy. Findings preserved.`,
-      enclaveSecurityLevel: 'TOP SECRET // SCI',
+      details: `Audio for case #${existing.id} purged in compliance with retention policy (storage deletion verified). Findings preserved.`,
+      enclaveSecurityLevel: existing.securityEnclave || 'TOP SECRET // SCI',
     });
 
     this.persist();
     return true;
   }
 
-  public recordReview(caseId: string, review: Omit<OfficerReviewAction, 'id' | 'timestamp'>): Case | null {
+  public recordReview(
+    caseId: string,
+    review: Omit<OfficerReviewAction, 'id' | 'timestamp'>,
+    officerSession?: OfficerSession | { officerId?: string; officerName?: string }
+  ): Case | null {
     const targetCase = this.getCaseById(caseId);
     if (!targetCase) return null;
+
+    // Server-derived officer identity: session identity always takes precedence over untrusted review payload
+    const officerId = (officerSession as any)?.user?.id || (officerSession as any)?.officerId || review.officerId || 'JENKINS-4829';
+    const officerName = (officerSession as any)?.user?.name || (officerSession as any)?.officerName || review.officerName || 'Det. S. Jenkins #4829';
 
     const actionId = `REV-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     const fullReview: OfficerReviewAction = {
       ...review,
       id: actionId,
+      officerId,
+      officerName,
       timestamp: new Date().toISOString(),
     };
 
@@ -432,7 +527,7 @@ class CaseStore {
             : review.action === 'correct'
             ? 'confirmed'
             : 'dismissed';
-        trig.verifiedBy = review.officerName;
+        trig.verifiedBy = officerName;
         trig.verifiedAt = fullReview.timestamp;
         if (review.reason) trig.officerNotes = review.reason;
         if (review.newValue) trig.explanation = review.newValue;
@@ -450,7 +545,7 @@ class CaseStore {
           ent.value = review.newValue;
           ent.normalizedValue = review.newValue;
         }
-        ent.verifiedBy = review.officerName;
+        ent.verifiedBy = officerName;
         ent.verifiedAt = fullReview.timestamp;
       }
     } else if (review.targetType === 'transcript' || review.targetType === 'transcript_segment') {
@@ -458,7 +553,7 @@ class CaseStore {
       if (seg) {
         if (review.newValue) {
           seg.editedText = review.newValue;
-          seg.editedBy = review.officerName;
+          seg.editedBy = officerName;
           seg.editedAt = fullReview.timestamp;
         }
       }
@@ -469,13 +564,13 @@ class CaseStore {
 
     this.logAuditEvent({
       action: `OFFICER_REVIEW_${review.action.toUpperCase()}`,
-      actorId: review.officerId,
-      actorName: review.officerName,
-      officer: review.officerName,
+      actorId: officerId,
+      actorName: officerName,
+      officer: officerName,
       resourceType: review.targetType,
       resourceId: review.targetId,
       details: `Officer reviewed ${review.targetType} ${review.targetId}: ${review.action.toUpperCase()}${review.reason ? ` (${review.reason})` : ''}`,
-      enclaveSecurityLevel: 'TOP SECRET // SCI',
+      enclaveSecurityLevel: targetCase.securityEnclave || 'TOP SECRET // SCI',
     });
 
     this.persist();
@@ -561,3 +656,36 @@ class CaseStore {
 
 // Global singleton instance
 export const store = new CaseStore();
+
+/**
+ * Checks whether a given case is a synthetic demo / fixture case.
+ */
+export function isSyntheticCase(caseData?: Case | null): boolean {
+  if (!caseData) return false;
+  if (caseData.isSyntheticDemo === true) return true;
+  if (caseData.fixtureId) return true;
+  const id = caseData.id || '';
+  if (
+    id.startsWith('FIXTURE-') ||
+    id === 'CALL-2026-9104' ||
+    id === 'CALL-2026-9088' ||
+    id === 'CALL-2026-9065' ||
+    id === 'CALL-2026-9051'
+  ) {
+    return true;
+  }
+  const filename = caseData.audioMetadata?.filename || '';
+  if (
+    filename.includes('DIGITAL_ARREST') ||
+    filename.includes('EXTORTION') ||
+    filename.includes('INFORMANT_TIP') ||
+    filename.includes('PANIC_9104') ||
+    filename.includes('COERCION_9088') ||
+    filename.includes('WHISTLEBLOWER_9065') ||
+    filename.includes('MULE_ACCOUNT_9051')
+  ) {
+    return true;
+  }
+  return false;
+}
+

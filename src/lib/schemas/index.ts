@@ -250,18 +250,23 @@ export const ModelConfigSnapshotSchema = z.object({
 });
 
 export const AnalysisRunSchema = z.object({
-  id: z.string().uuid(),
-  caseId: z.string().uuid(),
-  recordingId: z.string().uuid(),
+  id: z.string(),
+  caseId: z.string(),
+  recordingId: z.string().optional(),
   status: AnalysisRunStatusSchema,
-  stages: z.record(StageNameSchema, StageStateSchema),
-  modelConfig: ModelConfigSnapshotSchema,
-  initiatedBy: z.string().min(1),
+  stages: z.record(StageNameSchema, StageStateSchema).optional(),
+  modelConfig: ModelConfigSnapshotSchema.optional(),
+  initiatedBy: z.string().optional(),
   idempotencyKey: z.string().max(128).optional(),
   summary: z.string().optional(),
-  createdAt: z.string().datetime(),
-  updatedAt: z.string().datetime(),
-  completedAt: z.string().datetime().nullable().optional(),
+  modelId: z.string().optional(),
+  isSyntheticDemo: z.boolean().default(false),
+  analysisProvider: z.string().optional(),
+  acousticMetricsAvailable: z.boolean().default(false),
+  failureReason: z.string().optional(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+  completedAt: z.string().nullable().optional(),
 });
 
 export const StartAnalysisRequestSchema = z.object({

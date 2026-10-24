@@ -148,6 +148,9 @@ export type AcousticCueType = z.infer<typeof AcousticCueTypeSchema>;
 export const STANDARD_ACOUSTIC_CAVEAT =
   'Advisory acoustic observation only. Not forensic evidence; does not infer guilt, deception, honesty, or psychological intent.';
 
+export const STANDARD_FORENSIC_DSP_DISCLAIMER =
+  'Forensic acoustic DSP metrics not measured by basic LLM; human officer review required';
+
 export const AcousticCueSchema = z.object({
   cue_id: z.string().min(1),
   source_interval: SourceIntervalSchema,
@@ -155,6 +158,8 @@ export const AcousticCueSchema = z.object({
   description: z.string().min(1),
   confidence: z.number().min(0).max(1).default(0.8),
   caveat: z.string().default(STANDARD_ACOUSTIC_CAVEAT),
+  available: z.boolean().optional(),
+  disclaimer: z.string().optional(),
 });
 
 export type AcousticCue = z.infer<typeof AcousticCueSchema>;
@@ -178,13 +183,18 @@ export type ChronologicalEvent = z.infer<typeof ChronologicalEventSchema>;
 // ==============================================================================
 
 export const AnalysisMetadataSchema = z.object({
-  model_id: z.string(),
+  model_id: z.string().default('gemini-2.5-flash'),
+  modelId: z.string().optional(),
   run_timestamp: z.string(),
   duration_seconds: z.number().nonnegative(),
   language_detected: z.string(),
   speaker_count: z.number().int().nonnegative(),
   execution_time_ms: z.number().nonnegative(),
-  is_synthetic_fixture: z.boolean().default(false),
+  is_synthetic_fixture: z.boolean().optional(),
+  isSyntheticDemo: z.boolean().optional(),
+  analysisProvider: z.string().optional(),
+  acousticMetricsAvailable: z.boolean().optional(),
+  failureReason: z.string().optional(),
   fixture_id: z.string().optional(),
   audio_format: z.string().optional(),
   prompt_version: z.string().default('v1.0.0-vecnaverse'),
@@ -201,9 +211,56 @@ export const AudioAnalysisResultSchema = z.object({
   acoustic_cues: z.array(AcousticCueSchema).default([]),
   chronological_events: z.array(ChronologicalEventSchema).default([]),
   metadata: AnalysisMetadataSchema,
+  isSyntheticDemo: z.boolean().optional(),
+  analysisProvider: z.string().optional(),
+  acousticMetricsAvailable: z.boolean().optional(),
+  modelId: z.string().optional(),
+  failureReason: z.string().optional(),
 });
 
 export type AudioAnalysisResult = z.infer<typeof AudioAnalysisResultSchema>;
+
+// ==============================================================================
+// 7. Analysis Run Execution Schema & Provenance
+// ==============================================================================
+
+export const AnalysisRunStatusSchema = z.enum([
+  'queued',
+  'in_progress',
+  'completed',
+  'partial',
+  'failed',
+  'cancelled',
+  'QUEUED',
+  'IN_PROGRESS',
+  'COMPLETED',
+  'PARTIAL',
+  'FAILED',
+  'CANCELLED',
+]);
+
+export type AnalysisRunStatus = z.infer<typeof AnalysisRunStatusSchema>;
+
+export const AnalysisRunSchema = z.object({
+  id: z.string(),
+  caseId: z.string(),
+  recordingId: z.string().optional(),
+  status: AnalysisRunStatusSchema,
+  modelId: z.string().default('gemini-2.5-flash'),
+  promptVersion: z.string().default('v1.0.0-vecnaverse'),
+  isSyntheticDemo: z.boolean().default(false),
+  analysisProvider: z.string().default('gemini'),
+  acousticMetricsAvailable: z.boolean().default(false),
+  failureReason: z.string().optional(),
+  startedAt: z.string().optional(),
+  completedAt: z.string().nullable().optional(),
+  durationMs: z.number().optional(),
+  summary: z.string().optional(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+
+export type AnalysisRun = z.infer<typeof AnalysisRunSchema>;
 
 // Prohibited terms for deception/guilt inference (guardrails PRD-FR-011, PRD-FR-012, TEST-019)
 export const PROHIBITED_INFERENCE_TERMS = [

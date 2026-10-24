@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { store } from '@/lib/data/store';
 import { CaseStatus } from '@/types';
+import { getServerSession } from '@/lib/auth/session';
 
 export async function GET(request: NextRequest) {
   try {
@@ -22,6 +23,14 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await getServerSession(request);
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Authentication required: A verified officer session is required to create a case docket.' },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
 
     if (!body.title) {
@@ -31,14 +40,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const created = store.createCase({
-      title: body.title,
-      operationName: body.operationName || 'Operation CyberShield',
-      officerName: body.officerName || body.leadInvestigator || 'Det. S. Jenkins #4829',
-      description: body.description || '',
-      priority: body.priority || 'medium',
-      taskForce: body.taskForce || 'Cyber Financial Crimes Task Force',
-    });
+    const created = store.createCase(
+      {
+        title: body.title,
+        operationName: body.operationName || 'Operation CyberShield',
+        officerName: session.user.name,
+        description: body.description || '',
+        priority: body.priority || 'medium',
+        taskForce: body.taskForce || session.user.agency || 'Cyber Financial Crimes Task Force',
+      },
+      session
+    );
 
     return NextResponse.json(created, { status: 201 });
   } catch (error: any) {

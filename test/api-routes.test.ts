@@ -4,6 +4,7 @@ import { POST as analyzePost } from '../src/app/api/cases/[id]/analyze/route';
 import { POST as reviewPost } from '../src/app/api/cases/[id]/review/route';
 import { GET as exportGet, escapeCsvField } from '../src/app/api/cases/[id]/export/route';
 import { POST as retentionPost } from '../src/app/api/cases/[id]/retention/route';
+import { GET as telemetryGet } from '../src/app/api/telemetry/route';
 import { NextRequest } from 'next/server';
 
 describe('Cybercrime API Routes & SER Triage Suite', () => {
@@ -46,6 +47,123 @@ describe('Cybercrime API Routes & SER Triage Suite', () => {
       expect(data.case.emotionProfile).toBeDefined();
       expect(data.case.urgencyScore).toBeGreaterThanOrEqual(50);
       expect(data.case.emotionProfile.primaryEmotion).toBeDefined();
+    });
+
+    it('sets truthful provenance (isSyntheticDemo: true, analysisProvider: synthetic-fixture) in demo mode', async () => {
+      const req = new NextRequest(`http://localhost:3000/api/cases/${testCaseId}/analyze`, {
+        method: 'POST',
+        body: JSON.stringify({ useSynthetic: true, fixtureId: 'extortion-demand' }),
+      });
+      const res = await analyzePost(req, { params: Promise.resolve({ id: testCaseId }) });
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.isSyntheticDemo).toBe(true);
+      expect(data.analysisProvider).toBe('synthetic-fixture');
+      expect(data.modelUsed).toBe('synthetic-fixture');
+      expect(data.case.latestRun.isSyntheticDemo).toBe(true);
+      expect(data.case.latestRun.analysisProvider).toBe('synthetic-fixture');
+    });
+
+    it('removes fabricated emotion metrics: eliminates hardcoded jitter, speech rate, tremor, and energy', async () => {
+      const req = new NextRequest(`http://localhost:3000/api/cases/${testCaseId}/analyze`, {
+        method: 'POST',
+        body: JSON.stringify({ useSynthetic: true }),
+      });
+      const res = await analyzePost(req, { params: Promise.resolve({ id: testCaseId }) });
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      const metrics = data.case.emotionProfile.acousticMetrics;
+
+      expect(metrics.available).toBe(false);
+      expect(metrics.disclaimer).toContain('Forensic acoustic DSP metrics not measured by basic LLM');
+      expect(metrics.pitchJitterHz).toBeUndefined();
+      expect(metrics.speechRateWpm).toBeUndefined();
+      expect(metrics.vocalTremorScore).toBeUndefined();
+      expect(metrics.energySpikeDb).toBeUndefined();
+    });
+
+    it('rejects unconfigured API key on real audio analysis without masking as synthetic success', async () => {
+      const originalKey = process.env.GEMINI_API_KEY;
+      delete process.env.GEMINI_API_KEY;
+
+      try {
+        const realCase = store.createCase({
+          title: 'Real Audio Intercept Test',
+          audioMetadata: {
+            filename: 'real_intercept.wav',
+            storagePath: '/uploads/audio/real_intercept.wav',
+            durationSeconds: 15,
+            sampleRate: 16000,
+            channels: 1,
+            format: 'wav',
+            mimeType: 'audio/wav',
+            sizeBytes: 480000,
+            sha256Hash: 'a'.repeat(64),
+            uploadedAt: new Date().toISOString(),
+            expiresAt: new Date().toISOString(),
+            retentionHours: 24,
+            purged: false,
+          },
+        });
+
+        // Request REAL analysis (useSynthetic is false/omitted)
+        const req = new NextRequest(`http://localhost:3000/api/cases/${realCase.id}/analyze`, {
+          method: 'POST',
+          body: JSON.stringify({ useSynthetic: false }),
+        });
+        const res = await analyzePost(req, { params: Promise.resolve({ id: realCase.id }) });
+        expect(res.status).toBe(500);
+
+        const data = await res.json();
+        expect(data.success).toBe(false);
+        expect(data.status).toBe('FAILED');
+        expect(data.failureReason).toContain('Gemini API key is not configured');
+        expect(data.isSyntheticDemo).toBe(false);
+        expect(data.case.latestRun.status).toBe('failed');
+      } finally {
+        if (originalKey) process.env.GEMINI_API_KEY = originalKey;
+      }
+    });
+
+    it('returns FAILED status and records failure when real audio file is missing from disk', async () => {
+      process.env.GEMINI_API_KEY = 'mock-api-key-for-test';
+
+      try {
+        const realCase = store.createCase({
+          title: 'Missing File Test',
+          audioMetadata: {
+            filename: 'non_existent_file.wav',
+            storagePath: '/uploads/audio/NON_EXISTENT_AUDIO_CALL_404.wav',
+            durationSeconds: 10,
+            sampleRate: 16000,
+            channels: 1,
+            format: 'wav',
+            mimeType: 'audio/wav',
+            sizeBytes: 320000,
+            sha256Hash: 'b'.repeat(64),
+            uploadedAt: new Date().toISOString(),
+            expiresAt: new Date().toISOString(),
+            retentionHours: 24,
+            purged: false,
+          },
+        });
+
+        const req = new NextRequest(`http://localhost:3000/api/cases/${realCase.id}/analyze`, {
+          method: 'POST',
+          body: JSON.stringify({ useSynthetic: false }),
+        });
+        const res = await analyzePost(req, { params: Promise.resolve({ id: realCase.id }) });
+        expect(res.status).toBe(400); // Bad media / not found on disk
+
+        const data = await res.json();
+        expect(data.success).toBe(false);
+        expect(data.status).toBe('FAILED');
+        expect(data.failureReason).toContain('Audio file not found on disk');
+        expect(data.isSyntheticDemo).toBe(false);
+        expect(data.case.latestRun.status).toBe('failed');
+      } finally {
+        delete process.env.GEMINI_API_KEY;
+      }
     });
   });
 
@@ -162,6 +280,31 @@ describe('Cybercrime API Routes & SER Triage Suite', () => {
       expect(res2.status).toBe(200);
       const data2 = await res2.json();
       expect(data2.success).toBe(true);
+    });
+  });
+
+  describe('GET /api/telemetry', () => {
+    it('returns genuine system health, storage check, and compliance disclaimers without hardcoded CJIS claim', async () => {
+      const res = await telemetryGet();
+      expect(res.status).toBe(200);
+      const data = await res.json();
+
+      // System telemetry
+      expect(data.system).toBeDefined();
+      expect(data.system.nodeVersion).toMatch(/^v\d+/);
+      expect(typeof data.system.uptimeSeconds).toBe('number');
+      expect(data.system.memoryUsage.heapUsedMb).toBeGreaterThan(0);
+
+      // Storage writability
+      expect(data.storage).toBeDefined();
+      expect(typeof data.storage.writable).toBe('boolean');
+
+      // Compliance disclaimers
+      expect(data.compliance).toBeDefined();
+      expect(data.compliance.thirdPartyAudited).toBe(false);
+      expect(data.compliance.notice).toContain('third-party audit');
+      expect(data.cjisCompliant).toBeUndefined();
+      expect(data.isolatedDiskBacking).toBeUndefined();
     });
   });
 });

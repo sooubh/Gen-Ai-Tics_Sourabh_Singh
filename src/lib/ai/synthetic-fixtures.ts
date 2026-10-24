@@ -1138,6 +1138,13 @@ export function getSyntheticFixture(fixtureId: string): AudioAnalysisResult {
   // Deep clone and refresh timestamp
   const cloned: AudioAnalysisResult = JSON.parse(JSON.stringify(fixture));
   cloned.metadata.run_timestamp = new Date().toISOString();
+  cloned.isSyntheticDemo = true;
+  cloned.analysisProvider = 'synthetic-fixture';
+  cloned.acousticMetricsAvailable = false;
+  cloned.metadata.is_synthetic_fixture = true;
+  cloned.metadata.isSyntheticDemo = true;
+  cloned.metadata.analysisProvider = 'synthetic-fixture';
+  cloned.metadata.acousticMetricsAvailable = false;
 
   // Validate schema
   return AudioAnalysisResultSchema.parse(cloned);

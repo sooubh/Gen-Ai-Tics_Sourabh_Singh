@@ -15,6 +15,7 @@ import {
   AudioAnalysisResultSchema,
   PROHIBITED_INFERENCE_TERMS,
   STANDARD_ACOUSTIC_CAVEAT,
+  STANDARD_FORENSIC_DSP_DISCLAIMER,
   TriggerContext,
 } from './types';
 
@@ -74,13 +75,26 @@ export class GeminiMediaError extends GeminiError {
 }
 
 // ==============================================================================
-// Configuration Helpers
+// Configuration Helpers & Model Selection
 // ==============================================================================
+
+export const VERIFIED_GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash'] as const;
+export type VerifiedGeminiModel = typeof VERIFIED_GEMINI_MODELS[number];
+
+export function normalizeGeminiModel(modelName?: string): VerifiedGeminiModel {
+  if (!modelName) return 'gemini-2.5-flash';
+  const clean = modelName.trim().toLowerCase();
+  if (clean === 'gemini-2.0-flash' || clean.includes('2.0')) {
+    return 'gemini-2.0-flash';
+  }
+  // Default to gemini-2.5-flash for verified accuracy
+  return 'gemini-2.5-flash';
+}
 
 export interface GeminiAdapterConfig {
   apiKey?: string;
-  recordedModel?: string;
-  analysisModel?: string;
+  recordedModel?: VerifiedGeminiModel;
+  analysisModel?: VerifiedGeminiModel;
   maxRetries?: number;
   initialBackoffMs?: number;
   timeoutMs?: number;
@@ -89,12 +103,62 @@ export interface GeminiAdapterConfig {
 export function getGeminiConfig(overrides?: Partial<GeminiAdapterConfig>): GeminiAdapterConfig {
   return {
     apiKey: overrides?.apiKey || process.env.GEMINI_API_KEY,
-    recordedModel: overrides?.recordedModel || process.env.GEMINI_RECORDED_MODEL || 'gemini-2.5-flash',
-    analysisModel: overrides?.analysisModel || process.env.GEMINI_AUDIO_ANALYSIS_MODEL || 'gemini-2.5-flash',
+    recordedModel: normalizeGeminiModel(overrides?.recordedModel || process.env.GEMINI_RECORDED_MODEL),
+    analysisModel: normalizeGeminiModel(overrides?.analysisModel || process.env.GEMINI_AUDIO_ANALYSIS_MODEL),
     maxRetries: overrides?.maxRetries ?? Number(process.env.MAX_RETRY_ATTEMPTS || 3),
     initialBackoffMs: overrides?.initialBackoffMs ?? 1000,
     timeoutMs: overrides?.timeoutMs ?? 60000,
   };
+}
+
+/**
+ * Robust filesystem resolver for audio file paths across cross-platform environments.
+ * Checks exact paths, relative to process.cwd(), public/, and uploads/audio/.
+ */
+export function resolveAudioFilePath(filePath: string): string | null {
+  if (!filePath || typeof filePath !== 'string') return null;
+
+  // 1. Exact path as given
+  if (fs.existsSync(filePath)) {
+    try {
+      if (fs.statSync(filePath).isFile()) return path.resolve(filePath);
+    } catch {
+      // ignore
+    }
+  }
+
+  // 2. Relative to process.cwd(), stripping leading slash / backslash
+  const cleanRelative = filePath.replace(/^[/\\]+/, '');
+  const fromCwd = path.join(process.cwd(), cleanRelative);
+  if (fs.existsSync(fromCwd)) {
+    try {
+      if (fs.statSync(fromCwd).isFile()) return fromCwd;
+    } catch {
+      // ignore
+    }
+  }
+
+  // 3. Inside public/ directory
+  const fromPublic = path.join(process.cwd(), 'public', cleanRelative);
+  if (fs.existsSync(fromPublic)) {
+    try {
+      if (fs.statSync(fromPublic).isFile()) return fromPublic;
+    } catch {
+      // ignore
+    }
+  }
+
+  // 4. Inside uploads/audio/ by basename
+  const fromUploadsAudio = path.join(process.cwd(), 'uploads', 'audio', path.basename(filePath));
+  if (fs.existsSync(fromUploadsAudio)) {
+    try {
+      if (fs.statSync(fromUploadsAudio).isFile()) return fromUploadsAudio;
+    } catch {
+      // ignore
+    }
+  }
+
+  return null;
 }
 
 // ==============================================================================
@@ -240,6 +304,8 @@ function sanitizeAcousticCuesAndTriggers(result: AudioAnalysisResult): AudioAnal
       ...cue,
       description: desc,
       caveat: STANDARD_ACOUSTIC_CAVEAT,
+      available: false,
+      disclaimer: STANDARD_FORENSIC_DSP_DISCLAIMER,
     };
   });
 
@@ -286,10 +352,10 @@ export class GeminiAudioAdapter {
   }
 
   /**
-   * Returns current active model ID.
+   * Returns current active model ID verified against supported models (gemini-2.5-flash or gemini-2.0-flash).
    */
-  public getModelId(override?: string): string {
-    return override || this.config.recordedModel || 'gemini-2.5-flash';
+  public getModelId(override?: string): VerifiedGeminiModel {
+    return normalizeGeminiModel(override || this.config.recordedModel || this.config.analysisModel || 'gemini-2.5-flash');
   }
 
   /**
@@ -369,14 +435,22 @@ Analyze this audio file thoroughly according to all instructions and schema requ
         const parsedJson = this.extractJson(rawText);
         const executionTimeMs = Date.now() - startTime;
 
-        // Enhance metadata with execution timing and duration
+        // Enhance with real provenance and execution timing
+        parsedJson.isSyntheticDemo = false;
+        parsedJson.analysisProvider = 'gemini';
+        parsedJson.acousticMetricsAvailable = false;
+        parsedJson.modelId = modelId;
         parsedJson.metadata = {
           ...parsedJson.metadata,
           model_id: modelId,
+          modelId: modelId,
           run_timestamp: new Date().toISOString(),
           duration_seconds: options.durationSeconds ?? parsedJson.metadata?.duration_seconds ?? 0,
           execution_time_ms: executionTimeMs,
           is_synthetic_fixture: false,
+          isSyntheticDemo: false,
+          analysisProvider: 'gemini',
+          acousticMetricsAvailable: false,
         };
 
         // Runtime Schema Validation (ADR-02, REC-08)
@@ -436,17 +510,23 @@ Analyze this audio file thoroughly according to all instructions and schema requ
 
   /**
    * Analyzes an audio file stored on local disk (e.g. uploads/audio/...).
+   * Resolves paths robustly, checks existence/size, and streams/uploads to Gemini.
    */
   public async analyzeAudioFile(
     filePath: string,
     options: AnalyzeAudioOptions = {}
   ): Promise<AudioAnalysisResult> {
-    if (!fs.existsSync(filePath)) {
-      throw new GeminiMediaError(`Audio file not found at path: ${path.basename(filePath)}`);
+    const resolvedPath = resolveAudioFilePath(filePath);
+    if (!resolvedPath) {
+      throw new GeminiMediaError(`Audio file not found on disk at path: ${filePath}`);
     }
 
-    const buffer = await fs.promises.readFile(filePath);
-    const ext = path.extname(filePath).toLowerCase();
+    const stat = await fs.promises.stat(resolvedPath);
+    if (stat.size === 0) {
+      throw new GeminiMediaError(`Audio file is empty (0 bytes) at path: ${filePath}`);
+    }
+
+    const ext = path.extname(resolvedPath).toLowerCase();
 
     let detectedMime = options.mimeType;
     if (!detectedMime) {
@@ -471,10 +551,85 @@ Analyze this audio file thoroughly according to all instructions and schema requ
       }
     }
 
+    // For files exceeding standard inline payload limit (20MB), utilize Files API if supported
+    const MAX_INLINE_BYTES = 20 * 1024 * 1024;
+    if (stat.size > MAX_INLINE_BYTES && this.client && (this.client as any).files?.uploadFile) {
+      try {
+        const uploadResult = await (this.client as any).files.uploadFile(resolvedPath, {
+          mimeType: detectedMime,
+        });
+
+        const startTime = Date.now();
+        const modelId = this.getModelId(options.forceModel);
+        const promptText = `
+${AUDIO_ANALYSIS_SYSTEM_PROMPT}
+
+${AUDIO_ANALYSIS_SCHEMA_INSTRUCTION}
+
+Analyze this audio file thoroughly according to all instructions and schema requirements.
+`;
+        const response = await this.client.models.generateContent({
+          model: modelId,
+          contents: [
+            {
+              fileData: {
+                fileUri: uploadResult.uri,
+                mimeType: uploadResult.mimeType || detectedMime,
+              },
+            },
+            { text: promptText },
+          ],
+          config: {
+            responseMimeType: 'application/json',
+          },
+        });
+
+        const rawText = response.text;
+        if (!rawText) {
+          throw new GeminiResponseValidationError('Gemini returned an empty response body.');
+        }
+
+        const parsedJson = this.extractJson(rawText);
+        const executionTimeMs = Date.now() - startTime;
+
+        parsedJson.isSyntheticDemo = false;
+        parsedJson.analysisProvider = 'gemini';
+        parsedJson.acousticMetricsAvailable = false;
+        parsedJson.modelId = modelId;
+        parsedJson.metadata = {
+          ...parsedJson.metadata,
+          model_id: modelId,
+          modelId: modelId,
+          run_timestamp: new Date().toISOString(),
+          duration_seconds: options.durationSeconds ?? parsedJson.metadata?.duration_seconds ?? 0,
+          execution_time_ms: executionTimeMs,
+          is_synthetic_fixture: false,
+          isSyntheticDemo: false,
+          analysisProvider: 'gemini',
+          acousticMetricsAvailable: false,
+        };
+
+        const parseResult = AudioAnalysisResultSchema.safeParse(parsedJson);
+        if (!parseResult.success) {
+          throw new GeminiResponseValidationError(
+            `Output schema validation failed: ${parseResult.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join(', ')}`,
+            parseResult.error.format()
+          );
+        }
+
+        return sanitizeAcousticCuesAndTriggers(parseResult.data);
+      } catch (filesErr) {
+        if (filesErr instanceof GeminiError) throw filesErr;
+        // Fall back to buffer read if Files API upload fails
+      }
+    }
+
+    const buffer = await fs.promises.readFile(resolvedPath);
+
     return this.analyzeAudioBuffer(buffer, {
       ...options,
       mimeType: detectedMime,
-      fileName: path.basename(filePath),
+      fileName: path.basename(resolvedPath),
     });
   }
 

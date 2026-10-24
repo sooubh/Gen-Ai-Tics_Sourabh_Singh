@@ -3,7 +3,7 @@
 import React, { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { store } from '@/lib/data/store';
+import { store, isSyntheticCase } from '@/lib/data/store';
 import { Case, TranscriptSegment } from '@/types';
 import { AudioPlayer } from '@/components/AudioPlayer';
 import { SynchronizedTranscript } from '@/components/SynchronizedTranscript';
@@ -13,7 +13,7 @@ import { TimelineView } from '@/components/TimelineView';
 import { VocalIndicatorCard } from '@/components/VocalIndicatorCard';
 import { CaseReviewBar } from '@/components/CaseReviewBar';
 import { ReportModal } from '@/components/ReportModal';
-import { ArrowLeft, AlertCircle, FileAudio, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, AlertCircle, FileAudio, CheckCircle2, AlertTriangle } from 'lucide-react';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -212,6 +212,23 @@ export default function CaseDetailPage({ params }: PageProps) {
       />
 
       <main className="flex-1 p-4 md:p-6 max-w-7xl mx-auto w-full space-y-6">
+        {/* Synthetic Demo Case Alert Banner */}
+        {isSyntheticCase(caseData) && (
+          <div className="rounded-lg border border-[#ffb964]/50 bg-[#2a1a05] p-3 text-xs text-[#edeae1] shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+            <div className="flex items-center gap-2">
+              <span className="px-2 py-0.5 rounded bg-[#ffb964] text-[#121315] font-mono text-[10px] font-bold tracking-wider">
+                SYNTHETIC DEMO DATA
+              </span>
+              <span className="text-[#edeae1] font-medium text-xs">
+                This case is a synthetic demonstration fixture. All acoustic metrics, callers, and transcripts are simulated for evaluation.
+              </span>
+            </div>
+            <span className="font-mono text-[10px] text-[#ffb964] font-bold">
+              NON-INVESTIGATIVE EVIDENCE
+            </span>
+          </div>
+        )}
+
         {/* Navigation Breadcrumb & Caller Triage Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#18191c] p-3.5 rounded-lg border border-[#35373e]">
           <div className="space-y-1">
@@ -224,6 +241,11 @@ export default function CaseDetailPage({ params }: PageProps) {
               </Link>
               <span className="text-[#35373e]">/</span>
               <span className="font-mono text-xs text-[#8a9a5b] font-bold">{caseData.docketNumber}</span>
+              {isSyntheticCase(caseData) && (
+                <span className="rounded bg-[#422006] px-2 py-0.5 font-mono text-[10px] font-bold text-[#ffb964] border border-[#ffb964]/40">
+                  DEMO FIXTURE
+                </span>
+              )}
               {caseData.urgencyScore && (
                 <span className="rounded bg-[#401311] px-2 py-0.5 font-mono text-[10px] font-bold text-[#d96f68] border border-[#b84a44]/50 animate-pulse">
                   URGENCY: {caseData.urgencyScore}/100 [{caseData.urgencyLevel || 'HIGH'}]

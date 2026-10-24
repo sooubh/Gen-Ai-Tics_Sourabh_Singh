@@ -33,34 +33,183 @@ export async function POST(request: NextRequest, { params }: Params) {
       );
     }
 
+    const startTimeMs = Date.now();
+    const startTimeIso = new Date().toISOString();
     const apiKey = process.env.GEMINI_API_KEY;
-    const useSynthetic = body.useSynthetic || !apiKey;
-    const requestedFixture = body.fixtureId;
-    const fixtureId = requestedFixture && isFixtureAvailable(requestedFixture)
-      ? requestedFixture
-      : 'extortion-demand';
+
+    // Truth-in-advertising provenance: detect explicit synthetic demo requests
+    const isSyntheticDemo = Boolean(body.useSynthetic === true || body.fixtureId);
 
     let result: AudioAnalysisResult;
-    let modelUsed = 'synthetic-deterministic-pipeline';
+    let modelUsed: string;
+    let analysisProvider: string;
 
-    if (!useSynthetic && apiKey) {
-      try {
-        const adapter = new GeminiAudioAdapter();
-        if (targetCase.audioMetadata?.storagePath) {
-          result = await adapter.analyzeAudioFile(targetCase.audioMetadata.storagePath, {
-            caseId: id,
-          });
-          modelUsed = adapter.getModelId();
-        } else {
-          result = await executeSyntheticRun(fixtureId);
-        }
-      } catch (geminiErr: any) {
-        console.warn('Gemini live analysis failed, falling back to synthetic fixture runner:', geminiErr);
-        result = await executeSyntheticRun(fixtureId);
-        modelUsed = 'synthetic-fallback-fixture';
-      }
-    } else {
+    if (isSyntheticDemo) {
+      // User explicitly requested synthetic demo mode or specific fixture
+      const requestedFixture = body.fixtureId;
+      const fixtureId = requestedFixture && isFixtureAvailable(requestedFixture)
+        ? requestedFixture
+        : 'extortion-demand';
+
       result = await executeSyntheticRun(fixtureId);
+      modelUsed = 'synthetic-fixture';
+      analysisProvider = 'synthetic-fixture';
+    } else {
+      // Real audio processing branch
+      if (!apiKey) {
+        const failureReason =
+          'Gemini API key is not configured on server (GEMINI_API_KEY). Provide API key or specify useSynthetic: true for offline demo mode.';
+        const timestamp = new Date().toISOString();
+
+        const updated = store.updateCase(id, {
+          status: 'flagged',
+          latestRun: {
+            id: `run-${Date.now()}`,
+            caseId: id,
+            status: 'failed',
+            modelId: 'gemini-2.5-flash',
+            promptVersion: 'v1.0.0-vecnaverse',
+            isSyntheticDemo: false,
+            analysisProvider: 'gemini',
+            acousticMetricsAvailable: false,
+            failureReason,
+            startedAt: startTimeIso,
+            completedAt: timestamp,
+          },
+        });
+
+        store.logAuditEvent({
+          action: 'PIPELINE_FAILED',
+          actorId: 'JENKINS-4829',
+          actorName: 'Det. S. Jenkins #4829',
+          officer: targetCase.officerName || 'Det. S. Jenkins #4829',
+          resourceType: 'case',
+          resourceId: id,
+          details: `Forensic audio analysis failed: ${failureReason}`,
+          enclaveSecurityLevel: targetCase.securityEnclave || 'TOP SECRET // SCI',
+        });
+
+        return NextResponse.json(
+          {
+            success: false,
+            status: 'FAILED',
+            error: failureReason,
+            failureReason,
+            timestamp,
+            isSyntheticDemo: false,
+            analysisProvider: 'gemini',
+            case: updated,
+          },
+          { status: 500 }
+        );
+      }
+
+      const storagePath = targetCase.audioMetadata?.storagePath;
+      if (!storagePath) {
+        const failureReason =
+          'No audio recording attached to case for real audio analysis. Attach an audio file or specify useSynthetic: true for demo mode.';
+        const timestamp = new Date().toISOString();
+
+        const updated = store.updateCase(id, {
+          status: 'flagged',
+          latestRun: {
+            id: `run-${Date.now()}`,
+            caseId: id,
+            status: 'failed',
+            modelId: 'gemini-2.5-flash',
+            promptVersion: 'v1.0.0-vecnaverse',
+            isSyntheticDemo: false,
+            analysisProvider: 'gemini',
+            acousticMetricsAvailable: false,
+            failureReason,
+            startedAt: startTimeIso,
+            completedAt: timestamp,
+          },
+        });
+
+        store.logAuditEvent({
+          action: 'PIPELINE_FAILED',
+          actorId: 'JENKINS-4829',
+          actorName: 'Det. S. Jenkins #4829',
+          officer: targetCase.officerName || 'Det. S. Jenkins #4829',
+          resourceType: 'case',
+          resourceId: id,
+          details: `Forensic audio analysis failed: ${failureReason}`,
+          enclaveSecurityLevel: targetCase.securityEnclave || 'TOP SECRET // SCI',
+        });
+
+        return NextResponse.json(
+          {
+            success: false,
+            status: 'FAILED',
+            error: failureReason,
+            failureReason,
+            timestamp,
+            isSyntheticDemo: false,
+            analysisProvider: 'gemini',
+            case: updated,
+          },
+          { status: 400 }
+        );
+      }
+
+      try {
+        const adapter = new GeminiAudioAdapter({
+          recordedModel: body.model || 'gemini-2.5-flash',
+        });
+        result = await adapter.analyzeAudioFile(storagePath, {
+          caseId: id,
+          forceModel: body.model,
+        });
+        modelUsed = adapter.getModelId(body.model);
+        analysisProvider = 'gemini';
+      } catch (geminiErr: any) {
+        // NEVER silently mask Gemini failures with synthetic success!
+        const failureReason = geminiErr?.message || 'Gemini processing failed on audio file';
+        const timestamp = new Date().toISOString();
+
+        const updated = store.updateCase(id, {
+          status: 'flagged',
+          latestRun: {
+            id: `run-${Date.now()}`,
+            caseId: id,
+            status: 'failed',
+            modelId: 'gemini-2.5-flash',
+            promptVersion: 'v1.0.0-vecnaverse',
+            isSyntheticDemo: false,
+            analysisProvider: 'gemini',
+            acousticMetricsAvailable: false,
+            failureReason,
+            startedAt: startTimeIso,
+            completedAt: timestamp,
+          },
+        });
+
+        store.logAuditEvent({
+          action: 'PIPELINE_FAILED',
+          actorId: 'JENKINS-4829',
+          actorName: 'Det. S. Jenkins #4829',
+          officer: targetCase.officerName || 'Det. S. Jenkins #4829',
+          resourceType: 'case',
+          resourceId: id,
+          details: `Forensic audio analysis failed on file '${storagePath}': ${failureReason}`,
+          enclaveSecurityLevel: targetCase.securityEnclave || 'TOP SECRET // SCI',
+        });
+
+        return NextResponse.json(
+          {
+            success: false,
+            status: 'FAILED',
+            error: `Gemini audio analysis failed: ${failureReason}`,
+            failureReason,
+            timestamp,
+            isSyntheticDemo: false,
+            analysisProvider: 'gemini',
+            case: updated,
+          },
+          { status: geminiErr.status || 502 }
+        );
+      }
     }
 
     // Map segments
@@ -121,22 +270,22 @@ export async function POST(request: NextRequest, { params }: Params) {
     }));
 
     // Map acoustic cues to vocal indicators
+    // Basic LLMs provide advisory acoustic observations, not forensic DSP metrics.
     const mappedVocalIndicators: VocalIndicator[] = (result.acoustic_cues || []).map((cue, idx) => ({
       id: cue.cue_id || `voc-${idx + 1}`,
       type: cue.sound_type,
       metricName: cue.sound_type,
-      metricValue: cue.confidence * 100,
-      score: cue.confidence * 100,
       confidence: cue.confidence,
       description: cue.description,
-      disclaimer: cue.caveat,
-      advisoryDisclaimer: cue.caveat,
+      isAdvisory: true,
+      available: false,
+      disclaimer: 'Forensic acoustic DSP metrics not measured by basic LLM; human officer review required',
+      advisoryDisclaimer: cue.caveat || 'Forensic acoustic DSP metrics not measured by basic LLM; human officer review required',
       startTime: cue.source_interval.start_ms / 1000,
       endTime: cue.source_interval.end_ms / 1000,
-      isAdvisory: true,
     }));
 
-    // Derive dynamic Speech Emotion Recognition (SER) metrics and Urgency Score
+    // Derive Urgency Score strictly from validated emergency triggers
     let computedUrgency = 50;
     const criticalTriggers = mappedTriggers.filter((t) => t.severity === 'critical').length;
     const highTriggers = mappedTriggers.filter((t) => t.severity === 'high').length;
@@ -153,36 +302,41 @@ export async function POST(request: NextRequest, { params }: Params) {
     );
     const hasDistress = mappedTriggers.some((t) => t.category === 'DISTRESS');
 
-    const primaryEmotion: SpeechEmotionProfile['primaryEmotion'] = hasDistress
-      ? 'distress'
-      : hasExtortionOrViolence
-      ? 'fear'
-      : targetCase.callerCategory === 'suspected_fraudster'
-      ? 'anger'
-      : targetCase.callerCategory === 'informant'
-      ? 'nervousness'
-      : 'calm';
+    let primaryEmotion: SpeechEmotionProfile['primaryEmotion'] = 'neutral';
+    if (hasDistress) {
+      primaryEmotion = 'distress';
+    } else if (hasExtortionOrViolence) {
+      primaryEmotion = 'fear';
+    }
 
+    // REMOVED FABRICATED EMOTION METRICS:
+    // Eliminated pseudo-scientific precision numbers (jitter 182Hz, speech rate 218wpm, tremor 95/100, energy 24.5dB).
+    // Vocal indicators and acoustic telemetry are explicitly marked unavailable without dedicated DSP model.
     const computedEmotionProfile: SpeechEmotionProfile = {
       primaryEmotion,
       urgencyScore: computedUrgency,
       urgencyLevel,
       emotions: {
-        fear: primaryEmotion === 'fear' ? 0.94 : hasExtortionOrViolence ? 0.75 : 0.15,
-        distress: primaryEmotion === 'distress' ? 0.92 : hasDistress ? 0.8 : 0.1,
-        anger: primaryEmotion === 'anger' ? 0.89 : 0.15,
-        nervousness: primaryEmotion === 'nervousness' ? 0.74 : 0.35,
-        calm: primaryEmotion === 'calm' ? 0.85 : 0.08,
+        fear: (primaryEmotion as string) === 'fear' ? 0.8 : 0.2,
+        distress: (primaryEmotion as string) === 'distress' ? 0.8 : 0.2,
+        anger: (primaryEmotion as string) === 'anger' ? 0.8 : 0.2,
+        nervousness: (primaryEmotion as string) === 'nervousness' ? 0.8 : 0.2,
+        calm: (primaryEmotion as string) === 'calm' ? 0.8 : 0.2,
       },
       acousticMetrics: {
-        pitchJitterHz: primaryEmotion === 'fear' || primaryEmotion === 'distress' ? 182 : 65,
-        speechRateWpm: primaryEmotion === 'fear' ? 218 : 142,
-        vocalTremorScore: primaryEmotion === 'distress' ? 95 : primaryEmotion === 'fear' ? 88 : 35,
-        energySpikeDb: primaryEmotion === 'anger' ? 24.5 : 8.2,
+        available: false,
+        disclaimer: 'Forensic acoustic DSP metrics not measured by basic LLM; human officer review required',
       },
+      acousticMetricsAvailable: false,
+      disclaimer: 'Forensic acoustic DSP metrics not measured by basic LLM; human officer review required',
+      isSyntheticDemo,
+      analysisProvider,
     };
 
-    // Update case with findings and computed SER triage metrics
+    const durationMs = Date.now() - startTimeMs;
+    const completedAt = new Date().toISOString();
+
+    // Update case with findings, truthful provenance, and non-fabricated indicators
     const updated = store.updateCase(id, {
       status: 'under_review',
       segments: mappedSegments,
@@ -193,22 +347,41 @@ export async function POST(request: NextRequest, { params }: Params) {
       urgencyScore: computedUrgency,
       urgencyLevel,
       emotionProfile: computedEmotionProfile,
+      latestRun: {
+        id: `run-${Date.now()}`,
+        caseId: id,
+        status: 'completed',
+        modelId: modelUsed,
+        promptVersion: 'v1.0.0-vecnaverse',
+        isSyntheticDemo,
+        analysisProvider,
+        acousticMetricsAvailable: false,
+        startedAt: startTimeIso,
+        completedAt,
+        durationMs,
+      },
     });
 
     store.logAuditEvent({
       action: 'PIPELINE_EXECUTED',
       actorId: 'JENKINS-4829',
       actorName: 'Det. S. Jenkins #4829',
-      officer: 'Det. S. Jenkins #4829',
+      officer: targetCase.officerName || 'Det. S. Jenkins #4829',
       resourceType: 'case',
       resourceId: id,
-      details: `Forensic audio analysis run completed using ${modelUsed}.`,
-      enclaveSecurityLevel: 'TOP SECRET // SCI',
+      details: isSyntheticDemo
+        ? `Synthetic demo audio analysis run completed using ${modelUsed}.`
+        : `Forensic audio analysis run completed via Gemini using ${modelUsed}.`,
+      enclaveSecurityLevel: targetCase.securityEnclave || 'TOP SECRET // SCI',
     });
 
     return NextResponse.json({
       success: true,
+      status: 'COMPLETED',
       modelUsed,
+      isSyntheticDemo,
+      analysisProvider,
+      acousticMetricsAvailable: false,
       case: updated,
     });
   } catch (error: any) {

@@ -2,7 +2,8 @@
 
 import React from 'react';
 import { Case } from '@/types';
-import { FileText, Share2, ShieldCheck, Trash2 } from 'lucide-react';
+import { FileText, Share2, ShieldCheck, Trash2, AlertTriangle } from 'lucide-react';
+import { isSyntheticCase } from '@/lib/data/store';
 
 interface CaseReviewBarProps {
   caseData: Case;
@@ -41,6 +42,12 @@ export function CaseReviewBar({
             <span className="hidden md:inline px-2 py-0.5 rounded bg-[#0d0e10] text-[#71706b] border border-[#35373e]">
               {caseData.evidenceId || '#AUD-0892-FLAC'}
             </span>
+            {isSyntheticCase(caseData) && (
+              <span className="px-2 py-0.5 rounded bg-[#422006] text-[#ffb964] border border-[#ffb964]/50 font-bold inline-flex items-center gap-1 shadow-sm">
+                <AlertTriangle className="h-3 w-3 text-[#ffb964]" />
+                SYNTHETIC DEMO DATA
+              </span>
+            )}
             {caseData.audioMetadata?.purged && (
               <span className="rounded bg-[#401311] px-2 py-0.5 text-[#d96f68] border border-[#b84a44]/40 font-bold">
                 AUDIO PURGED (RETENTION COMPLIANT)

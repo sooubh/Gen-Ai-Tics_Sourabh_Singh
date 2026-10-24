@@ -72,28 +72,49 @@ export function LiveMonitorView() {
 
   return (
     <div className="flex flex-col gap-4 p-4 max-w-7xl mx-auto w-full">
+      {/* Prominent Simulation Disclaimer Banner */}
+      <div className="rounded-lg border border-[#ffb964]/60 bg-[#2a1a05] p-3.5 text-xs text-[#edeae1] shadow-lg flex items-start gap-3">
+        <AlertTriangle className="h-5 w-5 text-[#ffb964] flex-shrink-0 mt-0.5" />
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2">
+            <span className="font-mono font-bold text-[10px] uppercase tracking-wider px-2 py-0.5 rounded bg-[#ffb964] text-[#121315]">
+              SIMULATION PREVIEW
+            </span>
+            <span className="font-bold text-[#ffb964] text-xs">
+              Assistive Demonstration Mode
+            </span>
+          </div>
+          <p className="text-[#edeae1] leading-relaxed text-xs">
+            ⚠️ DEMO PREVIEW MODE — Simulated Audio Feed. No live microphone or WebRTC stream is currently connected. Acoustic indicators and live transcripts shown are simulated demonstrations and must not be used as investigative evidence.
+          </p>
+        </div>
+      </div>
+
       {/* Stream Control & Telemetry Bar */}
       <div className="w-full bg-[#18191c] border border-[#35373e] rounded-lg px-4 py-3 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 shadow-sm">
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">
             <span className="relative flex h-2.5 w-2.5">
               {isRecording && (
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#d96f68] opacity-75" />
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#ffb964] opacity-75" />
               )}
-              <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${isRecording ? 'bg-[#d96f68]' : 'bg-[#71706b]'}`} />
+              <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${isRecording ? 'bg-[#ffb964]' : 'bg-[#71706b]'}`} />
             </span>
             <span className="font-mono text-xs font-bold text-[#edeae1] uppercase tracking-wider">
-              Live Helpline Channel 01
+              Helpline Channel 01
+            </span>
+            <span className="rounded bg-[#422006] px-2 py-0.5 font-mono text-[10px] text-[#ffb964] border border-[#ffb964]/40 font-bold">
+              SIMULATION PREVIEW
             </span>
             <span className="text-[#35373e]">|</span>
             <span className="rounded bg-[#401311] px-2 py-0.5 font-mono text-[10px] text-[#d96f68] border border-[#b84a44]/50 font-black animate-pulse">
-              LIVE URGENCY: {liveUrgency}/100 [CRITICAL]
+              SIMULATED URGENCY: {liveUrgency}/100 [DEMO]
             </span>
           </div>
 
           <div className="flex items-center gap-2 font-mono text-xs text-[#9e9c96]">
             <span className="text-[#71706b]">Caller:</span>
-            <span className="text-[#edeae1] font-medium">Distressed Citizen (+91 98201 44829)</span>
+            <span className="text-[#edeae1] font-medium">Distressed Citizen (+91 98201 44829) [Synthetic]</span>
             <span>·</span>
             <span className="text-[#71706b]">Elapsed:</span>
             <span className="font-bold text-[#8a9a5b]">{formatTimer(elapsedSeconds)}</span>
@@ -118,7 +139,7 @@ export function LiveMonitorView() {
             }`}
           >
             {isRecording ? <PauseCircle className="h-4 w-4" /> : <PlayCircle className="h-4 w-4" />}
-            <span>{isRecording ? 'Hold Live Stream' : 'Resume Capture'}</span>
+            <span>{isRecording ? 'Pause Simulation' : 'Resume Simulation'}</span>
           </button>
         </div>
       </div>
@@ -153,10 +174,10 @@ export function LiveMonitorView() {
                 </div>
               </div>
               <div className="flex items-center gap-2 font-mono text-[11px] text-[#71706b]">
-                <span>Acoustic Latency: 32ms</span>
+                <span>Simulated Latency: 32ms</span>
                 <span>·</span>
-                <span className="text-[#8a9a5b] font-medium flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#8a9a5b]" /> LIVE SER ACTIVE
+                <span className="text-[#ffb964] font-medium flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#ffb964]" /> SIMULATION PREVIEW
                 </span>
               </div>
             </div>
@@ -185,10 +206,10 @@ export function LiveMonitorView() {
           <div className="bg-[#18191c] border border-[#35373e] rounded-lg p-4 shadow-sm flex flex-col gap-3">
             <div className="flex items-center justify-between border-b border-[#35373e]/40 pb-2">
               <h3 className="text-sm font-semibold text-[#edeae1]">
-                Live Speech Emotion Recognition (SER) Transcript
+                Simulated SER Transcript [Demo Stream]
               </h3>
-              <span className="font-mono text-[10px] text-[#8a9a5b] flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#8a9a5b] animate-ping" /> Synchronized
+              <span className="font-mono text-[10px] text-[#ffb964] flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#ffb964]" /> SIMULATION PREVIEW
               </span>
             </div>
 
@@ -226,9 +247,14 @@ export function LiveMonitorView() {
         <div className="lg:col-span-4 flex flex-col gap-4">
           {/* Live Emotion Telemetry */}
           <div className="bg-[#18191c] border border-[#35373e] rounded-lg p-4 shadow-sm flex flex-col gap-3">
-            <h3 className="text-sm font-semibold text-[#edeae1] border-b border-[#35373e]/40 pb-2 flex items-center gap-1.5">
-              <HeartPulse className="h-4 w-4 text-[#d96f68]" />
-              <span>Real-Time Emotion Telemetry</span>
+            <h3 className="text-sm font-semibold text-[#edeae1] border-b border-[#35373e]/40 pb-2 flex items-center justify-between">
+              <span className="flex items-center gap-1.5">
+                <HeartPulse className="h-4 w-4 text-[#d96f68]" />
+                <span>Simulated Emotion Telemetry</span>
+              </span>
+              <span className="font-mono text-[9px] px-1.5 py-0.5 rounded bg-[#422006] text-[#ffb964] border border-[#ffb964]/40 font-bold">
+                SIMULATION
+              </span>
             </h3>
 
             <div className="space-y-3 font-mono text-xs">

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import {
   Search,
   Shield,
@@ -13,11 +13,20 @@ import {
   FileCheck,
   X,
 } from 'lucide-react';
+import { store, isSyntheticCase } from '@/lib/data/store';
 
 export function Header() {
   const router = useRouter();
+  const pathname = usePathname();
   const [searchQuery, setSearchQuery] = useState('');
   const [showNotifications, setShowNotifications] = useState(false);
+
+  // Check if current route is viewing a synthetic case or simulation
+  const isCaseDetailPage = pathname?.startsWith('/cases/');
+  const currentCaseId = isCaseDetailPage ? pathname.split('/')[2] : null;
+  const currentCase = currentCaseId ? store.getCaseById(currentCaseId) : null;
+  const isCurrentCaseSynthetic = currentCase ? isSyntheticCase(currentCase) : false;
+  const isLiveMonitor = pathname === '/live-monitor';
   const [notifications, setNotifications] = useState([
     {
       id: 'notif-1',
@@ -82,6 +91,20 @@ export function Header() {
           <span className="text-[#71706b] text-xs">//</span>
           <span className="font-mono text-[10px] text-[#9e9c96]">METRO CYBER</span>
         </div>
+
+        {isCurrentCaseSynthetic && (
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#422006] border border-[#ffb964]/50 text-[#ffb964] whitespace-nowrap shadow-sm">
+            <AlertTriangle className="w-3.5 h-3.5 text-[#ffb964]" />
+            <span className="font-mono text-[10px] font-bold tracking-wider">SYNTHETIC DEMO DATA</span>
+          </div>
+        )}
+
+        {isLiveMonitor && (
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#422006] border border-[#ffb964]/50 text-[#ffb964] whitespace-nowrap shadow-sm">
+            <AlertTriangle className="w-3.5 h-3.5 text-[#ffb964]" />
+            <span className="font-mono text-[10px] font-bold tracking-wider">SIMULATION PREVIEW</span>
+          </div>
+        )}
       </div>
 
       {/* Right Controls: Audio I/O, Notifications, Officer Profile */}

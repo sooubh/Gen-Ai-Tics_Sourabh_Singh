@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { store } from '@/lib/data/store';
+import { store, isSyntheticCase } from '@/lib/data/store';
 import { Case, CallerCategory } from '@/types';
 import {
   PhoneCall,
@@ -271,6 +271,11 @@ export default function OverviewDashboard() {
                   <div className="flex flex-wrap items-center gap-2">
                     {getUrgencyBadge(call.urgencyScore, call.urgencyLevel)}
                     {getCategoryBadge(call.callerCategory)}
+                    {isSyntheticCase(call) && (
+                      <span className="rounded bg-[#422006] px-2 py-0.5 font-mono text-[10px] font-bold text-[#ffb964] border border-[#ffb964]/40">
+                        SYNTHETIC DEMO
+                      </span>
+                    )}
                     <span className="font-mono text-xs text-[#9e9c96]">{call.docketNumber}</span>
                   </div>
 

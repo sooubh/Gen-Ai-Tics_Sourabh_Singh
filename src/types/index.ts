@@ -59,6 +59,10 @@ export interface CaseAnalysisRunSummary {
   status: AnalysisRunStatus | string;
   modelId: string;
   promptVersion: string;
+  isSyntheticDemo?: boolean;
+  analysisProvider?: string;
+  acousticMetricsAvailable?: boolean;
+  failureReason?: string;
   pipelineConfig?: {
     diarization?: boolean;
     transcription?: boolean;
@@ -116,8 +120,14 @@ export interface SpeechEmotionProfile {
     speechRateWpm?: number;
     vocalTremorScore?: number;
     energySpikeDb?: number;
+    available?: boolean;
+    disclaimer?: string;
   };
   distressPeakTimestampSeconds?: number;
+  acousticMetricsAvailable?: boolean;
+  disclaimer?: string;
+  isSyntheticDemo?: boolean;
+  analysisProvider?: string;
 }
 
 export interface Case {
@@ -175,6 +185,8 @@ export interface Case {
   timeline: CaseTimelineEvent[];
   notes?: CaseNote[];
   reviews?: CaseReviewRecord[];
+  isSyntheticDemo?: boolean;
+  fixtureId?: string;
 }
 
 // ==============================================================================
@@ -297,11 +309,16 @@ export interface AnalysisRun {
   caseId: string;
   recordingId: string;
   status: AnalysisRunStatus;
-  stages: Record<StageName, StageState>;
-  modelConfig: ModelConfigSnapshot;
-  initiatedBy: string;
+  stages?: Record<StageName, StageState>;
+  modelConfig?: ModelConfigSnapshot;
+  initiatedBy?: string;
   idempotencyKey?: string;
   summary?: string;
+  isSyntheticDemo?: boolean;
+  analysisProvider?: string;
+  acousticMetricsAvailable?: boolean;
+  modelId?: string;
+  failureReason?: string;
   createdAt: string; // ISO 8601
   updatedAt: string; // ISO 8601
   completedAt?: string | null;
@@ -559,6 +576,7 @@ export interface VocalIndicator {
   disclaimer?: string; // alias
   abstained?: boolean;
   abstentionReason?: AbstentionReason | null;
+  available?: boolean;
 }
 
 // ==============================================================================

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { store } from '@/lib/data/store';
+import { store, isSyntheticCase } from '@/lib/data/store';
 import { Case, CaseStatus, CallerCategory } from '@/types';
 import {
   FolderLock,
@@ -182,8 +182,13 @@ function CasesContent() {
                     </td>
                     <td className="py-3.5 px-3.5">
                       <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 flex-wrap">
                           {getCategoryBadge(c.callerCategory)}
+                          {isSyntheticCase(c) && (
+                            <span className="rounded bg-[#422006] px-1.5 py-0.5 font-mono text-[9px] font-bold text-[#ffb964] border border-[#ffb964]/40">
+                              SYNTHETIC DEMO
+                            </span>
+                          )}
                           <span className="font-semibold text-[#edeae1]">{c.callerName || 'Anonymous'}</span>
                         </div>
                         <span className="font-mono text-[11px] text-[#9e9c96]">{c.callerPhone || 'Unlisted'}</span>
