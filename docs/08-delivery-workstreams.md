@@ -445,3 +445,657 @@ Every scope change records: requirement, reason, dependencies, added data, priva
 ## Planning boundary
 
 This file does not schedule background work, run tests, modify application code or claim any task is complete. Use evidence to move each item from Pending to Pass/Done.
+
+
+## Extended delivery task verification matrix
+
+Each task must be ready before implementation and must produce concrete acceptance evidence. Task order is dependency-based rather than a fixed 24-hour schedule.
+
+### WORK-W01-PLAN — Inspect repository and lock scope
+- **Scope:** Read actual existing files before changes
+- **Pass condition:** No source modifications under planning authorization
+- **Level:** Task definition and dependencies
+- **Evidence:** Owner confirms ready criteria
+- **Status:** Pending
+
+### WORK-W01-VERIFY — Inspect repository and lock scope
+- **Scope:** Read actual existing files before changes
+- **Pass condition:** No source modifications under planning authorization
+- **Level:** Observable evidence and failure case
+- **Evidence:** Test/build/fixture reference
+- **Status:** Pending
+
+### WORK-W02-PLAN — Confirm provider access
+- **Scope:** Run one synthetic API smoke
+- **Pass condition:** Model decision backed by output
+- **Level:** Task definition and dependencies
+- **Evidence:** Owner confirms ready criteria
+- **Status:** Pending
+
+### WORK-W02-VERIFY — Confirm provider access
+- **Scope:** Run one synthetic API smoke
+- **Pass condition:** Model decision backed by output
+- **Level:** Observable evidence and failure case
+- **Evidence:** Test/build/fixture reference
+- **Status:** Pending
+
+### WORK-W03-PLAN — Choose model IDs
+- **Scope:** Check current catalogue and project access
+- **Pass condition:** No stale assumed ID
+- **Level:** Task definition and dependencies
+- **Evidence:** Owner confirms ready criteria
+- **Status:** Pending
+
+### WORK-W03-VERIFY — Choose model IDs
+- **Scope:** Check current catalogue and project access
+- **Pass condition:** No stale assumed ID
+- **Level:** Observable evidence and failure case
+- **Evidence:** Test/build/fixture reference
+- **Status:** Pending
+
+### WORK-W04-PLAN — Validate recorded timestamps
+- **Scope:** Compare reference interval and returned offsets
+- **Pass condition:** Seek maps to source
+- **Level:** Task definition and dependencies
+- **Evidence:** Owner confirms ready criteria
+- **Status:** Pending
+
+### WORK-W04-VERIFY — Validate recorded timestamps
+- **Scope:** Compare reference interval and returned offsets
+- **Pass condition:** Seek maps to source
+- **Level:** Observable evidence and failure case
+- **Evidence:** Test/build/fixture reference
+- **Status:** Pending
+
+### WORK-W05-PLAN — Check language support
+- **Scope:** Use Hindi/English/Hinglish/unknown fixtures
+- **Pass condition:** Describe tested coverage only
+- **Level:** Task definition and dependencies
+- **Evidence:** Owner confirms ready criteria
+- **Status:** Pending
+
+### WORK-W05-VERIFY — Check language support
+- **Scope:** Use Hindi/English/Hinglish/unknown fixtures
+- **Pass condition:** Describe tested coverage only
+- **Level:** Observable evidence and failure case
+- **Evidence:** Test/build/fixture reference
+- **Status:** Pending
+
+### WORK-W06-PLAN — Evaluate vocal cues
+- **Scope:** Compare audio and transcript-only results
+- **Pass condition:** Enable/hold/disable documented
+- **Level:** Task definition and dependencies
+- **Evidence:** Owner confirms ready criteria
+- **Status:** Pending
+
+### WORK-W06-VERIFY — Evaluate vocal cues
+- **Scope:** Compare audio and transcript-only results
+- **Pass condition:** Enable/hold/disable documented
+- **Level:** Observable evidence and failure case
+- **Evidence:** Test/build/fixture reference
+- **Status:** Pending
+
+### WORK-W07-PLAN — Verify live protocol
+- **Scope:** Test authentication, codec, socket, stop
+- **Pass condition:** Live gate passed or feature off
+- **Level:** Task definition and dependencies
+- **Evidence:** Owner confirms ready criteria
+- **Status:** Pending
+
+### WORK-W07-VERIFY — Verify live protocol
+- **Scope:** Test authentication, codec, socket, stop
+- **Pass condition:** Live gate passed or feature off
+- **Level:** Observable evidence and failure case
+- **Evidence:** Test/build/fixture reference
+- **Status:** Pending
+
+### WORK-W08-PLAN — Choose tenancy model
+- **Scope:** Inspect deployed auth project
+- **Pass condition:** No assumed user schema
+- **Level:** Task definition and dependencies
+- **Evidence:** Owner confirms ready criteria
+- **Status:** Pending
+
+### WORK-W08-VERIFY — Choose tenancy model
+- **Scope:** Inspect deployed auth project
+- **Pass condition:** No assumed user schema
+- **Level:** Observable evidence and failure case
+- **Evidence:** Test/build/fixture reference
+- **Status:** Pending
+
+### WORK-W09-PLAN — Set media retention
+- **Scope:** Test storage/provider lifecycle
+- **Pass condition:** Policy matches actual capability
+- **Level:** Task definition and dependencies
+- **Evidence:** Owner confirms ready criteria
+- **Status:** Pending
+
+### WORK-W09-VERIFY — Set media retention
+- **Scope:** Test storage/provider lifecycle
+- **Pass condition:** Policy matches actual capability
+- **Level:** Observable evidence and failure case
+- **Evidence:** Test/build/fixture reference
+- **Status:** Pending
+
+### WORK-W10-PLAN — Define domain types
+- **Scope:** Case/run/segment/finding/review
+- **Pass condition:** Unit tests without network
+- **Level:** Task definition and dependencies
+- **Evidence:** Owner confirms ready criteria
+- **Status:** Pending
+
+### WORK-W10-VERIFY — Define domain types
+- **Scope:** Case/run/segment/finding/review
+- **Pass condition:** Unit tests without network
+- **Level:** Observable evidence and failure case
+- **Evidence:** Test/build/fixture reference
+- **Status:** Pending
+
+### WORK-W11-PLAN — Add runtime schemas
+- **Scope:** Validate route/provider boundaries
+- **Pass condition:** Malformed input rejected
+- **Level:** Task definition and dependencies
+- **Evidence:** Owner confirms ready criteria
+- **Status:** Pending
+
+### WORK-W11-VERIFY — Add runtime schemas
+- **Scope:** Validate route/provider boundaries
+- **Pass condition:** Malformed input rejected
+- **Level:** Observable evidence and failure case
+- **Evidence:** Test/build/fixture reference
+- **Status:** Pending
+
+### WORK-W12-PLAN — Add configuration preflight
+- **Scope:** Missing key/model/bucket check
+- **Pass condition:** No secret printing
+- **Level:** Task definition and dependencies
+- **Evidence:** Owner confirms ready criteria
+- **Status:** Pending
+
+### WORK-W12-VERIFY — Add configuration preflight
+- **Scope:** Missing key/model/bucket check
+- **Pass condition:** No secret printing
+- **Level:** Observable evidence and failure case
+- **Evidence:** Test/build/fixture reference
+- **Status:** Pending
+
+### WORK-W13-PLAN — Design migrations
+- **Scope:** Tables/indexes/RLS together
+- **Pass condition:** Fresh project matches migrations
+- **Level:** Task definition and dependencies
+- **Evidence:** Owner confirms ready criteria
+- **Status:** Pending
+
+### WORK-W13-VERIFY — Design migrations
+- **Scope:** Tables/indexes/RLS together
+- **Pass condition:** Fresh project matches migrations
+- **Level:** Observable evidence and failure case
+- **Evidence:** Test/build/fixture reference
+- **Status:** Pending
+
+### WORK-W14-PLAN — Create private bucket policy
+- **Scope:** Wrong-user and anonymous tests
+- **Pass condition:** No public audio
+- **Level:** Task definition and dependencies
+- **Evidence:** Owner confirms ready criteria
+- **Status:** Pending
+
+### WORK-W14-VERIFY — Create private bucket policy
+- **Scope:** Wrong-user and anonymous tests
+- **Pass condition:** No public audio
+- **Level:** Observable evidence and failure case
+- **Evidence:** Test/build/fixture reference
+- **Status:** Pending
+
+### WORK-W15-PLAN — Case APIs
+- **Scope:** Create/list/detail/update
+- **Pass condition:** Server ownership checks
+- **Level:** Task definition and dependencies
+- **Evidence:** Owner confirms ready criteria
+- **Status:** Pending
+
+### WORK-W15-VERIFY — Case APIs
+- **Scope:** Create/list/detail/update
+- **Pass condition:** Server ownership checks
+- **Level:** Observable evidence and failure case
+- **Evidence:** Test/build/fixture reference
+- **Status:** Pending
+
+### WORK-W16-PLAN — Upload authorization
+- **Scope:** Server-generated key and grant
+- **Pass condition:** No arbitrary object path
+- **Level:** Task definition and dependencies
+- **Evidence:** Owner confirms ready criteria
+- **Status:** Pending
+
+### WORK-W16-VERIFY — Upload authorization
+- **Scope:** Server-generated key and grant
+- **Pass condition:** No arbitrary object path
+- **Level:** Observable evidence and failure case
+- **Evidence:** Test/build/fixture reference
+- **Status:** Pending
+
+### WORK-W17-PLAN — Finalize upload
+- **Scope:** Check actual object metadata
+- **Pass condition:** No AI call before verification
+- **Level:** Task definition and dependencies
+- **Evidence:** Owner confirms ready criteria
+- **Status:** Pending
+
+### WORK-W17-VERIFY — Finalize upload
+- **Scope:** Check actual object metadata
+- **Pass condition:** No AI call before verification
+- **Level:** Observable evidence and failure case
+- **Evidence:** Test/build/fixture reference
+- **Status:** Pending
+
+### WORK-W18-PLAN — Media preflight
+- **Scope:** Supported format/size/duration/decode
+- **Pass condition:** Reject malformed content
+- **Level:** Task definition and dependencies
+- **Evidence:** Owner confirms ready criteria
+- **Status:** Pending
+
+### WORK-W18-VERIFY — Media preflight
+- **Scope:** Supported format/size/duration/decode
+- **Pass condition:** Reject malformed content
+- **Level:** Observable evidence and failure case
+- **Evidence:** Test/build/fixture reference
+- **Status:** Pending
+
+### WORK-W19-PLAN — Run lifecycle
+- **Scope:** Persist stages and retries
+- **Pass condition:** Durable partial/failure states
+- **Level:** Task definition and dependencies
+- **Evidence:** Owner confirms ready criteria
+- **Status:** Pending
+
+### WORK-W19-VERIFY — Run lifecycle
+- **Scope:** Persist stages and retries
+- **Pass condition:** Durable partial/failure states
+- **Level:** Observable evidence and failure case
+- **Evidence:** Test/build/fixture reference
+- **Status:** Pending
+
+### WORK-W20-PLAN — Recorded transcription
+- **Scope:** Real provider request and schema mapping
+- **Pass condition:** Synthetic integration result
+- **Level:** Task definition and dependencies
+- **Evidence:** Owner confirms ready criteria
+- **Status:** Pending
+
+### WORK-W20-VERIFY — Recorded transcription
+- **Scope:** Real provider request and schema mapping
+- **Pass condition:** Synthetic integration result
+- **Level:** Observable evidence and failure case
+- **Evidence:** Test/build/fixture reference
+- **Status:** Pending
+
+### WORK-W21-PLAN — Transcript UI
+- **Scope:** Source timestamps and uncertainty
+- **Pass condition:** Click-to-seek test
+- **Level:** Task definition and dependencies
+- **Evidence:** Owner confirms ready criteria
+- **Status:** Pending
+
+### WORK-W21-VERIFY — Transcript UI
+- **Scope:** Source timestamps and uncertainty
+- **Pass condition:** Click-to-seek test
+- **Level:** Observable evidence and failure case
+- **Evidence:** Test/build/fixture reference
+- **Status:** Pending
+
+### WORK-W22-PLAN — Entity extraction
+- **Scope:** Source span and candidate status
+- **Pass condition:** No hallucinated enrichment
+- **Level:** Task definition and dependencies
+- **Evidence:** Owner confirms ready criteria
+- **Status:** Pending
+
+### WORK-W22-VERIFY — Entity extraction
+- **Scope:** Source span and candidate status
+- **Pass condition:** No hallucinated enrichment
+- **Level:** Observable evidence and failure case
+- **Evidence:** Test/build/fixture reference
+- **Status:** Pending
+
+### WORK-W23-PLAN — Trigger extraction
+- **Scope:** Context-aware candidate set
+- **Pass condition:** Negation/historical/hypothetical tests
+- **Level:** Task definition and dependencies
+- **Evidence:** Owner confirms ready criteria
+- **Status:** Pending
+
+### WORK-W23-VERIFY — Trigger extraction
+- **Scope:** Context-aware candidate set
+- **Pass condition:** Negation/historical/hypothetical tests
+- **Level:** Observable evidence and failure case
+- **Evidence:** Test/build/fixture reference
+- **Status:** Pending
+
+### WORK-W24-PLAN — Evidence links
+- **Scope:** Same-run refs
+- **Pass condition:** Orphan/cross-run rejection
+- **Level:** Task definition and dependencies
+- **Evidence:** Owner confirms ready criteria
+- **Status:** Pending
+
+### WORK-W24-VERIFY — Evidence links
+- **Scope:** Same-run refs
+- **Pass condition:** Orphan/cross-run rejection
+- **Level:** Observable evidence and failure case
+- **Evidence:** Test/build/fixture reference
+- **Status:** Pending
+
+### WORK-W25-PLAN — Timeline UI
+- **Scope:** Sorted offsets and untimed group
+- **Pass condition:** Unknown time not invented
+- **Level:** Task definition and dependencies
+- **Evidence:** Owner confirms ready criteria
+- **Status:** Pending
+
+### WORK-W25-VERIFY — Timeline UI
+- **Scope:** Sorted offsets and untimed group
+- **Pass condition:** Unknown time not invented
+- **Level:** Observable evidence and failure case
+- **Evidence:** Test/build/fixture reference
+- **Status:** Pending
+
+### WORK-W26-PLAN — Review APIs
+- **Scope:** Confirm/correct/dismiss with version
+- **Pass condition:** Stale update conflict
+- **Level:** Task definition and dependencies
+- **Evidence:** Owner confirms ready criteria
+- **Status:** Pending
+
+### WORK-W26-VERIFY — Review APIs
+- **Scope:** Confirm/correct/dismiss with version
+- **Pass condition:** Stale update conflict
+- **Level:** Observable evidence and failure case
+- **Evidence:** Test/build/fixture reference
+- **Status:** Pending
+
+### WORK-W27-PLAN — Correction storage
+- **Scope:** Original plus reviewed value
+- **Pass condition:** No silent overwrite
+- **Level:** Task definition and dependencies
+- **Evidence:** Owner confirms ready criteria
+- **Status:** Pending
+
+### WORK-W27-VERIFY — Correction storage
+- **Scope:** Original plus reviewed value
+- **Pass condition:** No silent overwrite
+- **Level:** Observable evidence and failure case
+- **Evidence:** Test/build/fixture reference
+- **Status:** Pending
+
+### WORK-W28-PLAN — Report snapshot
+- **Scope:** Selected run and review states
+- **Pass condition:** DB/export reconciliation
+- **Level:** Task definition and dependencies
+- **Evidence:** Owner confirms ready criteria
+- **Status:** Pending
+
+### WORK-W28-VERIFY — Report snapshot
+- **Scope:** Selected run and review states
+- **Pass condition:** DB/export reconciliation
+- **Level:** Observable evidence and failure case
+- **Evidence:** Test/build/fixture reference
+- **Status:** Pending
+
+### WORK-W29-PLAN — CSV safe export
+- **Scope:** Formula escaping
+- **Pass condition:** Malicious cell inert
+- **Level:** Task definition and dependencies
+- **Evidence:** Owner confirms ready criteria
+- **Status:** Pending
+
+### WORK-W29-VERIFY — CSV safe export
+- **Scope:** Formula escaping
+- **Pass condition:** Malicious cell inert
+- **Level:** Observable evidence and failure case
+- **Evidence:** Test/build/fixture reference
+- **Status:** Pending
+
+### WORK-W30-PLAN — Print report
+- **Scope:** Caveat and source refs visible
+- **Pass condition:** Print preview check
+- **Level:** Task definition and dependencies
+- **Evidence:** Owner confirms ready criteria
+- **Status:** Pending
+
+### WORK-W30-VERIFY — Print report
+- **Scope:** Caveat and source refs visible
+- **Pass condition:** Print preview check
+- **Level:** Observable evidence and failure case
+- **Evidence:** Test/build/fixture reference
+- **Status:** Pending
+
+### WORK-W31-PLAN — Live state machine
+- **Scope:** Explicit real states
+- **Pass condition:** Transition tests
+- **Level:** Task definition and dependencies
+- **Evidence:** Owner confirms ready criteria
+- **Status:** Pending
+
+### WORK-W31-VERIFY — Live state machine
+- **Scope:** Explicit real states
+- **Pass condition:** Transition tests
+- **Level:** Observable evidence and failure case
+- **Evidence:** Test/build/fixture reference
+- **Status:** Pending
+
+### WORK-W32-PLAN — Live event adapter
+- **Scope:** Dedup interim/final/out-of-order
+- **Pass condition:** No duplicate transcript
+- **Level:** Task definition and dependencies
+- **Evidence:** Owner confirms ready criteria
+- **Status:** Pending
+
+### WORK-W32-VERIFY — Live event adapter
+- **Scope:** Dedup interim/final/out-of-order
+- **Pass condition:** No duplicate transcript
+- **Level:** Observable evidence and failure case
+- **Evidence:** Test/build/fixture reference
+- **Status:** Pending
+
+### WORK-W33-PLAN — Live UI
+- **Scope:** Permission, Stop and socket state
+- **Pass condition:** Denied/disconnect behavior
+- **Level:** Task definition and dependencies
+- **Evidence:** Owner confirms ready criteria
+- **Status:** Pending
+
+### WORK-W33-VERIFY — Live UI
+- **Scope:** Permission, Stop and socket state
+- **Pass condition:** Denied/disconnect behavior
+- **Level:** Observable evidence and failure case
+- **Evidence:** Test/build/fixture reference
+- **Status:** Pending
+
+### WORK-W34-PLAN — Retention job
+- **Scope:** Delete and confirm object absence
+- **Pass condition:** Failure remains visible
+- **Level:** Task definition and dependencies
+- **Evidence:** Owner confirms ready criteria
+- **Status:** Pending
+
+### WORK-W34-VERIFY — Retention job
+- **Scope:** Delete and confirm object absence
+- **Pass condition:** Failure remains visible
+- **Level:** Observable evidence and failure case
+- **Evidence:** Test/build/fixture reference
+- **Status:** Pending
+
+### WORK-W35-PLAN — Orphan cleanup
+- **Scope:** Grace period and dry-run
+- **Pass condition:** Don't delete active upload
+- **Level:** Task definition and dependencies
+- **Evidence:** Owner confirms ready criteria
+- **Status:** Pending
+
+### WORK-W35-VERIFY — Orphan cleanup
+- **Scope:** Grace period and dry-run
+- **Pass condition:** Don't delete active upload
+- **Level:** Observable evidence and failure case
+- **Evidence:** Test/build/fixture reference
+- **Status:** Pending
+
+### WORK-W36-PLAN — Review all routes
+- **Scope:** Auth and parent ownership
+- **Pass condition:** Cross-user matrix
+- **Level:** Task definition and dependencies
+- **Evidence:** Owner confirms ready criteria
+- **Status:** Pending
+
+### WORK-W36-VERIFY — Review all routes
+- **Scope:** Auth and parent ownership
+- **Pass condition:** Cross-user matrix
+- **Level:** Observable evidence and failure case
+- **Evidence:** Test/build/fixture reference
+- **Status:** Pending
+
+### WORK-W37-PLAN — Rate and cost limits
+- **Scope:** Server-side budgets
+- **Pass condition:** Direct API burst test
+- **Level:** Task definition and dependencies
+- **Evidence:** Owner confirms ready criteria
+- **Status:** Pending
+
+### WORK-W37-VERIFY — Rate and cost limits
+- **Scope:** Server-side budgets
+- **Pass condition:** Direct API burst test
+- **Level:** Observable evidence and failure case
+- **Evidence:** Test/build/fixture reference
+- **Status:** Pending
+
+### WORK-W38-PLAN — Operational errors
+- **Scope:** Safe codes and request IDs
+- **Pass condition:** Fault injection
+- **Level:** Task definition and dependencies
+- **Evidence:** Owner confirms ready criteria
+- **Status:** Pending
+
+### WORK-W38-VERIFY — Operational errors
+- **Scope:** Safe codes and request IDs
+- **Pass condition:** Fault injection
+- **Level:** Observable evidence and failure case
+- **Evidence:** Test/build/fixture reference
+- **Status:** Pending
+
+### WORK-W39-PLAN — Keyboard/accessibility
+- **Scope:** Complete core review without mouse
+- **Pass condition:** Keyboard check
+- **Level:** Task definition and dependencies
+- **Evidence:** Owner confirms ready criteria
+- **Status:** Pending
+
+### WORK-W39-VERIFY — Keyboard/accessibility
+- **Scope:** Complete core review without mouse
+- **Pass condition:** Keyboard check
+- **Level:** Observable evidence and failure case
+- **Evidence:** Test/build/fixture reference
+- **Status:** Pending
+
+### WORK-W40-PLAN — Responsive UI
+- **Scope:** Evidence and Stop accessible
+- **Pass condition:** Multiple viewport review
+- **Level:** Task definition and dependencies
+- **Evidence:** Owner confirms ready criteria
+- **Status:** Pending
+
+### WORK-W40-VERIFY — Responsive UI
+- **Scope:** Evidence and Stop accessible
+- **Pass condition:** Multiple viewport review
+- **Level:** Observable evidence and failure case
+- **Evidence:** Test/build/fixture reference
+- **Status:** Pending
+
+### WORK-W41-PLAN — Fixture set
+- **Scope:** Only synthetic/authorized media
+- **Pass condition:** Demo source audit
+- **Level:** Task definition and dependencies
+- **Evidence:** Owner confirms ready criteria
+- **Status:** Pending
+
+### WORK-W41-VERIFY — Fixture set
+- **Scope:** Only synthetic/authorized media
+- **Pass condition:** Demo source audit
+- **Level:** Observable evidence and failure case
+- **Evidence:** Test/build/fixture reference
+- **Status:** Pending
+
+### WORK-W42-PLAN — Regression suite
+- **Scope:** Model/prompt/schema update
+- **Pass condition:** Holdout fixture and version record
+- **Level:** Task definition and dependencies
+- **Evidence:** Owner confirms ready criteria
+- **Status:** Pending
+
+### WORK-W42-VERIFY — Regression suite
+- **Scope:** Model/prompt/schema update
+- **Pass condition:** Holdout fixture and version record
+- **Level:** Observable evidence and failure case
+- **Evidence:** Test/build/fixture reference
+- **Status:** Pending
+
+### WORK-W43-PLAN — End-to-end test
+- **Scope:** Upload to report
+- **Pass condition:** Clean test project result
+- **Level:** Task definition and dependencies
+- **Evidence:** Owner confirms ready criteria
+- **Status:** Pending
+
+### WORK-W43-VERIFY — End-to-end test
+- **Scope:** Upload to report
+- **Pass condition:** Clean test project result
+- **Level:** Observable evidence and failure case
+- **Evidence:** Test/build/fixture reference
+- **Status:** Pending
+
+### WORK-W44-PLAN — Release preflight
+- **Scope:** Environment, secrets and features
+- **Pass condition:** No missing critical config
+- **Level:** Task definition and dependencies
+- **Evidence:** Owner confirms ready criteria
+- **Status:** Pending
+
+### WORK-W44-VERIFY — Release preflight
+- **Scope:** Environment, secrets and features
+- **Pass condition:** No missing critical config
+- **Level:** Observable evidence and failure case
+- **Evidence:** Test/build/fixture reference
+- **Status:** Pending
+
+### WORK-W45-PLAN — Demo rehearsal
+- **Scope:** Known-good recorded path and honest fallback
+- **Pass condition:** No simulated API output
+- **Level:** Task definition and dependencies
+- **Evidence:** Owner confirms ready criteria
+- **Status:** Pending
+
+### WORK-W45-VERIFY — Demo rehearsal
+- **Scope:** Known-good recorded path and honest fallback
+- **Pass condition:** No simulated API output
+- **Level:** Observable evidence and failure case
+- **Evidence:** Test/build/fixture reference
+- **Status:** Pending
+
+## Blocker log template
+
+| Blocker | Impact | Required owner/action | Exit evidence | Status |
+|---|---|---|---|---|
+| Provider model/API mismatch | Recorded path blocked | Recheck current docs and run synthetic smoke | Sanitized output and test ID | Pending |
+| Live auth/socket mismatch | Live path blocked | Verify supported protocol or disable feature | Real connection test | Pending |
+| Emotion output not grounded | Vocal cue path blocked | Hold/disable cue feature | Evaluation record | Pending |
+| Storage/RLS policy missing | Sensitive media blocked | Configure scoped policies | Cross-user negative suite | Pending |
+| Deletion not verified | Retention claim blocked | Inspect object/provider lifecycle | Deletion evidence | Pending |
+| Hosting limits exceeded | Upload/long run blocked | Measure runtime and choose supported upload/job path | Largest clip test | Pending |
+
+## Release discipline
+
+- Keep one known-good recorded workflow while adding live capability.
+- Do not change DB policies just to make a demo pass.
+- Do not merge schema, model adapter and report contract changes without focused regression.
+- Each feature can be gated off without fabricated fallback output.
+- Only tests run in a named environment can change state from Pending to Passed.
