@@ -621,3 +621,777 @@ Every feature addition needs a user problem, data/safety impact, dependency, fai
 - https://nextjs.org/docs/app
 - https://supabase.com/docs/guides/storage/buckets/fundamentals
 - https://vercel.com/docs/errors/function_payload_too_large
+
+
+## Expanded requirement-to-evidence mapping
+
+The following matrix extends the acceptance checklist with a practical evidence plan. Each row must be linked to an executed test or remain Pending. The third column names the prohibited shortcut to avoid.
+
+### PRD-EVID-01-UNIT — Product boundary
+- **Requirement:** Officer-facing audio investigation helper
+- **Guardrail:** No dispatch/SOS identity scoring
+- **Acceptance evidence:** Scope check
+- **Test level:** Pure schema/domain assertion, no network
+- **Evidence artifact:** Output: test ID and assertion result.
+
+### PRD-EVID-01-INTEGRATION — Product boundary
+- **Requirement:** Officer-facing audio investigation helper
+- **Guardrail:** No dispatch/SOS identity scoring
+- **Acceptance evidence:** Scope check
+- **Test level:** API/storage/provider boundary using test project/fixture
+- **Evidence artifact:** Output: safe request ID and persisted result.
+
+### PRD-EVID-01-E2E — Product boundary
+- **Requirement:** Officer-facing audio investigation helper
+- **Guardrail:** No dispatch/SOS identity scoring
+- **Acceptance evidence:** Scope check
+- **Test level:** User workflow in browser with durable state
+- **Evidence artifact:** Output: build ID and synthetic fixture ID.
+
+### PRD-EVID-02-UNIT — Recorded upload
+- **Requirement:** Authorized MP3/WAV according to deployed allowlist
+- **Guardrail:** Reject invalid media before model charge
+- **Acceptance evidence:** API and browser test
+- **Test level:** Pure schema/domain assertion, no network
+- **Evidence artifact:** Output: test ID and assertion result.
+
+### PRD-EVID-02-INTEGRATION — Recorded upload
+- **Requirement:** Authorized MP3/WAV according to deployed allowlist
+- **Guardrail:** Reject invalid media before model charge
+- **Acceptance evidence:** API and browser test
+- **Test level:** API/storage/provider boundary using test project/fixture
+- **Evidence artifact:** Output: safe request ID and persisted result.
+
+### PRD-EVID-02-E2E — Recorded upload
+- **Requirement:** Authorized MP3/WAV according to deployed allowlist
+- **Guardrail:** Reject invalid media before model charge
+- **Acceptance evidence:** API and browser test
+- **Test level:** User workflow in browser with durable state
+- **Evidence artifact:** Output: build ID and synthetic fixture ID.
+
+### PRD-EVID-03-UNIT — Transcript timing
+- **Requirement:** Normalized media-relative offsets
+- **Guardrail:** No fabricated milliseconds
+- **Acceptance evidence:** Offset check
+- **Test level:** Pure schema/domain assertion, no network
+- **Evidence artifact:** Output: test ID and assertion result.
+
+### PRD-EVID-03-INTEGRATION — Transcript timing
+- **Requirement:** Normalized media-relative offsets
+- **Guardrail:** No fabricated milliseconds
+- **Acceptance evidence:** Offset check
+- **Test level:** API/storage/provider boundary using test project/fixture
+- **Evidence artifact:** Output: safe request ID and persisted result.
+
+### PRD-EVID-03-E2E — Transcript timing
+- **Requirement:** Normalized media-relative offsets
+- **Guardrail:** No fabricated milliseconds
+- **Acceptance evidence:** Offset check
+- **Test level:** User workflow in browser with durable state
+- **Evidence artifact:** Output: build ID and synthetic fixture ID.
+
+### PRD-EVID-04-UNIT — Unclear speech
+- **Requirement:** Explicit uncertainty marker
+- **Guardrail:** No contextual guessing
+- **Acceptance evidence:** Reference fixture
+- **Test level:** Pure schema/domain assertion, no network
+- **Evidence artifact:** Output: test ID and assertion result.
+
+### PRD-EVID-04-INTEGRATION — Unclear speech
+- **Requirement:** Explicit uncertainty marker
+- **Guardrail:** No contextual guessing
+- **Acceptance evidence:** Reference fixture
+- **Test level:** API/storage/provider boundary using test project/fixture
+- **Evidence artifact:** Output: safe request ID and persisted result.
+
+### PRD-EVID-04-E2E — Unclear speech
+- **Requirement:** Explicit uncertainty marker
+- **Guardrail:** No contextual guessing
+- **Acceptance evidence:** Reference fixture
+- **Test level:** User workflow in browser with durable state
+- **Evidence artifact:** Output: build ID and synthetic fixture ID.
+
+### PRD-EVID-05-UNIT — Entity candidate
+- **Requirement:** Explicit utterance plus source
+- **Guardrail:** No external enrichment
+- **Acceptance evidence:** Grounding check
+- **Test level:** Pure schema/domain assertion, no network
+- **Evidence artifact:** Output: test ID and assertion result.
+
+### PRD-EVID-05-INTEGRATION — Entity candidate
+- **Requirement:** Explicit utterance plus source
+- **Guardrail:** No external enrichment
+- **Acceptance evidence:** Grounding check
+- **Test level:** API/storage/provider boundary using test project/fixture
+- **Evidence artifact:** Output: safe request ID and persisted result.
+
+### PRD-EVID-05-E2E — Entity candidate
+- **Requirement:** Explicit utterance plus source
+- **Guardrail:** No external enrichment
+- **Acceptance evidence:** Grounding check
+- **Test level:** User workflow in browser with durable state
+- **Evidence artifact:** Output: build ID and synthetic fixture ID.
+
+### PRD-EVID-06-UNIT — Phone candidate
+- **Requirement:** Spoken digits only
+- **Guardrail:** Partial stays partial
+- **Acceptance evidence:** No invented digit
+- **Test level:** Pure schema/domain assertion, no network
+- **Evidence artifact:** Output: test ID and assertion result.
+
+### PRD-EVID-06-INTEGRATION — Phone candidate
+- **Requirement:** Spoken digits only
+- **Guardrail:** Partial stays partial
+- **Acceptance evidence:** No invented digit
+- **Test level:** API/storage/provider boundary using test project/fixture
+- **Evidence artifact:** Output: safe request ID and persisted result.
+
+### PRD-EVID-06-E2E — Phone candidate
+- **Requirement:** Spoken digits only
+- **Guardrail:** Partial stays partial
+- **Acceptance evidence:** No invented digit
+- **Test level:** User workflow in browser with durable state
+- **Evidence artifact:** Output: build ID and synthetic fixture ID.
+
+### PRD-EVID-07-UNIT — Location candidate
+- **Requirement:** Spoken place only
+- **Guardrail:** No GPS/geocoding claim
+- **Acceptance evidence:** Source attribution
+- **Test level:** Pure schema/domain assertion, no network
+- **Evidence artifact:** Output: test ID and assertion result.
+
+### PRD-EVID-07-INTEGRATION — Location candidate
+- **Requirement:** Spoken place only
+- **Guardrail:** No GPS/geocoding claim
+- **Acceptance evidence:** Source attribution
+- **Test level:** API/storage/provider boundary using test project/fixture
+- **Evidence artifact:** Output: safe request ID and persisted result.
+
+### PRD-EVID-07-E2E — Location candidate
+- **Requirement:** Spoken place only
+- **Guardrail:** No GPS/geocoding claim
+- **Acceptance evidence:** Source attribution
+- **Test level:** User workflow in browser with durable state
+- **Evidence artifact:** Output: build ID and synthetic fixture ID.
+
+### PRD-EVID-08-UNIT — Speaker label
+- **Requirement:** Per-recording neutral ID
+- **Guardrail:** No real identity/demographic inference
+- **Acceptance evidence:** Schema check
+- **Test level:** Pure schema/domain assertion, no network
+- **Evidence artifact:** Output: test ID and assertion result.
+
+### PRD-EVID-08-INTEGRATION — Speaker label
+- **Requirement:** Per-recording neutral ID
+- **Guardrail:** No real identity/demographic inference
+- **Acceptance evidence:** Schema check
+- **Test level:** API/storage/provider boundary using test project/fixture
+- **Evidence artifact:** Output: safe request ID and persisted result.
+
+### PRD-EVID-08-E2E — Speaker label
+- **Requirement:** Per-recording neutral ID
+- **Guardrail:** No real identity/demographic inference
+- **Acceptance evidence:** Schema check
+- **Test level:** User workflow in browser with durable state
+- **Evidence artifact:** Output: build ID and synthetic fixture ID.
+
+### PRD-EVID-09-UNIT — Role candidate
+- **Requirement:** Contextual role with quote
+- **Guardrail:** Allegation not fact
+- **Acceptance evidence:** Review check
+- **Test level:** Pure schema/domain assertion, no network
+- **Evidence artifact:** Output: test ID and assertion result.
+
+### PRD-EVID-09-INTEGRATION — Role candidate
+- **Requirement:** Contextual role with quote
+- **Guardrail:** Allegation not fact
+- **Acceptance evidence:** Review check
+- **Test level:** API/storage/provider boundary using test project/fixture
+- **Evidence artifact:** Output: safe request ID and persisted result.
+
+### PRD-EVID-09-E2E — Role candidate
+- **Requirement:** Contextual role with quote
+- **Guardrail:** Allegation not fact
+- **Acceptance evidence:** Review check
+- **Test level:** User workflow in browser with durable state
+- **Evidence artifact:** Output: build ID and synthetic fixture ID.
+
+### PRD-EVID-10-UNIT — Trigger candidate
+- **Requirement:** Context and relevant quote
+- **Guardrail:** Not an emergency verdict
+- **Acceptance evidence:** Context matrix
+- **Test level:** Pure schema/domain assertion, no network
+- **Evidence artifact:** Output: test ID and assertion result.
+
+### PRD-EVID-10-INTEGRATION — Trigger candidate
+- **Requirement:** Context and relevant quote
+- **Guardrail:** Not an emergency verdict
+- **Acceptance evidence:** Context matrix
+- **Test level:** API/storage/provider boundary using test project/fixture
+- **Evidence artifact:** Output: safe request ID and persisted result.
+
+### PRD-EVID-10-E2E — Trigger candidate
+- **Requirement:** Context and relevant quote
+- **Guardrail:** Not an emergency verdict
+- **Acceptance evidence:** Context matrix
+- **Test level:** User workflow in browser with durable state
+- **Evidence artifact:** Output: build ID and synthetic fixture ID.
+
+### PRD-EVID-11-UNIT — Negation
+- **Requirement:** Statement denies event
+- **Guardrail:** No positive from keyword alone
+- **Acceptance evidence:** Negative fixture
+- **Test level:** Pure schema/domain assertion, no network
+- **Evidence artifact:** Output: test ID and assertion result.
+
+### PRD-EVID-11-INTEGRATION — Negation
+- **Requirement:** Statement denies event
+- **Guardrail:** No positive from keyword alone
+- **Acceptance evidence:** Negative fixture
+- **Test level:** API/storage/provider boundary using test project/fixture
+- **Evidence artifact:** Output: safe request ID and persisted result.
+
+### PRD-EVID-11-E2E — Negation
+- **Requirement:** Statement denies event
+- **Guardrail:** No positive from keyword alone
+- **Acceptance evidence:** Negative fixture
+- **Test level:** User workflow in browser with durable state
+- **Evidence artifact:** Output: build ID and synthetic fixture ID.
+
+### PRD-EVID-12-UNIT — Historical event
+- **Requirement:** Past statement
+- **Guardrail:** Not automatically current
+- **Acceptance evidence:** Tense fixture
+- **Test level:** Pure schema/domain assertion, no network
+- **Evidence artifact:** Output: test ID and assertion result.
+
+### PRD-EVID-12-INTEGRATION — Historical event
+- **Requirement:** Past statement
+- **Guardrail:** Not automatically current
+- **Acceptance evidence:** Tense fixture
+- **Test level:** API/storage/provider boundary using test project/fixture
+- **Evidence artifact:** Output: safe request ID and persisted result.
+
+### PRD-EVID-12-E2E — Historical event
+- **Requirement:** Past statement
+- **Guardrail:** Not automatically current
+- **Acceptance evidence:** Tense fixture
+- **Test level:** User workflow in browser with durable state
+- **Evidence artifact:** Output: build ID and synthetic fixture ID.
+
+### PRD-EVID-13-UNIT — Hypothetical
+- **Requirement:** Conditional language
+- **Guardrail:** Not a present event
+- **Acceptance evidence:** Hypothetical fixture
+- **Test level:** Pure schema/domain assertion, no network
+- **Evidence artifact:** Output: test ID and assertion result.
+
+### PRD-EVID-13-INTEGRATION — Hypothetical
+- **Requirement:** Conditional language
+- **Guardrail:** Not a present event
+- **Acceptance evidence:** Hypothetical fixture
+- **Test level:** API/storage/provider boundary using test project/fixture
+- **Evidence artifact:** Output: safe request ID and persisted result.
+
+### PRD-EVID-13-E2E — Hypothetical
+- **Requirement:** Conditional language
+- **Guardrail:** Not a present event
+- **Acceptance evidence:** Hypothetical fixture
+- **Test level:** User workflow in browser with durable state
+- **Evidence artifact:** Output: build ID and synthetic fixture ID.
+
+### PRD-EVID-14-UNIT — Quote attribution
+- **Requirement:** Reported words
+- **Guardrail:** Don't assign speaker intent blindly
+- **Acceptance evidence:** Attribution test
+- **Test level:** Pure schema/domain assertion, no network
+- **Evidence artifact:** Output: test ID and assertion result.
+
+### PRD-EVID-14-INTEGRATION — Quote attribution
+- **Requirement:** Reported words
+- **Guardrail:** Don't assign speaker intent blindly
+- **Acceptance evidence:** Attribution test
+- **Test level:** API/storage/provider boundary using test project/fixture
+- **Evidence artifact:** Output: safe request ID and persisted result.
+
+### PRD-EVID-14-E2E — Quote attribution
+- **Requirement:** Reported words
+- **Guardrail:** Don't assign speaker intent blindly
+- **Acceptance evidence:** Attribution test
+- **Test level:** User workflow in browser with durable state
+- **Evidence artifact:** Output: build ID and synthetic fixture ID.
+
+### PRD-EVID-15-UNIT — Vocal cue
+- **Requirement:** Audio-local observation
+- **Guardrail:** No guilt/deception proof
+- **Acceptance evidence:** Cue gate
+- **Test level:** Pure schema/domain assertion, no network
+- **Evidence artifact:** Output: test ID and assertion result.
+
+### PRD-EVID-15-INTEGRATION — Vocal cue
+- **Requirement:** Audio-local observation
+- **Guardrail:** No guilt/deception proof
+- **Acceptance evidence:** Cue gate
+- **Test level:** API/storage/provider boundary using test project/fixture
+- **Evidence artifact:** Output: safe request ID and persisted result.
+
+### PRD-EVID-15-E2E — Vocal cue
+- **Requirement:** Audio-local observation
+- **Guardrail:** No guilt/deception proof
+- **Acceptance evidence:** Cue gate
+- **Test level:** User workflow in browser with durable state
+- **Evidence artifact:** Output: build ID and synthetic fixture ID.
+
+### PRD-EVID-16-UNIT — Acoustic/semantic separation
+- **Requirement:** Tone independent from word meaning
+- **Guardrail:** No lexicon-as-emotion
+- **Acceptance evidence:** Cross-channel fixture
+- **Test level:** Pure schema/domain assertion, no network
+- **Evidence artifact:** Output: test ID and assertion result.
+
+### PRD-EVID-16-INTEGRATION — Acoustic/semantic separation
+- **Requirement:** Tone independent from word meaning
+- **Guardrail:** No lexicon-as-emotion
+- **Acceptance evidence:** Cross-channel fixture
+- **Test level:** API/storage/provider boundary using test project/fixture
+- **Evidence artifact:** Output: safe request ID and persisted result.
+
+### PRD-EVID-16-E2E — Acoustic/semantic separation
+- **Requirement:** Tone independent from word meaning
+- **Guardrail:** No lexicon-as-emotion
+- **Acceptance evidence:** Cross-channel fixture
+- **Test level:** User workflow in browser with durable state
+- **Evidence artifact:** Output: build ID and synthetic fixture ID.
+
+### PRD-EVID-17-UNIT — Abstention
+- **Requirement:** Insufficient evidence supported
+- **Guardrail:** No forced label
+- **Acceptance evidence:** Short/noisy clip test
+- **Test level:** Pure schema/domain assertion, no network
+- **Evidence artifact:** Output: test ID and assertion result.
+
+### PRD-EVID-17-INTEGRATION — Abstention
+- **Requirement:** Insufficient evidence supported
+- **Guardrail:** No forced label
+- **Acceptance evidence:** Short/noisy clip test
+- **Test level:** API/storage/provider boundary using test project/fixture
+- **Evidence artifact:** Output: safe request ID and persisted result.
+
+### PRD-EVID-17-E2E — Abstention
+- **Requirement:** Insufficient evidence supported
+- **Guardrail:** No forced label
+- **Acceptance evidence:** Short/noisy clip test
+- **Test level:** User workflow in browser with durable state
+- **Evidence artifact:** Output: build ID and synthetic fixture ID.
+
+### PRD-EVID-18-UNIT — Timeline
+- **Requirement:** Chronological by source offset
+- **Guardrail:** Unknown time separate
+- **Acceptance evidence:** Sort test
+- **Test level:** Pure schema/domain assertion, no network
+- **Evidence artifact:** Output: test ID and assertion result.
+
+### PRD-EVID-18-INTEGRATION — Timeline
+- **Requirement:** Chronological by source offset
+- **Guardrail:** Unknown time separate
+- **Acceptance evidence:** Sort test
+- **Test level:** API/storage/provider boundary using test project/fixture
+- **Evidence artifact:** Output: safe request ID and persisted result.
+
+### PRD-EVID-18-E2E — Timeline
+- **Requirement:** Chronological by source offset
+- **Guardrail:** Unknown time separate
+- **Acceptance evidence:** Sort test
+- **Test level:** User workflow in browser with durable state
+- **Evidence artifact:** Output: build ID and synthetic fixture ID.
+
+### PRD-EVID-19-UNIT — Missing detail
+- **Requirement:** Question suggestion
+- **Guardrail:** Not inserted as a fact
+- **Acceptance evidence:** UI/review test
+- **Test level:** Pure schema/domain assertion, no network
+- **Evidence artifact:** Output: test ID and assertion result.
+
+### PRD-EVID-19-INTEGRATION — Missing detail
+- **Requirement:** Question suggestion
+- **Guardrail:** Not inserted as a fact
+- **Acceptance evidence:** UI/review test
+- **Test level:** API/storage/provider boundary using test project/fixture
+- **Evidence artifact:** Output: safe request ID and persisted result.
+
+### PRD-EVID-19-E2E — Missing detail
+- **Requirement:** Question suggestion
+- **Guardrail:** Not inserted as a fact
+- **Acceptance evidence:** UI/review test
+- **Test level:** User workflow in browser with durable state
+- **Evidence artifact:** Output: build ID and synthetic fixture ID.
+
+### PRD-EVID-20-UNIT — Contradiction
+- **Requirement:** Two claims shown separately
+- **Guardrail:** No credibility score
+- **Acceptance evidence:** Dual-anchor test
+- **Test level:** Pure schema/domain assertion, no network
+- **Evidence artifact:** Output: test ID and assertion result.
+
+### PRD-EVID-20-INTEGRATION — Contradiction
+- **Requirement:** Two claims shown separately
+- **Guardrail:** No credibility score
+- **Acceptance evidence:** Dual-anchor test
+- **Test level:** API/storage/provider boundary using test project/fixture
+- **Evidence artifact:** Output: safe request ID and persisted result.
+
+### PRD-EVID-20-E2E — Contradiction
+- **Requirement:** Two claims shown separately
+- **Guardrail:** No credibility score
+- **Acceptance evidence:** Dual-anchor test
+- **Test level:** User workflow in browser with durable state
+- **Evidence artifact:** Output: build ID and synthetic fixture ID.
+
+### PRD-EVID-21-UNIT — Case create
+- **Requirement:** Server ID and actor
+- **Guardrail:** No client trust of actor field
+- **Acceptance evidence:** Auth test
+- **Test level:** Pure schema/domain assertion, no network
+- **Evidence artifact:** Output: test ID and assertion result.
+
+### PRD-EVID-21-INTEGRATION — Case create
+- **Requirement:** Server ID and actor
+- **Guardrail:** No client trust of actor field
+- **Acceptance evidence:** Auth test
+- **Test level:** API/storage/provider boundary using test project/fixture
+- **Evidence artifact:** Output: safe request ID and persisted result.
+
+### PRD-EVID-21-E2E — Case create
+- **Requirement:** Server ID and actor
+- **Guardrail:** No client trust of actor field
+- **Acceptance evidence:** Auth test
+- **Test level:** User workflow in browser with durable state
+- **Evidence artifact:** Output: build ID and synthetic fixture ID.
+
+### PRD-EVID-22-UNIT — Case search
+- **Requirement:** Authorized server filtering
+- **Guardrail:** No broad unauthorized queries
+- **Acceptance evidence:** Negative test
+- **Test level:** Pure schema/domain assertion, no network
+- **Evidence artifact:** Output: test ID and assertion result.
+
+### PRD-EVID-22-INTEGRATION — Case search
+- **Requirement:** Authorized server filtering
+- **Guardrail:** No broad unauthorized queries
+- **Acceptance evidence:** Negative test
+- **Test level:** API/storage/provider boundary using test project/fixture
+- **Evidence artifact:** Output: safe request ID and persisted result.
+
+### PRD-EVID-22-E2E — Case search
+- **Requirement:** Authorized server filtering
+- **Guardrail:** No broad unauthorized queries
+- **Acceptance evidence:** Negative test
+- **Test level:** User workflow in browser with durable state
+- **Evidence artifact:** Output: build ID and synthetic fixture ID.
+
+### PRD-EVID-23-UNIT — Run retry
+- **Requirement:** New controlled attempt
+- **Guardrail:** No unbounded cost or merge
+- **Acceptance evidence:** Idempotency test
+- **Test level:** Pure schema/domain assertion, no network
+- **Evidence artifact:** Output: test ID and assertion result.
+
+### PRD-EVID-23-INTEGRATION — Run retry
+- **Requirement:** New controlled attempt
+- **Guardrail:** No unbounded cost or merge
+- **Acceptance evidence:** Idempotency test
+- **Test level:** API/storage/provider boundary using test project/fixture
+- **Evidence artifact:** Output: safe request ID and persisted result.
+
+### PRD-EVID-23-E2E — Run retry
+- **Requirement:** New controlled attempt
+- **Guardrail:** No unbounded cost or merge
+- **Acceptance evidence:** Idempotency test
+- **Test level:** User workflow in browser with durable state
+- **Evidence artifact:** Output: build ID and synthetic fixture ID.
+
+### PRD-EVID-24-UNIT — Review confirm
+- **Requirement:** Explicit actor decision
+- **Guardrail:** Not external verification
+- **Acceptance evidence:** Audit test
+- **Test level:** Pure schema/domain assertion, no network
+- **Evidence artifact:** Output: test ID and assertion result.
+
+### PRD-EVID-24-INTEGRATION — Review confirm
+- **Requirement:** Explicit actor decision
+- **Guardrail:** Not external verification
+- **Acceptance evidence:** Audit test
+- **Test level:** API/storage/provider boundary using test project/fixture
+- **Evidence artifact:** Output: safe request ID and persisted result.
+
+### PRD-EVID-24-E2E — Review confirm
+- **Requirement:** Explicit actor decision
+- **Guardrail:** Not external verification
+- **Acceptance evidence:** Audit test
+- **Test level:** User workflow in browser with durable state
+- **Evidence artifact:** Output: build ID and synthetic fixture ID.
+
+### PRD-EVID-25-UNIT — Review correction
+- **Requirement:** Preserve original and reviewed text
+- **Guardrail:** No destructive overwrite
+- **Acceptance evidence:** History test
+- **Test level:** Pure schema/domain assertion, no network
+- **Evidence artifact:** Output: test ID and assertion result.
+
+### PRD-EVID-25-INTEGRATION — Review correction
+- **Requirement:** Preserve original and reviewed text
+- **Guardrail:** No destructive overwrite
+- **Acceptance evidence:** History test
+- **Test level:** API/storage/provider boundary using test project/fixture
+- **Evidence artifact:** Output: safe request ID and persisted result.
+
+### PRD-EVID-25-E2E — Review correction
+- **Requirement:** Preserve original and reviewed text
+- **Guardrail:** No destructive overwrite
+- **Acceptance evidence:** History test
+- **Test level:** User workflow in browser with durable state
+- **Evidence artifact:** Output: build ID and synthetic fixture ID.
+
+### PRD-EVID-26-UNIT — Review dismiss
+- **Requirement:** State persists
+- **Guardrail:** Not silently erased
+- **Acceptance evidence:** Reload test
+- **Test level:** Pure schema/domain assertion, no network
+- **Evidence artifact:** Output: test ID and assertion result.
+
+### PRD-EVID-26-INTEGRATION — Review dismiss
+- **Requirement:** State persists
+- **Guardrail:** Not silently erased
+- **Acceptance evidence:** Reload test
+- **Test level:** API/storage/provider boundary using test project/fixture
+- **Evidence artifact:** Output: safe request ID and persisted result.
+
+### PRD-EVID-26-E2E — Review dismiss
+- **Requirement:** State persists
+- **Guardrail:** Not silently erased
+- **Acceptance evidence:** Reload test
+- **Test level:** User workflow in browser with durable state
+- **Evidence artifact:** Output: build ID and synthetic fixture ID.
+
+### PRD-EVID-27-UNIT — Report
+- **Requirement:** Selected run snapshot
+- **Guardrail:** No unsupported statement
+- **Acceptance evidence:** Reconciliation test
+- **Test level:** Pure schema/domain assertion, no network
+- **Evidence artifact:** Output: test ID and assertion result.
+
+### PRD-EVID-27-INTEGRATION — Report
+- **Requirement:** Selected run snapshot
+- **Guardrail:** No unsupported statement
+- **Acceptance evidence:** Reconciliation test
+- **Test level:** API/storage/provider boundary using test project/fixture
+- **Evidence artifact:** Output: safe request ID and persisted result.
+
+### PRD-EVID-27-E2E — Report
+- **Requirement:** Selected run snapshot
+- **Guardrail:** No unsupported statement
+- **Acceptance evidence:** Reconciliation test
+- **Test level:** User workflow in browser with durable state
+- **Evidence artifact:** Output: build ID and synthetic fixture ID.
+
+### PRD-EVID-28-UNIT — CSV
+- **Requirement:** Safe allowlisted export
+- **Guardrail:** No spreadsheet formula injection
+- **Acceptance evidence:** CSV fixture
+- **Test level:** Pure schema/domain assertion, no network
+- **Evidence artifact:** Output: test ID and assertion result.
+
+### PRD-EVID-28-INTEGRATION — CSV
+- **Requirement:** Safe allowlisted export
+- **Guardrail:** No spreadsheet formula injection
+- **Acceptance evidence:** CSV fixture
+- **Test level:** API/storage/provider boundary using test project/fixture
+- **Evidence artifact:** Output: safe request ID and persisted result.
+
+### PRD-EVID-28-E2E — CSV
+- **Requirement:** Safe allowlisted export
+- **Guardrail:** No spreadsheet formula injection
+- **Acceptance evidence:** CSV fixture
+- **Test level:** User workflow in browser with durable state
+- **Evidence artifact:** Output: build ID and synthetic fixture ID.
+
+### PRD-EVID-29-UNIT — Live start
+- **Requirement:** Explicit mic action
+- **Guardrail:** No hidden capture
+- **Acceptance evidence:** Browser permission test
+- **Test level:** Pure schema/domain assertion, no network
+- **Evidence artifact:** Output: test ID and assertion result.
+
+### PRD-EVID-29-INTEGRATION — Live start
+- **Requirement:** Explicit mic action
+- **Guardrail:** No hidden capture
+- **Acceptance evidence:** Browser permission test
+- **Test level:** API/storage/provider boundary using test project/fixture
+- **Evidence artifact:** Output: safe request ID and persisted result.
+
+### PRD-EVID-29-E2E — Live start
+- **Requirement:** Explicit mic action
+- **Guardrail:** No hidden capture
+- **Acceptance evidence:** Browser permission test
+- **Test level:** User workflow in browser with durable state
+- **Evidence artifact:** Output: build ID and synthetic fixture ID.
+
+### PRD-EVID-30-UNIT — Live stop
+- **Requirement:** Bounded finalization
+- **Guardrail:** No late hidden extension
+- **Acceptance evidence:** State test
+- **Test level:** Pure schema/domain assertion, no network
+- **Evidence artifact:** Output: test ID and assertion result.
+
+### PRD-EVID-30-INTEGRATION — Live stop
+- **Requirement:** Bounded finalization
+- **Guardrail:** No late hidden extension
+- **Acceptance evidence:** State test
+- **Test level:** API/storage/provider boundary using test project/fixture
+- **Evidence artifact:** Output: safe request ID and persisted result.
+
+### PRD-EVID-30-E2E — Live stop
+- **Requirement:** Bounded finalization
+- **Guardrail:** No late hidden extension
+- **Acceptance evidence:** State test
+- **Test level:** User workflow in browser with durable state
+- **Evidence artifact:** Output: build ID and synthetic fixture ID.
+
+### PRD-EVID-31-UNIT — Retention
+- **Requirement:** Private object expiry
+- **Guardrail:** Actual storage deletion confirmed
+- **Acceptance evidence:** Lifecycle test
+- **Test level:** Pure schema/domain assertion, no network
+- **Evidence artifact:** Output: test ID and assertion result.
+
+### PRD-EVID-31-INTEGRATION — Retention
+- **Requirement:** Private object expiry
+- **Guardrail:** Actual storage deletion confirmed
+- **Acceptance evidence:** Lifecycle test
+- **Test level:** API/storage/provider boundary using test project/fixture
+- **Evidence artifact:** Output: safe request ID and persisted result.
+
+### PRD-EVID-31-E2E — Retention
+- **Requirement:** Private object expiry
+- **Guardrail:** Actual storage deletion confirmed
+- **Acceptance evidence:** Lifecycle test
+- **Test level:** User workflow in browser with durable state
+- **Evidence artifact:** Output: build ID and synthetic fixture ID.
+
+### PRD-EVID-32-UNIT — Security
+- **Requirement:** Resource-level authorization
+- **Guardrail:** No ID-only trust
+- **Acceptance evidence:** Cross-user test
+- **Test level:** Pure schema/domain assertion, no network
+- **Evidence artifact:** Output: test ID and assertion result.
+
+### PRD-EVID-32-INTEGRATION — Security
+- **Requirement:** Resource-level authorization
+- **Guardrail:** No ID-only trust
+- **Acceptance evidence:** Cross-user test
+- **Test level:** API/storage/provider boundary using test project/fixture
+- **Evidence artifact:** Output: safe request ID and persisted result.
+
+### PRD-EVID-32-E2E — Security
+- **Requirement:** Resource-level authorization
+- **Guardrail:** No ID-only trust
+- **Acceptance evidence:** Cross-user test
+- **Test level:** User workflow in browser with durable state
+- **Evidence artifact:** Output: build ID and synthetic fixture ID.
+
+### PRD-EVID-33-UNIT — Cost cap
+- **Requirement:** Server-side limits
+- **Guardrail:** No client-only quota
+- **Acceptance evidence:** Burst test
+- **Test level:** Pure schema/domain assertion, no network
+- **Evidence artifact:** Output: test ID and assertion result.
+
+### PRD-EVID-33-INTEGRATION — Cost cap
+- **Requirement:** Server-side limits
+- **Guardrail:** No client-only quota
+- **Acceptance evidence:** Burst test
+- **Test level:** API/storage/provider boundary using test project/fixture
+- **Evidence artifact:** Output: safe request ID and persisted result.
+
+### PRD-EVID-33-E2E — Cost cap
+- **Requirement:** Server-side limits
+- **Guardrail:** No client-only quota
+- **Acceptance evidence:** Burst test
+- **Test level:** User workflow in browser with durable state
+- **Evidence artifact:** Output: build ID and synthetic fixture ID.
+
+### PRD-EVID-34-UNIT — Error UI
+- **Requirement:** Stable code and next action
+- **Guardrail:** No raw stack/provider payload
+- **Acceptance evidence:** Fault test
+- **Test level:** Pure schema/domain assertion, no network
+- **Evidence artifact:** Output: test ID and assertion result.
+
+### PRD-EVID-34-INTEGRATION — Error UI
+- **Requirement:** Stable code and next action
+- **Guardrail:** No raw stack/provider payload
+- **Acceptance evidence:** Fault test
+- **Test level:** API/storage/provider boundary using test project/fixture
+- **Evidence artifact:** Output: safe request ID and persisted result.
+
+### PRD-EVID-34-E2E — Error UI
+- **Requirement:** Stable code and next action
+- **Guardrail:** No raw stack/provider payload
+- **Acceptance evidence:** Fault test
+- **Test level:** User workflow in browser with durable state
+- **Evidence artifact:** Output: build ID and synthetic fixture ID.
+
+### PRD-EVID-35-UNIT — Demo
+- **Requirement:** Synthetic/authorized fixture
+- **Guardrail:** No real sensitive calls
+- **Acceptance evidence:** Fixture audit
+- **Test level:** Pure schema/domain assertion, no network
+- **Evidence artifact:** Output: test ID and assertion result.
+
+### PRD-EVID-35-INTEGRATION — Demo
+- **Requirement:** Synthetic/authorized fixture
+- **Guardrail:** No real sensitive calls
+- **Acceptance evidence:** Fixture audit
+- **Test level:** API/storage/provider boundary using test project/fixture
+- **Evidence artifact:** Output: safe request ID and persisted result.
+
+### PRD-EVID-35-E2E — Demo
+- **Requirement:** Synthetic/authorized fixture
+- **Guardrail:** No real sensitive calls
+- **Acceptance evidence:** Fixture audit
+- **Test level:** User workflow in browser with durable state
+- **Evidence artifact:** Output: build ID and synthetic fixture ID.
+
+## Implementation review record template
+
+| Field | Required content |
+|---|---|
+| Requirement ID | Stable PRD/architecture/test ID |
+| Change | Exact behavior being added/changed |
+| Source boundary | Browser, API, DB, Storage or provider |
+| Data impact | Added/stored/deleted/externally transmitted fields |
+| Authorization | Actor, resource and action checks |
+| Failure cases | Invalid input, timeout, permission, provider/storage failure |
+| Acceptance | Observable pass/fail condition |
+| Test evidence | Test run, fixture ID and commit |
+| Rollback | Disable flag/revert/migration recovery |
+| Documentation | Files that need synchronizing |
+
+## Release evidence ledger
+
+| Gate | Evidence link/reference | State | Reviewer/date |
+|---|---|---|---|
+| Model API compatibility | Pending sanitized synthetic request/response | Pending | Not reviewed |
+| Transcript fidelity | Pending fixture comparisons | Pending | Not reviewed |
+| Timing alignment | Pending source seek test | Pending | Not reviewed |
+| Trigger context | Pending positive/negative fixture results | Pending | Not reviewed |
+| Vocal cue quality | Pending cue/abstention review | Pending | Not reviewed |
+| Live protocol | Pending connection/event/finalization test | Pending | Not reviewed |
+| RLS/access isolation | Pending two-user negative suite | Pending | Not reviewed |
+| Audio deletion | Pending confirmed test object deletion | Pending | Not reviewed |
+| Report correctness | Pending selected-run reconciliation | Pending | Not reviewed |
+| Demo source | Pending fixture authorization register | Pending | Not reviewed |
+
+### Interpretation
+
+Planning text, code that compiles, mocked tests and visually plausible output are not evidence that a real model endpoint, private storage policy or deletion worker works. Evidence must be tied to an environment, configuration and fixture.
