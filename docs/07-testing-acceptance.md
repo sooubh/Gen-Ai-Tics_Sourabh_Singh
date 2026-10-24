@@ -1119,3 +1119,1432 @@ Track independent dimensions rather than a single summary accuracy number.
 ## Acceptance rule
 
 Only tests actually executed in a named environment can be marked passed. A mocked provider test is not evidence that a real API key/model/endpoint works.
+
+
+## Extended negative and recovery test matrix
+
+This appendix is a repeatable test inventory. One scenario is intentionally verified at separate layers because a unit test cannot prove authorization, real storage behavior or browser state.
+
+### EXT-Test01-UNIT — Wrong-case ID read
+- **Precondition:** Wrong-case ID read
+- **Expected invariant:** No metadata and no body returned
+- **Priority:** P0
+- **Layer:** Pure domain and schema checks
+- **Evidence artifact:** Assertion output and test ID
+
+### EXT-Test01-API_INT — Wrong-case ID read
+- **Precondition:** Wrong-case ID read
+- **Expected invariant:** No metadata and no body returned
+- **Priority:** P0
+- **Layer:** API + test DB/Storage boundary
+- **Evidence artifact:** Safe request ID plus observed persistence/access result
+
+### EXT-Test01-BROWSER_E2E — Wrong-case ID read
+- **Precondition:** Wrong-case ID read
+- **Expected invariant:** No metadata and no body returned
+- **Priority:** P0
+- **Layer:** Browser-level user workflow
+- **Evidence artifact:** Build ID and synthetic fixture ID
+
+### EXT-Test01-OPS_NEGATIVE — Wrong-case ID read
+- **Precondition:** Wrong-case ID read
+- **Expected invariant:** No metadata and no body returned
+- **Priority:** P0
+- **Layer:** Failure, cost, retention or authorization path
+- **Evidence artifact:** Fault-injection/config and final state evidence
+
+### EXT-Test02-UNIT — Wrong-case ID mutate
+- **Precondition:** Wrong-case ID mutate
+- **Expected invariant:** No state changed
+- **Priority:** P0
+- **Layer:** Pure domain and schema checks
+- **Evidence artifact:** Assertion output and test ID
+
+### EXT-Test02-API_INT — Wrong-case ID mutate
+- **Precondition:** Wrong-case ID mutate
+- **Expected invariant:** No state changed
+- **Priority:** P0
+- **Layer:** API + test DB/Storage boundary
+- **Evidence artifact:** Safe request ID plus observed persistence/access result
+
+### EXT-Test02-BROWSER_E2E — Wrong-case ID mutate
+- **Precondition:** Wrong-case ID mutate
+- **Expected invariant:** No state changed
+- **Priority:** P0
+- **Layer:** Browser-level user workflow
+- **Evidence artifact:** Build ID and synthetic fixture ID
+
+### EXT-Test02-OPS_NEGATIVE — Wrong-case ID mutate
+- **Precondition:** Wrong-case ID mutate
+- **Expected invariant:** No state changed
+- **Priority:** P0
+- **Layer:** Failure, cost, retention or authorization path
+- **Evidence artifact:** Fault-injection/config and final state evidence
+
+### EXT-Test03-UNIT — Wrong-case audio download
+- **Precondition:** Wrong-case audio download
+- **Expected invariant:** No media bytes
+- **Priority:** P0
+- **Layer:** Pure domain and schema checks
+- **Evidence artifact:** Assertion output and test ID
+
+### EXT-Test03-API_INT — Wrong-case audio download
+- **Precondition:** Wrong-case audio download
+- **Expected invariant:** No media bytes
+- **Priority:** P0
+- **Layer:** API + test DB/Storage boundary
+- **Evidence artifact:** Safe request ID plus observed persistence/access result
+
+### EXT-Test03-BROWSER_E2E — Wrong-case audio download
+- **Precondition:** Wrong-case audio download
+- **Expected invariant:** No media bytes
+- **Priority:** P0
+- **Layer:** Browser-level user workflow
+- **Evidence artifact:** Build ID and synthetic fixture ID
+
+### EXT-Test03-OPS_NEGATIVE — Wrong-case audio download
+- **Precondition:** Wrong-case audio download
+- **Expected invariant:** No media bytes
+- **Priority:** P0
+- **Layer:** Failure, cost, retention or authorization path
+- **Evidence artifact:** Fault-injection/config and final state evidence
+
+### EXT-Test04-UNIT — Wrong-case report export
+- **Precondition:** Wrong-case report export
+- **Expected invariant:** No report emitted
+- **Priority:** P0
+- **Layer:** Pure domain and schema checks
+- **Evidence artifact:** Assertion output and test ID
+
+### EXT-Test04-API_INT — Wrong-case report export
+- **Precondition:** Wrong-case report export
+- **Expected invariant:** No report emitted
+- **Priority:** P0
+- **Layer:** API + test DB/Storage boundary
+- **Evidence artifact:** Safe request ID plus observed persistence/access result
+
+### EXT-Test04-BROWSER_E2E — Wrong-case report export
+- **Precondition:** Wrong-case report export
+- **Expected invariant:** No report emitted
+- **Priority:** P0
+- **Layer:** Browser-level user workflow
+- **Evidence artifact:** Build ID and synthetic fixture ID
+
+### EXT-Test04-OPS_NEGATIVE — Wrong-case report export
+- **Precondition:** Wrong-case report export
+- **Expected invariant:** No report emitted
+- **Priority:** P0
+- **Layer:** Failure, cost, retention or authorization path
+- **Evidence artifact:** Fault-injection/config and final state evidence
+
+### EXT-Test05-UNIT — Wrong-case delete
+- **Precondition:** Wrong-case delete
+- **Expected invariant:** No object deleted
+- **Priority:** P0
+- **Layer:** Pure domain and schema checks
+- **Evidence artifact:** Assertion output and test ID
+
+### EXT-Test05-API_INT — Wrong-case delete
+- **Precondition:** Wrong-case delete
+- **Expected invariant:** No object deleted
+- **Priority:** P0
+- **Layer:** API + test DB/Storage boundary
+- **Evidence artifact:** Safe request ID plus observed persistence/access result
+
+### EXT-Test05-BROWSER_E2E — Wrong-case delete
+- **Precondition:** Wrong-case delete
+- **Expected invariant:** No object deleted
+- **Priority:** P0
+- **Layer:** Browser-level user workflow
+- **Evidence artifact:** Build ID and synthetic fixture ID
+
+### EXT-Test05-OPS_NEGATIVE — Wrong-case delete
+- **Precondition:** Wrong-case delete
+- **Expected invariant:** No object deleted
+- **Priority:** P0
+- **Layer:** Failure, cost, retention or authorization path
+- **Evidence artifact:** Fault-injection/config and final state evidence
+
+### EXT-Test06-UNIT — Anonymous request
+- **Precondition:** Anonymous request
+- **Expected invariant:** 401 or policy-consistent denial
+- **Priority:** P0
+- **Layer:** Pure domain and schema checks
+- **Evidence artifact:** Assertion output and test ID
+
+### EXT-Test06-API_INT — Anonymous request
+- **Precondition:** Anonymous request
+- **Expected invariant:** 401 or policy-consistent denial
+- **Priority:** P0
+- **Layer:** API + test DB/Storage boundary
+- **Evidence artifact:** Safe request ID plus observed persistence/access result
+
+### EXT-Test06-BROWSER_E2E — Anonymous request
+- **Precondition:** Anonymous request
+- **Expected invariant:** 401 or policy-consistent denial
+- **Priority:** P0
+- **Layer:** Browser-level user workflow
+- **Evidence artifact:** Build ID and synthetic fixture ID
+
+### EXT-Test06-OPS_NEGATIVE — Anonymous request
+- **Precondition:** Anonymous request
+- **Expected invariant:** 401 or policy-consistent denial
+- **Priority:** P0
+- **Layer:** Failure, cost, retention or authorization path
+- **Evidence artifact:** Fault-injection/config and final state evidence
+
+### EXT-Test07-UNIT — Expired session
+- **Precondition:** Expired session
+- **Expected invariant:** Protected endpoint denied and client cache cleared
+- **Priority:** P0
+- **Layer:** Pure domain and schema checks
+- **Evidence artifact:** Assertion output and test ID
+
+### EXT-Test07-API_INT — Expired session
+- **Precondition:** Expired session
+- **Expected invariant:** Protected endpoint denied and client cache cleared
+- **Priority:** P0
+- **Layer:** API + test DB/Storage boundary
+- **Evidence artifact:** Safe request ID plus observed persistence/access result
+
+### EXT-Test07-BROWSER_E2E — Expired session
+- **Precondition:** Expired session
+- **Expected invariant:** Protected endpoint denied and client cache cleared
+- **Priority:** P0
+- **Layer:** Browser-level user workflow
+- **Evidence artifact:** Build ID and synthetic fixture ID
+
+### EXT-Test07-OPS_NEGATIVE — Expired session
+- **Precondition:** Expired session
+- **Expected invariant:** Protected endpoint denied and client cache cleared
+- **Priority:** P0
+- **Layer:** Failure, cost, retention or authorization path
+- **Evidence artifact:** Fault-injection/config and final state evidence
+
+### EXT-Test08-UNIT — Forged actor in JSON
+- **Precondition:** Forged actor in JSON
+- **Expected invariant:** Session actor wins; forged actor ignored/rejected
+- **Priority:** P0
+- **Layer:** Pure domain and schema checks
+- **Evidence artifact:** Assertion output and test ID
+
+### EXT-Test08-API_INT — Forged actor in JSON
+- **Precondition:** Forged actor in JSON
+- **Expected invariant:** Session actor wins; forged actor ignored/rejected
+- **Priority:** P0
+- **Layer:** API + test DB/Storage boundary
+- **Evidence artifact:** Safe request ID plus observed persistence/access result
+
+### EXT-Test08-BROWSER_E2E — Forged actor in JSON
+- **Precondition:** Forged actor in JSON
+- **Expected invariant:** Session actor wins; forged actor ignored/rejected
+- **Priority:** P0
+- **Layer:** Browser-level user workflow
+- **Evidence artifact:** Build ID and synthetic fixture ID
+
+### EXT-Test08-OPS_NEGATIVE — Forged actor in JSON
+- **Precondition:** Forged actor in JSON
+- **Expected invariant:** Session actor wins; forged actor ignored/rejected
+- **Priority:** P0
+- **Layer:** Failure, cost, retention or authorization path
+- **Evidence artifact:** Fault-injection/config and final state evidence
+
+### EXT-Test09-UNIT — Arbitrary storage key
+- **Precondition:** Arbitrary storage key
+- **Expected invariant:** Upload/download/delete scope rejected
+- **Priority:** P0
+- **Layer:** Pure domain and schema checks
+- **Evidence artifact:** Assertion output and test ID
+
+### EXT-Test09-API_INT — Arbitrary storage key
+- **Precondition:** Arbitrary storage key
+- **Expected invariant:** Upload/download/delete scope rejected
+- **Priority:** P0
+- **Layer:** API + test DB/Storage boundary
+- **Evidence artifact:** Safe request ID plus observed persistence/access result
+
+### EXT-Test09-BROWSER_E2E — Arbitrary storage key
+- **Precondition:** Arbitrary storage key
+- **Expected invariant:** Upload/download/delete scope rejected
+- **Priority:** P0
+- **Layer:** Browser-level user workflow
+- **Evidence artifact:** Build ID and synthetic fixture ID
+
+### EXT-Test09-OPS_NEGATIVE — Arbitrary storage key
+- **Precondition:** Arbitrary storage key
+- **Expected invariant:** Upload/download/delete scope rejected
+- **Priority:** P0
+- **Layer:** Failure, cost, retention or authorization path
+- **Evidence artifact:** Fault-injection/config and final state evidence
+
+### EXT-Test10-UNIT — Expired signed grant
+- **Precondition:** Expired signed grant
+- **Expected invariant:** Operation rejected; re-authorize if allowed
+- **Priority:** P0
+- **Layer:** Pure domain and schema checks
+- **Evidence artifact:** Assertion output and test ID
+
+### EXT-Test10-API_INT — Expired signed grant
+- **Precondition:** Expired signed grant
+- **Expected invariant:** Operation rejected; re-authorize if allowed
+- **Priority:** P0
+- **Layer:** API + test DB/Storage boundary
+- **Evidence artifact:** Safe request ID plus observed persistence/access result
+
+### EXT-Test10-BROWSER_E2E — Expired signed grant
+- **Precondition:** Expired signed grant
+- **Expected invariant:** Operation rejected; re-authorize if allowed
+- **Priority:** P0
+- **Layer:** Browser-level user workflow
+- **Evidence artifact:** Build ID and synthetic fixture ID
+
+### EXT-Test10-OPS_NEGATIVE — Expired signed grant
+- **Precondition:** Expired signed grant
+- **Expected invariant:** Operation rejected; re-authorize if allowed
+- **Priority:** P0
+- **Layer:** Failure, cost, retention or authorization path
+- **Evidence artifact:** Fault-injection/config and final state evidence
+
+### EXT-Test11-UNIT — Extension/media mismatch
+- **Precondition:** Extension/media mismatch
+- **Expected invariant:** Reject before paid provider request
+- **Priority:** P0
+- **Layer:** Pure domain and schema checks
+- **Evidence artifact:** Assertion output and test ID
+
+### EXT-Test11-API_INT — Extension/media mismatch
+- **Precondition:** Extension/media mismatch
+- **Expected invariant:** Reject before paid provider request
+- **Priority:** P0
+- **Layer:** API + test DB/Storage boundary
+- **Evidence artifact:** Safe request ID plus observed persistence/access result
+
+### EXT-Test11-BROWSER_E2E — Extension/media mismatch
+- **Precondition:** Extension/media mismatch
+- **Expected invariant:** Reject before paid provider request
+- **Priority:** P0
+- **Layer:** Browser-level user workflow
+- **Evidence artifact:** Build ID and synthetic fixture ID
+
+### EXT-Test11-OPS_NEGATIVE — Extension/media mismatch
+- **Precondition:** Extension/media mismatch
+- **Expected invariant:** Reject before paid provider request
+- **Priority:** P0
+- **Layer:** Failure, cost, retention or authorization path
+- **Evidence artifact:** Fault-injection/config and final state evidence
+
+### EXT-Test12-UNIT — Oversized upload
+- **Precondition:** Oversized upload
+- **Expected invariant:** Reject at server boundary
+- **Priority:** P0
+- **Layer:** Pure domain and schema checks
+- **Evidence artifact:** Assertion output and test ID
+
+### EXT-Test12-API_INT — Oversized upload
+- **Precondition:** Oversized upload
+- **Expected invariant:** Reject at server boundary
+- **Priority:** P0
+- **Layer:** API + test DB/Storage boundary
+- **Evidence artifact:** Safe request ID plus observed persistence/access result
+
+### EXT-Test12-BROWSER_E2E — Oversized upload
+- **Precondition:** Oversized upload
+- **Expected invariant:** Reject at server boundary
+- **Priority:** P0
+- **Layer:** Browser-level user workflow
+- **Evidence artifact:** Build ID and synthetic fixture ID
+
+### EXT-Test12-OPS_NEGATIVE — Oversized upload
+- **Precondition:** Oversized upload
+- **Expected invariant:** Reject at server boundary
+- **Priority:** P0
+- **Layer:** Failure, cost, retention or authorization path
+- **Evidence artifact:** Fault-injection/config and final state evidence
+
+### EXT-Test13-UNIT — Duration over limit
+- **Precondition:** Duration over limit
+- **Expected invariant:** Reject or documented supported segmentation
+- **Priority:** P0
+- **Layer:** Pure domain and schema checks
+- **Evidence artifact:** Assertion output and test ID
+
+### EXT-Test13-API_INT — Duration over limit
+- **Precondition:** Duration over limit
+- **Expected invariant:** Reject or documented supported segmentation
+- **Priority:** P0
+- **Layer:** API + test DB/Storage boundary
+- **Evidence artifact:** Safe request ID plus observed persistence/access result
+
+### EXT-Test13-BROWSER_E2E — Duration over limit
+- **Precondition:** Duration over limit
+- **Expected invariant:** Reject or documented supported segmentation
+- **Priority:** P0
+- **Layer:** Browser-level user workflow
+- **Evidence artifact:** Build ID and synthetic fixture ID
+
+### EXT-Test13-OPS_NEGATIVE — Duration over limit
+- **Precondition:** Duration over limit
+- **Expected invariant:** Reject or documented supported segmentation
+- **Priority:** P0
+- **Layer:** Failure, cost, retention or authorization path
+- **Evidence artifact:** Fault-injection/config and final state evidence
+
+### EXT-Test14-UNIT — Duplicate analysis POST
+- **Precondition:** Duplicate analysis POST
+- **Expected invariant:** Defined idempotent or explicitly separate run
+- **Priority:** P0
+- **Layer:** Pure domain and schema checks
+- **Evidence artifact:** Assertion output and test ID
+
+### EXT-Test14-API_INT — Duplicate analysis POST
+- **Precondition:** Duplicate analysis POST
+- **Expected invariant:** Defined idempotent or explicitly separate run
+- **Priority:** P0
+- **Layer:** API + test DB/Storage boundary
+- **Evidence artifact:** Safe request ID plus observed persistence/access result
+
+### EXT-Test14-BROWSER_E2E — Duplicate analysis POST
+- **Precondition:** Duplicate analysis POST
+- **Expected invariant:** Defined idempotent or explicitly separate run
+- **Priority:** P0
+- **Layer:** Browser-level user workflow
+- **Evidence artifact:** Build ID and synthetic fixture ID
+
+### EXT-Test14-OPS_NEGATIVE — Duplicate analysis POST
+- **Precondition:** Duplicate analysis POST
+- **Expected invariant:** Defined idempotent or explicitly separate run
+- **Priority:** P0
+- **Layer:** Failure, cost, retention or authorization path
+- **Evidence artifact:** Fault-injection/config and final state evidence
+
+### EXT-Test15-UNIT — Replay same key different payload
+- **Precondition:** Replay same key different payload
+- **Expected invariant:** Conflict
+- **Priority:** P0
+- **Layer:** Pure domain and schema checks
+- **Evidence artifact:** Assertion output and test ID
+
+### EXT-Test15-API_INT — Replay same key different payload
+- **Precondition:** Replay same key different payload
+- **Expected invariant:** Conflict
+- **Priority:** P0
+- **Layer:** API + test DB/Storage boundary
+- **Evidence artifact:** Safe request ID plus observed persistence/access result
+
+### EXT-Test15-BROWSER_E2E — Replay same key different payload
+- **Precondition:** Replay same key different payload
+- **Expected invariant:** Conflict
+- **Priority:** P0
+- **Layer:** Browser-level user workflow
+- **Evidence artifact:** Build ID and synthetic fixture ID
+
+### EXT-Test15-OPS_NEGATIVE — Replay same key different payload
+- **Precondition:** Replay same key different payload
+- **Expected invariant:** Conflict
+- **Priority:** P0
+- **Layer:** Failure, cost, retention or authorization path
+- **Evidence artifact:** Fault-injection/config and final state evidence
+
+### EXT-Test16-UNIT — Provider 429
+- **Precondition:** Provider 429
+- **Expected invariant:** Bounded retry; no retry storm
+- **Priority:** P0
+- **Layer:** Pure domain and schema checks
+- **Evidence artifact:** Assertion output and test ID
+
+### EXT-Test16-API_INT — Provider 429
+- **Precondition:** Provider 429
+- **Expected invariant:** Bounded retry; no retry storm
+- **Priority:** P0
+- **Layer:** API + test DB/Storage boundary
+- **Evidence artifact:** Safe request ID plus observed persistence/access result
+
+### EXT-Test16-BROWSER_E2E — Provider 429
+- **Precondition:** Provider 429
+- **Expected invariant:** Bounded retry; no retry storm
+- **Priority:** P0
+- **Layer:** Browser-level user workflow
+- **Evidence artifact:** Build ID and synthetic fixture ID
+
+### EXT-Test16-OPS_NEGATIVE — Provider 429
+- **Precondition:** Provider 429
+- **Expected invariant:** Bounded retry; no retry storm
+- **Priority:** P0
+- **Layer:** Failure, cost, retention or authorization path
+- **Evidence artifact:** Fault-injection/config and final state evidence
+
+### EXT-Test17-UNIT — Provider timeout after partial output
+- **Precondition:** Provider timeout after partial output
+- **Expected invariant:** Honest partial/failure state
+- **Priority:** P0
+- **Layer:** Pure domain and schema checks
+- **Evidence artifact:** Assertion output and test ID
+
+### EXT-Test17-API_INT — Provider timeout after partial output
+- **Precondition:** Provider timeout after partial output
+- **Expected invariant:** Honest partial/failure state
+- **Priority:** P0
+- **Layer:** API + test DB/Storage boundary
+- **Evidence artifact:** Safe request ID plus observed persistence/access result
+
+### EXT-Test17-BROWSER_E2E — Provider timeout after partial output
+- **Precondition:** Provider timeout after partial output
+- **Expected invariant:** Honest partial/failure state
+- **Priority:** P0
+- **Layer:** Browser-level user workflow
+- **Evidence artifact:** Build ID and synthetic fixture ID
+
+### EXT-Test17-OPS_NEGATIVE — Provider timeout after partial output
+- **Precondition:** Provider timeout after partial output
+- **Expected invariant:** Honest partial/failure state
+- **Priority:** P0
+- **Layer:** Failure, cost, retention or authorization path
+- **Evidence artifact:** Fault-injection/config and final state evidence
+
+### EXT-Test18-UNIT — Provider schema change
+- **Precondition:** Provider schema change
+- **Expected invariant:** Validation error and adapter gate
+- **Priority:** P0
+- **Layer:** Pure domain and schema checks
+- **Evidence artifact:** Assertion output and test ID
+
+### EXT-Test18-API_INT — Provider schema change
+- **Precondition:** Provider schema change
+- **Expected invariant:** Validation error and adapter gate
+- **Priority:** P0
+- **Layer:** API + test DB/Storage boundary
+- **Evidence artifact:** Safe request ID plus observed persistence/access result
+
+### EXT-Test18-BROWSER_E2E — Provider schema change
+- **Precondition:** Provider schema change
+- **Expected invariant:** Validation error and adapter gate
+- **Priority:** P0
+- **Layer:** Browser-level user workflow
+- **Evidence artifact:** Build ID and synthetic fixture ID
+
+### EXT-Test18-OPS_NEGATIVE — Provider schema change
+- **Precondition:** Provider schema change
+- **Expected invariant:** Validation error and adapter gate
+- **Priority:** P0
+- **Layer:** Failure, cost, retention or authorization path
+- **Evidence artifact:** Fault-injection/config and final state evidence
+
+### EXT-Test19-UNIT — No transcript segments
+- **Precondition:** No transcript segments
+- **Expected invariant:** No-transcript state, not safe result
+- **Priority:** P0
+- **Layer:** Pure domain and schema checks
+- **Evidence artifact:** Assertion output and test ID
+
+### EXT-Test19-API_INT — No transcript segments
+- **Precondition:** No transcript segments
+- **Expected invariant:** No-transcript state, not safe result
+- **Priority:** P0
+- **Layer:** API + test DB/Storage boundary
+- **Evidence artifact:** Safe request ID plus observed persistence/access result
+
+### EXT-Test19-BROWSER_E2E — No transcript segments
+- **Precondition:** No transcript segments
+- **Expected invariant:** No-transcript state, not safe result
+- **Priority:** P0
+- **Layer:** Browser-level user workflow
+- **Evidence artifact:** Build ID and synthetic fixture ID
+
+### EXT-Test19-OPS_NEGATIVE — No transcript segments
+- **Precondition:** No transcript segments
+- **Expected invariant:** No-transcript state, not safe result
+- **Priority:** P0
+- **Layer:** Failure, cost, retention or authorization path
+- **Evidence artifact:** Fault-injection/config and final state evidence
+
+### EXT-Test20-UNIT — No trigger candidates
+- **Precondition:** No trigger candidates
+- **Expected invariant:** Neutral empty candidate list
+- **Priority:** P0
+- **Layer:** Pure domain and schema checks
+- **Evidence artifact:** Assertion output and test ID
+
+### EXT-Test20-API_INT — No trigger candidates
+- **Precondition:** No trigger candidates
+- **Expected invariant:** Neutral empty candidate list
+- **Priority:** P0
+- **Layer:** API + test DB/Storage boundary
+- **Evidence artifact:** Safe request ID plus observed persistence/access result
+
+### EXT-Test20-BROWSER_E2E — No trigger candidates
+- **Precondition:** No trigger candidates
+- **Expected invariant:** Neutral empty candidate list
+- **Priority:** P0
+- **Layer:** Browser-level user workflow
+- **Evidence artifact:** Build ID and synthetic fixture ID
+
+### EXT-Test20-OPS_NEGATIVE — No trigger candidates
+- **Precondition:** No trigger candidates
+- **Expected invariant:** Neutral empty candidate list
+- **Priority:** P0
+- **Layer:** Failure, cost, retention or authorization path
+- **Evidence artifact:** Fault-injection/config and final state evidence
+
+### EXT-Test21-UNIT — Negative threat context
+- **Precondition:** Negative threat context
+- **Expected invariant:** No keyword-only trigger
+- **Priority:** P0
+- **Layer:** Pure domain and schema checks
+- **Evidence artifact:** Assertion output and test ID
+
+### EXT-Test21-API_INT — Negative threat context
+- **Precondition:** Negative threat context
+- **Expected invariant:** No keyword-only trigger
+- **Priority:** P0
+- **Layer:** API + test DB/Storage boundary
+- **Evidence artifact:** Safe request ID plus observed persistence/access result
+
+### EXT-Test21-BROWSER_E2E — Negative threat context
+- **Precondition:** Negative threat context
+- **Expected invariant:** No keyword-only trigger
+- **Priority:** P0
+- **Layer:** Browser-level user workflow
+- **Evidence artifact:** Build ID and synthetic fixture ID
+
+### EXT-Test21-OPS_NEGATIVE — Negative threat context
+- **Precondition:** Negative threat context
+- **Expected invariant:** No keyword-only trigger
+- **Priority:** P0
+- **Layer:** Failure, cost, retention or authorization path
+- **Evidence artifact:** Fault-injection/config and final state evidence
+
+### EXT-Test22-UNIT — Historical threat context
+- **Precondition:** Historical threat context
+- **Expected invariant:** Past/report attribution retained
+- **Priority:** P0
+- **Layer:** Pure domain and schema checks
+- **Evidence artifact:** Assertion output and test ID
+
+### EXT-Test22-API_INT — Historical threat context
+- **Precondition:** Historical threat context
+- **Expected invariant:** Past/report attribution retained
+- **Priority:** P0
+- **Layer:** API + test DB/Storage boundary
+- **Evidence artifact:** Safe request ID plus observed persistence/access result
+
+### EXT-Test22-BROWSER_E2E — Historical threat context
+- **Precondition:** Historical threat context
+- **Expected invariant:** Past/report attribution retained
+- **Priority:** P0
+- **Layer:** Browser-level user workflow
+- **Evidence artifact:** Build ID and synthetic fixture ID
+
+### EXT-Test22-OPS_NEGATIVE — Historical threat context
+- **Precondition:** Historical threat context
+- **Expected invariant:** Past/report attribution retained
+- **Priority:** P0
+- **Layer:** Failure, cost, retention or authorization path
+- **Evidence artifact:** Fault-injection/config and final state evidence
+
+### EXT-Test23-UNIT — Hypothetical threat context
+- **Precondition:** Hypothetical threat context
+- **Expected invariant:** Conditional status preserved
+- **Priority:** P0
+- **Layer:** Pure domain and schema checks
+- **Evidence artifact:** Assertion output and test ID
+
+### EXT-Test23-API_INT — Hypothetical threat context
+- **Precondition:** Hypothetical threat context
+- **Expected invariant:** Conditional status preserved
+- **Priority:** P0
+- **Layer:** API + test DB/Storage boundary
+- **Evidence artifact:** Safe request ID plus observed persistence/access result
+
+### EXT-Test23-BROWSER_E2E — Hypothetical threat context
+- **Precondition:** Hypothetical threat context
+- **Expected invariant:** Conditional status preserved
+- **Priority:** P0
+- **Layer:** Browser-level user workflow
+- **Evidence artifact:** Build ID and synthetic fixture ID
+
+### EXT-Test23-OPS_NEGATIVE — Hypothetical threat context
+- **Precondition:** Hypothetical threat context
+- **Expected invariant:** Conditional status preserved
+- **Priority:** P0
+- **Layer:** Failure, cost, retention or authorization path
+- **Evidence artifact:** Fault-injection/config and final state evidence
+
+### EXT-Test24-UNIT — Quote attribution
+- **Precondition:** Quote attribution
+- **Expected invariant:** Reported words not assigned as intent automatically
+- **Priority:** P0
+- **Layer:** Pure domain and schema checks
+- **Evidence artifact:** Assertion output and test ID
+
+### EXT-Test24-API_INT — Quote attribution
+- **Precondition:** Quote attribution
+- **Expected invariant:** Reported words not assigned as intent automatically
+- **Priority:** P0
+- **Layer:** API + test DB/Storage boundary
+- **Evidence artifact:** Safe request ID plus observed persistence/access result
+
+### EXT-Test24-BROWSER_E2E — Quote attribution
+- **Precondition:** Quote attribution
+- **Expected invariant:** Reported words not assigned as intent automatically
+- **Priority:** P0
+- **Layer:** Browser-level user workflow
+- **Evidence artifact:** Build ID and synthetic fixture ID
+
+### EXT-Test24-OPS_NEGATIVE — Quote attribution
+- **Precondition:** Quote attribution
+- **Expected invariant:** Reported words not assigned as intent automatically
+- **Priority:** P0
+- **Layer:** Failure, cost, retention or authorization path
+- **Evidence artifact:** Fault-injection/config and final state evidence
+
+### EXT-Test25-UNIT — Model omits confidence
+- **Precondition:** Model omits confidence
+- **Expected invariant:** Null/not-provided
+- **Priority:** P0
+- **Layer:** Pure domain and schema checks
+- **Evidence artifact:** Assertion output and test ID
+
+### EXT-Test25-API_INT — Model omits confidence
+- **Precondition:** Model omits confidence
+- **Expected invariant:** Null/not-provided
+- **Priority:** P0
+- **Layer:** API + test DB/Storage boundary
+- **Evidence artifact:** Safe request ID plus observed persistence/access result
+
+### EXT-Test25-BROWSER_E2E — Model omits confidence
+- **Precondition:** Model omits confidence
+- **Expected invariant:** Null/not-provided
+- **Priority:** P0
+- **Layer:** Browser-level user workflow
+- **Evidence artifact:** Build ID and synthetic fixture ID
+
+### EXT-Test25-OPS_NEGATIVE — Model omits confidence
+- **Precondition:** Model omits confidence
+- **Expected invariant:** Null/not-provided
+- **Priority:** P0
+- **Layer:** Failure, cost, retention or authorization path
+- **Evidence artifact:** Fault-injection/config and final state evidence
+
+### EXT-Test26-UNIT — Model emits unsupported identity field
+- **Precondition:** Model emits unsupported identity field
+- **Expected invariant:** Field rejected/removed
+- **Priority:** P0
+- **Layer:** Pure domain and schema checks
+- **Evidence artifact:** Assertion output and test ID
+
+### EXT-Test26-API_INT — Model emits unsupported identity field
+- **Precondition:** Model emits unsupported identity field
+- **Expected invariant:** Field rejected/removed
+- **Priority:** P0
+- **Layer:** API + test DB/Storage boundary
+- **Evidence artifact:** Safe request ID plus observed persistence/access result
+
+### EXT-Test26-BROWSER_E2E — Model emits unsupported identity field
+- **Precondition:** Model emits unsupported identity field
+- **Expected invariant:** Field rejected/removed
+- **Priority:** P0
+- **Layer:** Browser-level user workflow
+- **Evidence artifact:** Build ID and synthetic fixture ID
+
+### EXT-Test26-OPS_NEGATIVE — Model emits unsupported identity field
+- **Precondition:** Model emits unsupported identity field
+- **Expected invariant:** Field rejected/removed
+- **Priority:** P0
+- **Layer:** Failure, cost, retention or authorization path
+- **Evidence artifact:** Fault-injection/config and final state evidence
+
+### EXT-Test27-UNIT — Finding references other run
+- **Precondition:** Finding references other run
+- **Expected invariant:** Persist rejected
+- **Priority:** P0
+- **Layer:** Pure domain and schema checks
+- **Evidence artifact:** Assertion output and test ID
+
+### EXT-Test27-API_INT — Finding references other run
+- **Precondition:** Finding references other run
+- **Expected invariant:** Persist rejected
+- **Priority:** P0
+- **Layer:** API + test DB/Storage boundary
+- **Evidence artifact:** Safe request ID plus observed persistence/access result
+
+### EXT-Test27-BROWSER_E2E — Finding references other run
+- **Precondition:** Finding references other run
+- **Expected invariant:** Persist rejected
+- **Priority:** P0
+- **Layer:** Browser-level user workflow
+- **Evidence artifact:** Build ID and synthetic fixture ID
+
+### EXT-Test27-OPS_NEGATIVE — Finding references other run
+- **Precondition:** Finding references other run
+- **Expected invariant:** Persist rejected
+- **Priority:** P0
+- **Layer:** Failure, cost, retention or authorization path
+- **Evidence artifact:** Fault-injection/config and final state evidence
+
+### EXT-Test28-UNIT — Finding has no evidence
+- **Precondition:** Finding has no evidence
+- **Expected invariant:** Reject or explicitly non-evidentiary type
+- **Priority:** P0
+- **Layer:** Pure domain and schema checks
+- **Evidence artifact:** Assertion output and test ID
+
+### EXT-Test28-API_INT — Finding has no evidence
+- **Precondition:** Finding has no evidence
+- **Expected invariant:** Reject or explicitly non-evidentiary type
+- **Priority:** P0
+- **Layer:** API + test DB/Storage boundary
+- **Evidence artifact:** Safe request ID plus observed persistence/access result
+
+### EXT-Test28-BROWSER_E2E — Finding has no evidence
+- **Precondition:** Finding has no evidence
+- **Expected invariant:** Reject or explicitly non-evidentiary type
+- **Priority:** P0
+- **Layer:** Browser-level user workflow
+- **Evidence artifact:** Build ID and synthetic fixture ID
+
+### EXT-Test28-OPS_NEGATIVE — Finding has no evidence
+- **Precondition:** Finding has no evidence
+- **Expected invariant:** Reject or explicitly non-evidentiary type
+- **Priority:** P0
+- **Layer:** Failure, cost, retention or authorization path
+- **Evidence artifact:** Fault-injection/config and final state evidence
+
+### EXT-Test29-UNIT — Negative time offset
+- **Precondition:** Negative time offset
+- **Expected invariant:** Invalid
+- **Priority:** P0
+- **Layer:** Pure domain and schema checks
+- **Evidence artifact:** Assertion output and test ID
+
+### EXT-Test29-API_INT — Negative time offset
+- **Precondition:** Negative time offset
+- **Expected invariant:** Invalid
+- **Priority:** P0
+- **Layer:** API + test DB/Storage boundary
+- **Evidence artifact:** Safe request ID plus observed persistence/access result
+
+### EXT-Test29-BROWSER_E2E — Negative time offset
+- **Precondition:** Negative time offset
+- **Expected invariant:** Invalid
+- **Priority:** P0
+- **Layer:** Browser-level user workflow
+- **Evidence artifact:** Build ID and synthetic fixture ID
+
+### EXT-Test29-OPS_NEGATIVE — Negative time offset
+- **Precondition:** Negative time offset
+- **Expected invariant:** Invalid
+- **Priority:** P0
+- **Layer:** Failure, cost, retention or authorization path
+- **Evidence artifact:** Fault-injection/config and final state evidence
+
+### EXT-Test30-UNIT — Offset beyond recording
+- **Precondition:** Offset beyond recording
+- **Expected invariant:** Reject/flag
+- **Priority:** P0
+- **Layer:** Pure domain and schema checks
+- **Evidence artifact:** Assertion output and test ID
+
+### EXT-Test30-API_INT — Offset beyond recording
+- **Precondition:** Offset beyond recording
+- **Expected invariant:** Reject/flag
+- **Priority:** P0
+- **Layer:** API + test DB/Storage boundary
+- **Evidence artifact:** Safe request ID plus observed persistence/access result
+
+### EXT-Test30-BROWSER_E2E — Offset beyond recording
+- **Precondition:** Offset beyond recording
+- **Expected invariant:** Reject/flag
+- **Priority:** P0
+- **Layer:** Browser-level user workflow
+- **Evidence artifact:** Build ID and synthetic fixture ID
+
+### EXT-Test30-OPS_NEGATIVE — Offset beyond recording
+- **Precondition:** Offset beyond recording
+- **Expected invariant:** Reject/flag
+- **Priority:** P0
+- **Layer:** Failure, cost, retention or authorization path
+- **Evidence artifact:** Fault-injection/config and final state evidence
+
+### EXT-Test31-UNIT — Transcript correction
+- **Precondition:** Transcript correction
+- **Expected invariant:** Original preserved and correction attributed
+- **Priority:** P0
+- **Layer:** Pure domain and schema checks
+- **Evidence artifact:** Assertion output and test ID
+
+### EXT-Test31-API_INT — Transcript correction
+- **Precondition:** Transcript correction
+- **Expected invariant:** Original preserved and correction attributed
+- **Priority:** P0
+- **Layer:** API + test DB/Storage boundary
+- **Evidence artifact:** Safe request ID plus observed persistence/access result
+
+### EXT-Test31-BROWSER_E2E — Transcript correction
+- **Precondition:** Transcript correction
+- **Expected invariant:** Original preserved and correction attributed
+- **Priority:** P0
+- **Layer:** Browser-level user workflow
+- **Evidence artifact:** Build ID and synthetic fixture ID
+
+### EXT-Test31-OPS_NEGATIVE — Transcript correction
+- **Precondition:** Transcript correction
+- **Expected invariant:** Original preserved and correction attributed
+- **Priority:** P0
+- **Layer:** Failure, cost, retention or authorization path
+- **Evidence artifact:** Fault-injection/config and final state evidence
+
+### EXT-Test32-UNIT — Late model write after correction
+- **Precondition:** Late model write after correction
+- **Expected invariant:** No silent overwrite
+- **Priority:** P0
+- **Layer:** Pure domain and schema checks
+- **Evidence artifact:** Assertion output and test ID
+
+### EXT-Test32-API_INT — Late model write after correction
+- **Precondition:** Late model write after correction
+- **Expected invariant:** No silent overwrite
+- **Priority:** P0
+- **Layer:** API + test DB/Storage boundary
+- **Evidence artifact:** Safe request ID plus observed persistence/access result
+
+### EXT-Test32-BROWSER_E2E — Late model write after correction
+- **Precondition:** Late model write after correction
+- **Expected invariant:** No silent overwrite
+- **Priority:** P0
+- **Layer:** Browser-level user workflow
+- **Evidence artifact:** Build ID and synthetic fixture ID
+
+### EXT-Test32-OPS_NEGATIVE — Late model write after correction
+- **Precondition:** Late model write after correction
+- **Expected invariant:** No silent overwrite
+- **Priority:** P0
+- **Layer:** Failure, cost, retention or authorization path
+- **Evidence artifact:** Fault-injection/config and final state evidence
+
+### EXT-Test33-UNIT — Concurrent review update
+- **Precondition:** Concurrent review update
+- **Expected invariant:** Stale version conflict
+- **Priority:** P0
+- **Layer:** Pure domain and schema checks
+- **Evidence artifact:** Assertion output and test ID
+
+### EXT-Test33-API_INT — Concurrent review update
+- **Precondition:** Concurrent review update
+- **Expected invariant:** Stale version conflict
+- **Priority:** P0
+- **Layer:** API + test DB/Storage boundary
+- **Evidence artifact:** Safe request ID plus observed persistence/access result
+
+### EXT-Test33-BROWSER_E2E — Concurrent review update
+- **Precondition:** Concurrent review update
+- **Expected invariant:** Stale version conflict
+- **Priority:** P0
+- **Layer:** Browser-level user workflow
+- **Evidence artifact:** Build ID and synthetic fixture ID
+
+### EXT-Test33-OPS_NEGATIVE — Concurrent review update
+- **Precondition:** Concurrent review update
+- **Expected invariant:** Stale version conflict
+- **Priority:** P0
+- **Layer:** Failure, cost, retention or authorization path
+- **Evidence artifact:** Fault-injection/config and final state evidence
+
+### EXT-Test34-UNIT — CSV formula starts with equals
+- **Precondition:** CSV formula starts with equals
+- **Expected invariant:** Escaped/inert cell
+- **Priority:** P0
+- **Layer:** Pure domain and schema checks
+- **Evidence artifact:** Assertion output and test ID
+
+### EXT-Test34-API_INT — CSV formula starts with equals
+- **Precondition:** CSV formula starts with equals
+- **Expected invariant:** Escaped/inert cell
+- **Priority:** P0
+- **Layer:** API + test DB/Storage boundary
+- **Evidence artifact:** Safe request ID plus observed persistence/access result
+
+### EXT-Test34-BROWSER_E2E — CSV formula starts with equals
+- **Precondition:** CSV formula starts with equals
+- **Expected invariant:** Escaped/inert cell
+- **Priority:** P0
+- **Layer:** Browser-level user workflow
+- **Evidence artifact:** Build ID and synthetic fixture ID
+
+### EXT-Test34-OPS_NEGATIVE — CSV formula starts with equals
+- **Precondition:** CSV formula starts with equals
+- **Expected invariant:** Escaped/inert cell
+- **Priority:** P0
+- **Layer:** Failure, cost, retention or authorization path
+- **Evidence artifact:** Fault-injection/config and final state evidence
+
+### EXT-Test35-UNIT — Export selected older run
+- **Precondition:** Export selected older run
+- **Expected invariant:** Output matches older run only
+- **Priority:** P0
+- **Layer:** Pure domain and schema checks
+- **Evidence artifact:** Assertion output and test ID
+
+### EXT-Test35-API_INT — Export selected older run
+- **Precondition:** Export selected older run
+- **Expected invariant:** Output matches older run only
+- **Priority:** P0
+- **Layer:** API + test DB/Storage boundary
+- **Evidence artifact:** Safe request ID plus observed persistence/access result
+
+### EXT-Test35-BROWSER_E2E — Export selected older run
+- **Precondition:** Export selected older run
+- **Expected invariant:** Output matches older run only
+- **Priority:** P0
+- **Layer:** Browser-level user workflow
+- **Evidence artifact:** Build ID and synthetic fixture ID
+
+### EXT-Test35-OPS_NEGATIVE — Export selected older run
+- **Precondition:** Export selected older run
+- **Expected invariant:** Output matches older run only
+- **Priority:** P0
+- **Layer:** Failure, cost, retention or authorization path
+- **Evidence artifact:** Fault-injection/config and final state evidence
+
+### EXT-Test36-UNIT — Delete storage failure
+- **Precondition:** Delete storage failure
+- **Expected invariant:** State remains pending/failed
+- **Priority:** P0
+- **Layer:** Pure domain and schema checks
+- **Evidence artifact:** Assertion output and test ID
+
+### EXT-Test36-API_INT — Delete storage failure
+- **Precondition:** Delete storage failure
+- **Expected invariant:** State remains pending/failed
+- **Priority:** P0
+- **Layer:** API + test DB/Storage boundary
+- **Evidence artifact:** Safe request ID plus observed persistence/access result
+
+### EXT-Test36-BROWSER_E2E — Delete storage failure
+- **Precondition:** Delete storage failure
+- **Expected invariant:** State remains pending/failed
+- **Priority:** P0
+- **Layer:** Browser-level user workflow
+- **Evidence artifact:** Build ID and synthetic fixture ID
+
+### EXT-Test36-OPS_NEGATIVE — Delete storage failure
+- **Precondition:** Delete storage failure
+- **Expected invariant:** State remains pending/failed
+- **Priority:** P0
+- **Layer:** Failure, cost, retention or authorization path
+- **Evidence artifact:** Fault-injection/config and final state evidence
+
+### EXT-Test37-UNIT — Provider remote file
+- **Precondition:** Provider remote file
+- **Expected invariant:** Lifecycle status independently verified
+- **Priority:** P0
+- **Layer:** Pure domain and schema checks
+- **Evidence artifact:** Assertion output and test ID
+
+### EXT-Test37-API_INT — Provider remote file
+- **Precondition:** Provider remote file
+- **Expected invariant:** Lifecycle status independently verified
+- **Priority:** P0
+- **Layer:** API + test DB/Storage boundary
+- **Evidence artifact:** Safe request ID plus observed persistence/access result
+
+### EXT-Test37-BROWSER_E2E — Provider remote file
+- **Precondition:** Provider remote file
+- **Expected invariant:** Lifecycle status independently verified
+- **Priority:** P0
+- **Layer:** Browser-level user workflow
+- **Evidence artifact:** Build ID and synthetic fixture ID
+
+### EXT-Test37-OPS_NEGATIVE — Provider remote file
+- **Precondition:** Provider remote file
+- **Expected invariant:** Lifecycle status independently verified
+- **Priority:** P0
+- **Layer:** Failure, cost, retention or authorization path
+- **Evidence artifact:** Fault-injection/config and final state evidence
+
+### EXT-Test38-UNIT — Repeated live interim event
+- **Precondition:** Repeated live interim event
+- **Expected invariant:** No duplicate segment
+- **Priority:** P0
+- **Layer:** Pure domain and schema checks
+- **Evidence artifact:** Assertion output and test ID
+
+### EXT-Test38-API_INT — Repeated live interim event
+- **Precondition:** Repeated live interim event
+- **Expected invariant:** No duplicate segment
+- **Priority:** P0
+- **Layer:** API + test DB/Storage boundary
+- **Evidence artifact:** Safe request ID plus observed persistence/access result
+
+### EXT-Test38-BROWSER_E2E — Repeated live interim event
+- **Precondition:** Repeated live interim event
+- **Expected invariant:** No duplicate segment
+- **Priority:** P0
+- **Layer:** Browser-level user workflow
+- **Evidence artifact:** Build ID and synthetic fixture ID
+
+### EXT-Test38-OPS_NEGATIVE — Repeated live interim event
+- **Precondition:** Repeated live interim event
+- **Expected invariant:** No duplicate segment
+- **Priority:** P0
+- **Layer:** Failure, cost, retention or authorization path
+- **Evidence artifact:** Fault-injection/config and final state evidence
+
+### EXT-Test39-UNIT — Late event after stop
+- **Precondition:** Late event after stop
+- **Expected invariant:** Close/finalization rule enforced
+- **Priority:** P0
+- **Layer:** Pure domain and schema checks
+- **Evidence artifact:** Assertion output and test ID
+
+### EXT-Test39-API_INT — Late event after stop
+- **Precondition:** Late event after stop
+- **Expected invariant:** Close/finalization rule enforced
+- **Priority:** P0
+- **Layer:** API + test DB/Storage boundary
+- **Evidence artifact:** Safe request ID plus observed persistence/access result
+
+### EXT-Test39-BROWSER_E2E — Late event after stop
+- **Precondition:** Late event after stop
+- **Expected invariant:** Close/finalization rule enforced
+- **Priority:** P0
+- **Layer:** Browser-level user workflow
+- **Evidence artifact:** Build ID and synthetic fixture ID
+
+### EXT-Test39-OPS_NEGATIVE — Late event after stop
+- **Precondition:** Late event after stop
+- **Expected invariant:** Close/finalization rule enforced
+- **Priority:** P0
+- **Layer:** Failure, cost, retention or authorization path
+- **Evidence artifact:** Fault-injection/config and final state evidence
+
+### EXT-Test40-UNIT — Mic permission denied
+- **Precondition:** Mic permission denied
+- **Expected invariant:** Recorded audio option available
+- **Priority:** P0
+- **Layer:** Pure domain and schema checks
+- **Evidence artifact:** Assertion output and test ID
+
+### EXT-Test40-API_INT — Mic permission denied
+- **Precondition:** Mic permission denied
+- **Expected invariant:** Recorded audio option available
+- **Priority:** P0
+- **Layer:** API + test DB/Storage boundary
+- **Evidence artifact:** Safe request ID plus observed persistence/access result
+
+### EXT-Test40-BROWSER_E2E — Mic permission denied
+- **Precondition:** Mic permission denied
+- **Expected invariant:** Recorded audio option available
+- **Priority:** P0
+- **Layer:** Browser-level user workflow
+- **Evidence artifact:** Build ID and synthetic fixture ID
+
+### EXT-Test40-OPS_NEGATIVE — Mic permission denied
+- **Precondition:** Mic permission denied
+- **Expected invariant:** Recorded audio option available
+- **Priority:** P0
+- **Layer:** Failure, cost, retention or authorization path
+- **Evidence artifact:** Fault-injection/config and final state evidence
+
+### EXT-Test41-UNIT — Live socket close
+- **Precondition:** Live socket close
+- **Expected invariant:** No false connected state
+- **Priority:** P0
+- **Layer:** Pure domain and schema checks
+- **Evidence artifact:** Assertion output and test ID
+
+### EXT-Test41-API_INT — Live socket close
+- **Precondition:** Live socket close
+- **Expected invariant:** No false connected state
+- **Priority:** P0
+- **Layer:** API + test DB/Storage boundary
+- **Evidence artifact:** Safe request ID plus observed persistence/access result
+
+### EXT-Test41-BROWSER_E2E — Live socket close
+- **Precondition:** Live socket close
+- **Expected invariant:** No false connected state
+- **Priority:** P0
+- **Layer:** Browser-level user workflow
+- **Evidence artifact:** Build ID and synthetic fixture ID
+
+### EXT-Test41-OPS_NEGATIVE — Live socket close
+- **Precondition:** Live socket close
+- **Expected invariant:** No false connected state
+- **Priority:** P0
+- **Layer:** Failure, cost, retention or authorization path
+- **Evidence artifact:** Fault-injection/config and final state evidence
+
+### EXT-Test42-UNIT — Cue feature flag off
+- **Precondition:** Cue feature flag off
+- **Expected invariant:** No cue output and recorded pipeline works
+- **Priority:** P0
+- **Layer:** Pure domain and schema checks
+- **Evidence artifact:** Assertion output and test ID
+
+### EXT-Test42-API_INT — Cue feature flag off
+- **Precondition:** Cue feature flag off
+- **Expected invariant:** No cue output and recorded pipeline works
+- **Priority:** P0
+- **Layer:** API + test DB/Storage boundary
+- **Evidence artifact:** Safe request ID plus observed persistence/access result
+
+### EXT-Test42-BROWSER_E2E — Cue feature flag off
+- **Precondition:** Cue feature flag off
+- **Expected invariant:** No cue output and recorded pipeline works
+- **Priority:** P0
+- **Layer:** Browser-level user workflow
+- **Evidence artifact:** Build ID and synthetic fixture ID
+
+### EXT-Test42-OPS_NEGATIVE — Cue feature flag off
+- **Precondition:** Cue feature flag off
+- **Expected invariant:** No cue output and recorded pipeline works
+- **Priority:** P0
+- **Layer:** Failure, cost, retention or authorization path
+- **Evidence artifact:** Fault-injection/config and final state evidence
+
+### EXT-Test43-UNIT — Prompt injection spoken
+- **Precondition:** Prompt injection spoken
+- **Expected invariant:** Treated as data, not instructions
+- **Priority:** P0
+- **Layer:** Pure domain and schema checks
+- **Evidence artifact:** Assertion output and test ID
+
+### EXT-Test43-API_INT — Prompt injection spoken
+- **Precondition:** Prompt injection spoken
+- **Expected invariant:** Treated as data, not instructions
+- **Priority:** P0
+- **Layer:** API + test DB/Storage boundary
+- **Evidence artifact:** Safe request ID plus observed persistence/access result
+
+### EXT-Test43-BROWSER_E2E — Prompt injection spoken
+- **Precondition:** Prompt injection spoken
+- **Expected invariant:** Treated as data, not instructions
+- **Priority:** P0
+- **Layer:** Browser-level user workflow
+- **Evidence artifact:** Build ID and synthetic fixture ID
+
+### EXT-Test43-OPS_NEGATIVE — Prompt injection spoken
+- **Precondition:** Prompt injection spoken
+- **Expected invariant:** Treated as data, not instructions
+- **Priority:** P0
+- **Layer:** Failure, cost, retention or authorization path
+- **Evidence artifact:** Fault-injection/config and final state evidence
+
+### EXT-Test44-UNIT — Log inspect after known phrase
+- **Precondition:** Log inspect after known phrase
+- **Expected invariant:** Transcript/phone absent by default
+- **Priority:** P0
+- **Layer:** Pure domain and schema checks
+- **Evidence artifact:** Assertion output and test ID
+
+### EXT-Test44-API_INT — Log inspect after known phrase
+- **Precondition:** Log inspect after known phrase
+- **Expected invariant:** Transcript/phone absent by default
+- **Priority:** P0
+- **Layer:** API + test DB/Storage boundary
+- **Evidence artifact:** Safe request ID plus observed persistence/access result
+
+### EXT-Test44-BROWSER_E2E — Log inspect after known phrase
+- **Precondition:** Log inspect after known phrase
+- **Expected invariant:** Transcript/phone absent by default
+- **Priority:** P0
+- **Layer:** Browser-level user workflow
+- **Evidence artifact:** Build ID and synthetic fixture ID
+
+### EXT-Test44-OPS_NEGATIVE — Log inspect after known phrase
+- **Precondition:** Log inspect after known phrase
+- **Expected invariant:** Transcript/phone absent by default
+- **Priority:** P0
+- **Layer:** Failure, cost, retention or authorization path
+- **Evidence artifact:** Fault-injection/config and final state evidence
+
+### EXT-Test45-UNIT — Secret string in environment
+- **Precondition:** Secret string in environment
+- **Expected invariant:** No echo in error/build output
+- **Priority:** P0
+- **Layer:** Pure domain and schema checks
+- **Evidence artifact:** Assertion output and test ID
+
+### EXT-Test45-API_INT — Secret string in environment
+- **Precondition:** Secret string in environment
+- **Expected invariant:** No echo in error/build output
+- **Priority:** P0
+- **Layer:** API + test DB/Storage boundary
+- **Evidence artifact:** Safe request ID plus observed persistence/access result
+
+### EXT-Test45-BROWSER_E2E — Secret string in environment
+- **Precondition:** Secret string in environment
+- **Expected invariant:** No echo in error/build output
+- **Priority:** P0
+- **Layer:** Browser-level user workflow
+- **Evidence artifact:** Build ID and synthetic fixture ID
+
+### EXT-Test45-OPS_NEGATIVE — Secret string in environment
+- **Precondition:** Secret string in environment
+- **Expected invariant:** No echo in error/build output
+- **Priority:** P0
+- **Layer:** Failure, cost, retention or authorization path
+- **Evidence artifact:** Fault-injection/config and final state evidence
+
+### EXT-Test46-UNIT — RLS disabled/new table
+- **Precondition:** RLS disabled/new table
+- **Expected invariant:** Migration gate catches policy gap
+- **Priority:** P0
+- **Layer:** Pure domain and schema checks
+- **Evidence artifact:** Assertion output and test ID
+
+### EXT-Test46-API_INT — RLS disabled/new table
+- **Precondition:** RLS disabled/new table
+- **Expected invariant:** Migration gate catches policy gap
+- **Priority:** P0
+- **Layer:** API + test DB/Storage boundary
+- **Evidence artifact:** Safe request ID plus observed persistence/access result
+
+### EXT-Test46-BROWSER_E2E — RLS disabled/new table
+- **Precondition:** RLS disabled/new table
+- **Expected invariant:** Migration gate catches policy gap
+- **Priority:** P0
+- **Layer:** Browser-level user workflow
+- **Evidence artifact:** Build ID and synthetic fixture ID
+
+### EXT-Test46-OPS_NEGATIVE — RLS disabled/new table
+- **Precondition:** RLS disabled/new table
+- **Expected invariant:** Migration gate catches policy gap
+- **Priority:** P0
+- **Layer:** Failure, cost, retention or authorization path
+- **Evidence artifact:** Fault-injection/config and final state evidence
+
+### EXT-Test47-UNIT — Storage public policy accidentally enabled
+- **Precondition:** Storage public policy accidentally enabled
+- **Expected invariant:** Release gate fails
+- **Priority:** P0
+- **Layer:** Pure domain and schema checks
+- **Evidence artifact:** Assertion output and test ID
+
+### EXT-Test47-API_INT — Storage public policy accidentally enabled
+- **Precondition:** Storage public policy accidentally enabled
+- **Expected invariant:** Release gate fails
+- **Priority:** P0
+- **Layer:** API + test DB/Storage boundary
+- **Evidence artifact:** Safe request ID plus observed persistence/access result
+
+### EXT-Test47-BROWSER_E2E — Storage public policy accidentally enabled
+- **Precondition:** Storage public policy accidentally enabled
+- **Expected invariant:** Release gate fails
+- **Priority:** P0
+- **Layer:** Browser-level user workflow
+- **Evidence artifact:** Build ID and synthetic fixture ID
+
+### EXT-Test47-OPS_NEGATIVE — Storage public policy accidentally enabled
+- **Precondition:** Storage public policy accidentally enabled
+- **Expected invariant:** Release gate fails
+- **Priority:** P0
+- **Layer:** Failure, cost, retention or authorization path
+- **Evidence artifact:** Fault-injection/config and final state evidence
+
+### EXT-Test48-UNIT — Large output arrays
+- **Precondition:** Large output arrays
+- **Expected invariant:** Safe size bound
+- **Priority:** P0
+- **Layer:** Pure domain and schema checks
+- **Evidence artifact:** Assertion output and test ID
+
+### EXT-Test48-API_INT — Large output arrays
+- **Precondition:** Large output arrays
+- **Expected invariant:** Safe size bound
+- **Priority:** P0
+- **Layer:** API + test DB/Storage boundary
+- **Evidence artifact:** Safe request ID plus observed persistence/access result
+
+### EXT-Test48-BROWSER_E2E — Large output arrays
+- **Precondition:** Large output arrays
+- **Expected invariant:** Safe size bound
+- **Priority:** P0
+- **Layer:** Browser-level user workflow
+- **Evidence artifact:** Build ID and synthetic fixture ID
+
+### EXT-Test48-OPS_NEGATIVE — Large output arrays
+- **Precondition:** Large output arrays
+- **Expected invariant:** Safe size bound
+- **Priority:** P0
+- **Layer:** Failure, cost, retention or authorization path
+- **Evidence artifact:** Fault-injection/config and final state evidence
+
+### EXT-Test49-UNIT — Long transcript UI
+- **Precondition:** Long transcript UI
+- **Expected invariant:** No silent truncation
+- **Priority:** P1
+- **Layer:** Pure domain and schema checks
+- **Evidence artifact:** Assertion output and test ID
+
+### EXT-Test49-API_INT — Long transcript UI
+- **Precondition:** Long transcript UI
+- **Expected invariant:** No silent truncation
+- **Priority:** P1
+- **Layer:** API + test DB/Storage boundary
+- **Evidence artifact:** Safe request ID plus observed persistence/access result
+
+### EXT-Test49-BROWSER_E2E — Long transcript UI
+- **Precondition:** Long transcript UI
+- **Expected invariant:** No silent truncation
+- **Priority:** P1
+- **Layer:** Browser-level user workflow
+- **Evidence artifact:** Build ID and synthetic fixture ID
+
+### EXT-Test49-OPS_NEGATIVE — Long transcript UI
+- **Precondition:** Long transcript UI
+- **Expected invariant:** No silent truncation
+- **Priority:** P1
+- **Layer:** Failure, cost, retention or authorization path
+- **Evidence artifact:** Fault-injection/config and final state evidence
+
+### EXT-Test50-UNIT — Keyboard-only review
+- **Precondition:** Keyboard-only review
+- **Expected invariant:** Core flow remains operable
+- **Priority:** P1
+- **Layer:** Pure domain and schema checks
+- **Evidence artifact:** Assertion output and test ID
+
+### EXT-Test50-API_INT — Keyboard-only review
+- **Precondition:** Keyboard-only review
+- **Expected invariant:** Core flow remains operable
+- **Priority:** P1
+- **Layer:** API + test DB/Storage boundary
+- **Evidence artifact:** Safe request ID plus observed persistence/access result
+
+### EXT-Test50-BROWSER_E2E — Keyboard-only review
+- **Precondition:** Keyboard-only review
+- **Expected invariant:** Core flow remains operable
+- **Priority:** P1
+- **Layer:** Browser-level user workflow
+- **Evidence artifact:** Build ID and synthetic fixture ID
+
+### EXT-Test50-OPS_NEGATIVE — Keyboard-only review
+- **Precondition:** Keyboard-only review
+- **Expected invariant:** Core flow remains operable
+- **Priority:** P1
+- **Layer:** Failure, cost, retention or authorization path
+- **Evidence artifact:** Fault-injection/config and final state evidence
+
+## Test execution record
+
+| Field | Required value |
+|---|---|
+| Test ID | Stable ID from the catalog |
+| Commit/build | Exact tested revision |
+| Environment | Local/test/demo and configuration fingerprint without secret values |
+| Fixture | Approved synthetic/consented fixture ID |
+| Expected | Observable acceptance condition |
+| Actual | Observed status/body/state, redacted |
+| Outcome | Pass/fail/blocked/not run |
+| Defect | Linked issue/decision ID when failed |
+| Regression | Test rerun after remediation |
+
+## Evidence quality rules
+
+- Mocked success does not prove a live provider or remote Storage behavior.
+- A test that executes without assertion does not count as evidence.
+- A screenshot alone does not prove server-side authorization.
+- A DB status flag does not prove object deletion; inspect the storage object.
+- A provider output label does not prove acoustic grounding; inspect source interval and evaluator notes.
+- Failed, blocked and unrun tests must not be counted as passed.
+- Use sanitized request IDs and synthetic content in test reports.
