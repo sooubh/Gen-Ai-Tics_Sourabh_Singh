@@ -309,6 +309,7 @@ export default function CaseDetailPage({ params }: PageProps) {
           <div className="lg:col-span-7 space-y-4">
             <SynchronizedTranscript
               segments={caseData.segments}
+              cues={caseData.vocalIndicators || []}
               currentTime={currentTime}
               onSeek={handleSeek}
               onEditSegment={handleEditSegment}
