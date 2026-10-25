@@ -229,6 +229,7 @@ export default function NewAudioAnalysisPage() {
   const [pipelineState, setPipelineState] = useState<PipelineState>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [failedCaseId, setFailedCaseId] = useState<string | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
 
   // Pipeline configuration toggles
   const [pipelineConfig, setPipelineConfig] = useState({
@@ -312,10 +313,7 @@ export default function NewAudioAnalysisPage() {
     }
   };
 
-  const handleCustomFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const processSelectedFile = (file: File) => {
     setErrorMessage(null);
     setIsGeminiKeyMissing(false);
     setFailedCaseId(null);
@@ -358,6 +356,38 @@ export default function NewAudioAnalysisPage() {
     setSelectedScenario('custom');
     setCallTitle(`Inbound Call Audio: ${file.name}`);
     setCallDescription(`Direct audio file upload (${formatFileSize(file.size)}) analyzed for speech distress markers.`);
+  };
+
+  const handleCustomFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      processSelectedFile(file);
+    }
+    if (e.target) {
+      e.target.value = '';
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      processSelectedFile(file);
+    }
   };
 
   const handleSelectScenario = (scenario: PresetScenario) => {
@@ -782,13 +812,18 @@ export default function NewAudioAnalysisPage() {
               type="file"
               ref={fileInputRef}
               onChange={handleCustomFileUpload}
-              accept="audio/*,.wav,.mp3,.m4a,.flac,.ogg,.webm,.aac,.mp4"
+              accept=".mp3,.wav,.m4a,.flac,.ogg,.webm,.aac,.mp4,audio/mpeg,audio/mp3,audio/wav,audio/x-wav,audio/x-m4a,audio/m4a,audio/ogg,audio/flac,audio/aac,audio/webm"
               className="hidden"
             />
             <div
               onClick={() => fileInputRef.current?.click()}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
               className={`rounded-lg border-2 border-dashed p-6 flex flex-col items-center justify-center text-center transition-all cursor-pointer ${
-                selectedScenario === 'custom' && customAudioFile
+                isDragOver
+                  ? 'border-[#ffb964] bg-[#ffb964]/10 scale-[1.01] shadow-[0_0_15px_rgba(255,185,100,0.25)]'
+                  : selectedScenario === 'custom' && customAudioFile
                   ? 'border-[#8a9a5b] bg-[#1a2e1f]/30 shadow-[0_0_12px_rgba(138,154,91,0.15)]'
                   : 'border-[#35373e] bg-[#121315] hover:bg-[#1a1b1e] hover:border-[#8a9a5b]/60'
               }`}
