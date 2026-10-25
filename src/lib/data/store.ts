@@ -96,12 +96,12 @@ class CaseStore {
       {
         id: 'AUD-001',
         action: 'SYSTEM_BOOTSTRAP',
-        actorId: 'JENKINS-4829',
-        actorName: 'Det. S. Jenkins #4829',
-        officer: 'Det. S. Jenkins #4829',
+        actorId: 'OFFICER-01',
+        actorName: 'Investigating Officer 01',
+        officer: 'Investigating Officer 01',
         resourceType: 'system',
         resourceId: 'enclave-local',
-        details: 'Local secure enclave initialized with 4 seeded cybercrime dockets.',
+        details: 'Local secure enclave initialized with clean forensic case records.',
         timestamp: new Date().toISOString(),
         enclaveSecurityLevel: 'TOP SECRET // SCI',
       },
@@ -213,16 +213,62 @@ class CaseStore {
     };
   }
 
+  public reloadFromDisk() {
+    const { fs: nodeFs, path: nodePath } = getNodeModules();
+    if (nodeFs && nodePath) {
+      try {
+        const dataDir = nodePath.join(process.cwd(), 'data');
+        const dbFile = nodePath.join(dataDir, 'db.json');
+        if (nodeFs.existsSync(dbFile)) {
+          const raw = nodeFs.readFileSync(dbFile, 'utf-8');
+          if (raw && raw.trim().length > 0) {
+            const parsed: LocalDbSchema = JSON.parse(raw);
+            if (parsed.cases && Array.isArray(parsed.cases)) {
+              this.cases = parsed.cases;
+            }
+            if (parsed.auditLogs && Array.isArray(parsed.auditLogs)) {
+              this.auditLogs = parsed.auditLogs;
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('Error reloading local DB from disk:', err);
+      }
+    }
+  }
+
   public getCaseById(id: string): Case | null {
     const cleanId = id.replace(/^#/, '');
-    const found = this.cases.find(
+    let found = this.cases.find(
       (c) => c.id === cleanId || c.docketNumber === id || c.docketNumber === `#${id}`
     );
+    if (!found && typeof window === 'undefined') {
+      this.reloadFromDisk();
+      found = this.cases.find(
+        (c) => c.id === cleanId || c.docketNumber === id || c.docketNumber === `#${id}`
+      );
+    }
     return found || null;
+  }
+
+  public upsertCase(caseData: Case): Case {
+    const idx = this.cases.findIndex(
+      (c) => c.id === caseData.id || c.docketNumber === caseData.docketNumber
+    );
+    if (idx >= 0) {
+      this.cases[idx] = { ...this.cases[idx], ...caseData, updatedAt: new Date().toISOString() };
+      this.persist();
+      return this.cases[idx];
+    } else {
+      this.cases.unshift(caseData);
+      this.persist();
+      return caseData;
+    }
   }
 
   public createCase(
     data: {
+      id?: string;
       title: string;
       operationName?: string;
       description?: string;
@@ -243,7 +289,7 @@ class CaseStore {
     officerSession?: OfficerSession | { officerId?: string; officerName?: string }
   ): Case {
     const caseNum = Math.floor(1000 + Math.random() * 9000);
-    const newId = `CALL-2026-${caseNum}`;
+    const newId = data.id || `CALL-2026-${caseNum}`;
     const now = new Date().toISOString();
 
     const officerId = (officerSession as any)?.user?.id || (officerSession as any)?.officerId || 'JENKINS-4829';
@@ -257,43 +303,13 @@ class CaseStore {
       description: data.description || '',
       status: 'triage',
       priority: data.priority || 'high',
-      callerCategory: data.callerCategory || 'distressed_victim',
-      callerName: data.callerName || 'Inbound Caller',
-      callerPhone: data.callerPhone || '+91 9XXXX XXXXX',
-      urgencyScore: data.urgencyScore ?? 85,
-      urgencyLevel: data.urgencyLevel || 'HIGH',
-      emotionProfile: data.emotionProfile || {
-        primaryEmotion: 'fear',
-        urgencyScore: data.urgencyScore ?? 85,
-        urgencyLevel: data.urgencyLevel || 'HIGH',
-        emotions: {
-          fear: 0.82,
-          distress: 0.78,
-          anger: 0.12,
-          nervousness: 0.65,
-          calm: 0.10,
-        },
-        acousticMetrics: {
-          pitchJitterHz: 145,
-          speechRateWpm: 210,
-          vocalTremorScore: 82,
-        },
-      },
-      audioMetadata: data.audioMetadata || {
-        filename: 'INBOUND_CALL_STREAM.wav',
-        durationSeconds: 154,
-        sampleRate: 44100,
-        channels: 1,
-        format: 'PCM 16-bit / 44.1 kHz / 1ch',
-        mimeType: 'audio/wav',
-        sizeBytes: 27150000,
-        sha256Hash: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
-        uploadedAt: now,
-        expiresAt: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
-        retentionHours: 24,
-        storagePath: '/uploads/audio/INBOUND_CALL_STREAM.wav',
-        purged: false,
-      },
+      callerCategory: data.callerCategory || 'unknown',
+      callerName: data.callerName,
+      callerPhone: data.callerPhone,
+      urgencyScore: data.urgencyScore,
+      urgencyLevel: data.urgencyLevel,
+      emotionProfile: data.emotionProfile,
+      audioMetadata: data.audioMetadata,
       officerId,
       officerName,
       leadInvestigatorId: officerId,
@@ -371,17 +387,23 @@ class CaseStore {
     return existing;
   }
 
-  public deleteCase(id: string): boolean {
+  public deleteCase(
+    id: string,
+    officerSession?: OfficerSession | { officerId?: string; officerName?: string }
+  ): boolean {
     const cleanId = id.replace(/^#/, '');
     const index = this.cases.findIndex((c) => c.id === cleanId);
     if (index === -1) return false;
 
+    const actorId = (officerSession as any)?.user?.id || (officerSession as any)?.officerId || 'JENKINS-4829';
+    const actorName = (officerSession as any)?.user?.name || (officerSession as any)?.officerName || 'Det. S. Jenkins #4829';
+
     this.cases.splice(index, 1);
     this.logAuditEvent({
       action: 'CASE_DELETED',
-      actorId: 'JENKINS-4829',
-      actorName: 'Det. S. Jenkins #4829',
-      officer: 'Det. S. Jenkins #4829',
+      actorId,
+      actorName,
+      officer: actorName,
       resourceType: 'case',
       resourceId: cleanId,
       details: `Docket #${cleanId} deleted by authorized officer`,
@@ -391,7 +413,11 @@ class CaseStore {
     return true;
   }
 
-  public attachAudio(caseId: string, metadata: AudioMetadata): Case | null {
+  public attachAudio(
+    caseId: string,
+    metadata: AudioMetadata,
+    officerSession?: OfficerSession | { officerId?: string; officerName?: string }
+  ): Case | null {
     const existing = this.getCaseById(caseId);
     if (!existing) return null;
 
@@ -399,11 +425,14 @@ class CaseStore {
     existing.status = 'under_review';
     existing.updatedAt = new Date().toISOString();
 
+    const actorId = (officerSession as any)?.user?.id || (officerSession as any)?.officerId || 'JENKINS-4829';
+    const actorName = (officerSession as any)?.user?.name || (officerSession as any)?.officerName || 'Det. S. Jenkins #4829';
+
     this.logAuditEvent({
       action: 'AUDIO_ATTACHED',
-      actorId: 'JENKINS-4829',
-      actorName: 'Det. S. Jenkins #4829',
-      officer: 'Det. S. Jenkins #4829',
+      actorId,
+      actorName,
+      officer: actorName,
       resourceType: 'audio',
       resourceId: caseId,
       details: `Audio file ${metadata.filename} attached (${(metadata.sizeBytes / (1024 * 1024)).toFixed(1)}MB). Chain-of-custody SHA256: ${metadata.sha256Hash.substring(0, 16)}...`,
@@ -419,10 +448,28 @@ class CaseStore {
     officerSession?: OfficerSession | { officerId?: string; officerName?: string }
   ): boolean {
     const existing = this.getCaseById(caseId);
-    if (!existing || !existing.audioMetadata) return false;
+    if (!existing) return false;
 
     // Idempotent: if already purged, return true immediately
-    if (existing.audioMetadata.purged) return true;
+    if (existing.audioMetadata?.purged) return true;
+
+    if (!existing.audioMetadata) {
+      existing.audioMetadata = {
+        filename: 'AUDIO_STREAM.wav',
+        durationSeconds: 0,
+        sampleRate: 0,
+        channels: 0,
+        format: '',
+        mimeType: 'audio/wav',
+        sizeBytes: 0,
+        sha256Hash: '',
+        uploadedAt: existing.createdAt || new Date().toISOString(),
+        expiresAt: new Date().toISOString(),
+        retentionHours: 24,
+        storagePath: '',
+        purged: false,
+      };
+    }
 
     // Delete local file from disk if it exists and verify deletion against filesystem
     const { fs: nodeFs, path: nodePath } = getNodeModules();
@@ -581,15 +628,23 @@ class CaseStore {
     return targetCase;
   }
 
-  public addNote(caseId: string, content: string, officerName: string = 'Det. S. Jenkins #4829'): Case | null {
+  public addNote(
+    caseId: string,
+    content: string,
+    officerName: string = 'Det. S. Jenkins #4829',
+    officerSession?: OfficerSession | { officerId?: string; officerName?: string }
+  ): Case | null {
     const targetCase = this.getCaseById(caseId);
     if (!targetCase) return null;
+
+    const actorId = (officerSession as any)?.user?.id || (officerSession as any)?.officerId || 'JENKINS-4829';
+    const resolvedOfficerName = (officerSession as any)?.user?.name || (officerSession as any)?.officerName || officerName;
 
     const newNote: CaseNote = {
       id: `NOTE-${Date.now()}`,
       caseId: targetCase.id,
-      officerId: 'JENKINS-4829',
-      officerName,
+      officerId: actorId,
+      officerName: resolvedOfficerName,
       content,
       createdAt: new Date().toISOString(),
     };
@@ -602,9 +657,9 @@ class CaseStore {
 
     this.logAuditEvent({
       action: 'NOTE_ADDED',
-      actorId: 'JENKINS-4829',
-      actorName: officerName,
-      officer: officerName,
+      actorId,
+      actorName: resolvedOfficerName,
+      officer: resolvedOfficerName,
       resourceType: 'case_note',
       resourceId: targetCase.id,
       details: `Case note recorded on #${targetCase.id}`,
@@ -618,29 +673,49 @@ class CaseStore {
   public getDashboardStats(): DashboardStats {
     const totalCases = this.cases.length;
     const underReview = this.cases.filter((c) => c.status === 'under_review' || c.status === 'Under Review').length;
-    const totalTriggers = this.cases.reduce((sum, c) => sum + c.triggers.length, 0);
+    const totalTriggers = this.cases.reduce((sum, c) => sum + (c.triggers?.length || 0), 0);
+    const activeAnalyses = this.cases.filter((c) => c.status === 'triage' || c.status === 'under_review').length;
 
     return {
-      totalCasesAnalyzed: 1482 + totalCases,
-      casesChangeVsLastWeek: '+14.2% vs last wk',
-      activeAnalyses: 6,
+      totalCasesAnalyzed: totalCases,
+      casesChangeVsLastWeek: '+0.0% vs last wk',
+      activeAnalyses,
       activeAudioFeedsLabel: 'Active audio feeds',
-      flaggedTriggers: 28 + totalTriggers,
+      flaggedTriggers: totalTriggers,
       flaggedTriggersLabel: 'Keyword / pattern hit',
-      pendingReviews: 14 + underReview,
+      pendingReviews: underReview,
       pendingReviewsLabel: 'Awaiting officer signoff',
       dailyCallActivity: [
-        { day: 'M', count: 180 },
-        { day: 'T', count: 210 },
-        { day: 'W', count: 195 },
-        { day: 'T', count: 260 },
-        { day: 'F', count: 240 },
-        { day: 'S', count: 290 },
-        { day: 'S', count: 275, active: true },
+        { day: 'M', count: 0 },
+        { day: 'T', count: 0 },
+        { day: 'W', count: 0 },
+        { day: 'T', count: 0 },
+        { day: 'F', count: 0 },
+        { day: 'S', count: 0 },
+        { day: 'S', count: totalCases, active: true },
       ],
-      avgCallsPerDay: 235,
-      peakDayLabel: 'Peak: 290 on Sat',
+      avgCallsPerDay: totalCases,
+      peakDayLabel: `Current active: ${totalCases}`,
     };
+  }
+
+  public reset(): void {
+    this.cases = JSON.parse(JSON.stringify(INITIAL_CASES));
+    this.auditLogs = [
+      {
+        id: 'AUD-001',
+        action: 'SYSTEM_BOOTSTRAP',
+        actorId: 'OFFICER-01',
+        actorName: 'Investigating Officer 01',
+        officer: 'Investigating Officer 01',
+        resourceType: 'system',
+        resourceId: 'enclave-local',
+        details: 'Local secure enclave initialized with clean forensic case records.',
+        timestamp: new Date().toISOString(),
+        enclaveSecurityLevel: 'TOP SECRET // SCI',
+      },
+    ];
+    this.persist();
   }
 
   public getAuditLogs(): AuditLogEntry[] {
@@ -658,8 +733,12 @@ class CaseStore {
   }
 }
 
-// Global singleton instance
-export const store = new CaseStore();
+// Global singleton instance with cross-module server enclave persistence
+const globalRef = typeof globalThis !== 'undefined' ? (globalThis as any) : {};
+export const store: CaseStore = globalRef.__vecnaverse_store || new CaseStore();
+if (typeof window === 'undefined') {
+  globalRef.__vecnaverse_store = store;
+}
 
 /**
  * Checks whether a given case is a synthetic demo / fixture case.
@@ -669,13 +748,7 @@ export function isSyntheticCase(caseData?: Case | null): boolean {
   if (caseData.isSyntheticDemo === true) return true;
   if (caseData.fixtureId) return true;
   const id = caseData.id || '';
-  if (
-    id.startsWith('FIXTURE-') ||
-    id === 'CALL-2026-9104' ||
-    id === 'CALL-2026-9088' ||
-    id === 'CALL-2026-9065' ||
-    id === 'CALL-2026-9051'
-  ) {
+  if (id.startsWith('FIXTURE-')) {
     return true;
   }
   const filename = caseData.audioMetadata?.filename || '';

@@ -1,17 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { store } from '@/lib/data/store';
 import { AuditLogEntry, Case } from '@/types';
 import {
   ShieldAlert,
   Clock,
-  User,
   Activity,
   Trash2,
-  Lock,
-  Download,
-  AlertTriangle,
   CheckCircle2,
 } from 'lucide-react';
 

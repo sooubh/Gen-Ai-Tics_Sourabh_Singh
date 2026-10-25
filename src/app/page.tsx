@@ -1,90 +1,77 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { store, isSyntheticCase } from '@/lib/data/store';
+import { store } from '@/lib/data/store';
 import { Case, CallerCategory } from '@/types';
 import {
-  PhoneCall,
-  AlertOctagon,
-  HeartPulse,
-  Radio,
-  Clock,
-  ArrowRight,
-  ShieldCheck,
-  AlertTriangle,
-  User,
-  ShieldAlert,
   Search,
-  Filter,
-  CheckCircle2,
+  ArrowRight,
+  Radio,
+  Phone,
+  FileAudio,
+  User,
 } from 'lucide-react';
 
 export default function OverviewDashboard() {
-  const router = useRouter();
   const [cases, setCases] = useState<Case[]>([]);
   const [filterCategory, setFilterCategory] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   useEffect(() => {
-    const loadedCases = store.getCases();
-    setCases(loadedCases);
+    setCases(store.getCases());
   }, []);
 
-  const getCategoryBadge = (category?: CallerCategory) => {
+  const formatDuration = (seconds?: number) => {
+    if (!seconds) return '—';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const getCategoryLabel = (category?: CallerCategory | string) => {
     switch (category) {
       case 'distressed_victim':
-        return (
-          <span className="rounded bg-[#401311] px-2 py-0.5 font-mono text-[11px] font-bold text-[#d96f68] border border-[#b84a44]/50 flex items-center gap-1">
-            <HeartPulse className="h-3 w-3" /> Distressed Victim
-          </span>
-        );
+        return 'Victim Report';
       case 'suspected_fraudster':
+        return 'Suspect Audio';
+      case 'informant':
+        return 'Informant Tip';
+      default:
+        return 'Audio Recording';
+    }
+  };
+
+  const getStatusBadge = (status?: string) => {
+    switch (status) {
+      case 'under_review':
         return (
-          <span className="rounded bg-[#422006] px-2 py-0.5 font-mono text-[11px] font-bold text-[#ffb964] border border-[#ffb964]/40 flex items-center gap-1">
-            <AlertTriangle className="h-3 w-3" /> Suspected Fraudster
+          <span className="px-2 py-0.5 rounded text-[11px] font-mono bg-[#23252a] text-[#8a9a5b] border border-[#35373e]">
+            Under Review
           </span>
         );
-      case 'informant':
+      case 'escalated':
         return (
-          <span className="rounded bg-[#1a2e1f] px-2 py-0.5 font-mono text-[11px] font-bold text-[#8a9a5b] border border-[#5a8264]/40 flex items-center gap-1">
-            <ShieldCheck className="h-3 w-3" /> Informant Tip-Off
+          <span className="px-2 py-0.5 rounded text-[11px] font-mono bg-[#2a221f] text-[#ffb964] border border-[#443228]">
+            Escalated
+          </span>
+        );
+      case 'closed':
+        return (
+          <span className="px-2 py-0.5 rounded text-[11px] font-mono bg-[#1c1d21] text-[#71706b] border border-[#2d2f36]">
+            Closed
           </span>
         );
       default:
         return (
-          <span className="rounded bg-[#23252a] px-2 py-0.5 font-mono text-[11px] font-medium text-[#9e9c96] border border-[#35373e]">
-            Inbound Call
+          <span className="px-2 py-0.5 rounded text-[11px] font-mono bg-[#23252a] text-[#edeae1] border border-[#35373e]">
+            Active
           </span>
         );
     }
   };
 
-  const getUrgencyBadge = (urgencyScore?: number, urgencyLevel?: string) => {
-    const score = urgencyScore ?? 50;
-    if (score >= 90 || urgencyLevel === 'CRITICAL') {
-      return (
-        <span className="rounded bg-[#b84a44]/30 px-2.5 py-1 font-mono text-xs font-black text-[#d96f68] border border-[#b84a44] animate-pulse flex items-center gap-1">
-          <AlertOctagon className="h-3.5 w-3.5" /> URGENCY: {score}/100 [CRITICAL]
-        </span>
-      );
-    }
-    if (score >= 75 || urgencyLevel === 'HIGH') {
-      return (
-        <span className="rounded bg-[#ffb964]/20 px-2.5 py-1 font-mono text-xs font-bold text-[#ffb964] border border-[#ffb964]/40 flex items-center gap-1">
-          URGENCY: {score}/100 [HIGH]
-        </span>
-      );
-    }
-    return (
-      <span className="rounded bg-[#292a2c] px-2.5 py-1 font-mono text-xs font-medium text-[#8a9a5b] border border-[#35373e] flex items-center gap-1">
-        URGENCY: {score}/100 [ROUTINE]
-      </span>
-    );
-  };
-
-  const filteredCalls = cases.filter((c) => {
+  const filteredCases = cases.filter((c) => {
     if (filterCategory !== 'ALL' && c.callerCategory !== filterCategory) {
       return false;
     }
@@ -94,244 +81,200 @@ export default function OverviewDashboard() {
         c.title.toLowerCase().includes(q) ||
         (c.callerName && c.callerName.toLowerCase().includes(q)) ||
         (c.callerPhone && c.callerPhone.toLowerCase().includes(q)) ||
-        c.docketNumber.toLowerCase().includes(q);
+        c.docketNumber.toLowerCase().includes(q) ||
+        c.id.toLowerCase().includes(q);
       if (!match) return false;
     }
     return true;
   });
 
-  const criticalCount = cases.filter((c) => (c.urgencyScore ?? 0) >= 90).length;
-  const victimCount = cases.filter((c) => c.callerCategory === 'distressed_victim').length;
-  const fraudsterCount = cases.filter((c) => c.callerCategory === 'suspected_fraudster').length;
-  const informantCount = cases.filter((c) => c.callerCategory === 'informant').length;
+  const primaryCase = cases[0] ?? null;
 
   return (
-    <div className="p-4 md:p-6 flex flex-col gap-6 max-w-7xl mx-auto w-full">
-      {/* Title & Rapid Action Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#35373e]">
+    <div className="p-6 flex flex-col gap-6 max-w-7xl mx-auto w-full">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#2d2f36]">
         <div>
-          <div className="flex items-center gap-2">
-            <Radio className="h-5 w-5 text-[#d96f68] animate-pulse" />
-            <h1 className="text-xl md:text-2xl font-bold font-mono text-[#edeae1] tracking-tight">
-              Cybercrime Call Triage & Distress Intelligence
-            </h1>
-          </div>
+          <h1 className="text-xl md:text-2xl font-bold font-['Space_Grotesk'] text-[#edeae1] tracking-tight">
+            Case Directory
+          </h1>
           <p className="text-xs text-[#9e9c96] mt-1">
-            Real-time Speech Emotion Recognition (SER) to identify caller panic, distress, and immediate emergencies.
+            Forensic audio case files, transcription records, and active investigations.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <Link
             href="/live-monitor"
-            className="inline-flex items-center gap-2 rounded bg-[#401311] px-3.5 py-2 font-mono text-xs font-bold text-[#d96f68] border border-[#b84a44]/50 hover:bg-[#5a1c1a] transition-all"
+            className="inline-flex items-center gap-2 rounded bg-[#23252a] px-3.5 py-2 font-mono text-xs font-medium text-[#edeae1] border border-[#35373e] hover:bg-[#2e3037] transition-colors"
           >
-            <Radio className="h-4 w-4" /> Live Call Monitor
-          </Link>
-          <Link
-            href="/new-audio-analysis"
-            className="inline-flex items-center gap-2 rounded bg-[#7d8c52] px-3.5 py-2 font-mono text-xs font-bold text-[#161f00] hover:bg-[#8da05a] transition-all"
-          >
-            <PhoneCall className="h-4 w-4" /> Ingest Call Recording
+            <Radio className="h-3.5 w-3.5 text-[#8a9a5b]" />
+            <span>Live Audio</span>
           </Link>
         </div>
       </div>
 
-      {/* Responsible AI Disclaimer Banner */}
-      <div className="rounded border border-[#b87a28]/40 bg-[#b87a28]/10 p-3 text-xs text-[#ffb964] flex items-start gap-2.5">
-        <ShieldAlert className="h-4 w-4 flex-shrink-0 text-[#ffb964] mt-0.5" />
-        <div className="text-[11px] leading-relaxed">
-          <strong>Mandatory Triage Protocol (Responsible AI):</strong> Emotion recognition is an indicative signal to prioritize callers in acute distress. It is <strong>NOT a lie detector</strong>, guilt metric, or proof of credibility. Final investigative decisions always rest with the officer.
-        </div>
-      </div>
-
-      {/* Real-time Triage Telemetry Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="rounded-lg border border-[#b84a44]/40 bg-[#18191c] p-4 flex flex-col justify-between">
-          <span className="font-mono text-xs text-[#9e9c96]">Critical Triage Calls</span>
-          <div className="flex items-baseline justify-between mt-2">
-            <span className="font-mono text-2xl font-bold text-[#d96f68]">{criticalCount} Calls</span>
-            <span className="font-mono text-[10px] text-[#d96f68] font-bold">Needs Immediate Action</span>
+      {/* Primary Active Case Spotlight */}
+      {primaryCase && (
+        <div className="rounded-lg border border-[#35373e] bg-[#18191c] p-5 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#2d2f36]">
+            <div className="flex items-center gap-2.5">
+              <span className="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-[#23252a] text-[#8a9a5b] border border-[#35373e]">
+                Primary Active Case
+              </span>
+              <span className="font-mono text-xs text-[#71706b]">
+                {primaryCase.docketNumber || primaryCase.id}
+              </span>
+            </div>
+            {getStatusBadge(primaryCase.status)}
           </div>
-        </div>
 
-        <div className="rounded-lg border border-[#35373e] bg-[#18191c] p-4 flex flex-col justify-between">
-          <span className="font-mono text-xs text-[#9e9c96]">Distressed Victims</span>
-          <div className="flex items-baseline justify-between mt-2">
-            <span className="font-mono text-2xl font-bold text-[#edeae1]">{victimCount} Calls</span>
-            <span className="font-mono text-[10px] text-[#ffb964]">Fear / Panic Peaks</span>
-          </div>
-        </div>
-
-        <div className="rounded-lg border border-[#35373e] bg-[#18191c] p-4 flex flex-col justify-between">
-          <span className="font-mono text-xs text-[#9e9c96]">Suspected Fraudsters</span>
-          <div className="flex items-baseline justify-between mt-2">
-            <span className="font-mono text-2xl font-bold text-[#ffb964]">{fraudsterCount} Calls</span>
-            <span className="font-mono text-[10px] text-[#ffb964]">Coercion / Ultimatums</span>
-          </div>
-        </div>
-
-        <div className="rounded-lg border border-[#35373e] bg-[#18191c] p-4 flex flex-col justify-between">
-          <span className="font-mono text-xs text-[#9e9c96]">Informant Tip-Offs</span>
-          <div className="flex items-baseline justify-between mt-2">
-            <span className="font-mono text-2xl font-bold text-[#8a9a5b]">{informantCount} Calls</span>
-            <span className="font-mono text-[10px] text-[#8a9a5b]">Intelligence Leads</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Priority Inbound Call Triage Queue */}
-      <div className="space-y-4">
-        <div className="flex flex-col gap-3">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div>
-              <h2 className="text-base font-semibold text-[#edeae1] font-mono flex items-center gap-2">
-                <Clock className="h-4 w-4 text-[#8a9a5b]" />
-                Inbound Call Priority Queue (Ranked by Caller Urgency)
+          <div className="mt-4 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            <div className="space-y-2 flex-1">
+              <h2 className="text-base font-semibold text-[#edeae1]">
+                {primaryCase.title}
               </h2>
-              <p className="text-xs text-[#9e9c96]">
-                AI dynamic ranking: attend top critical calls first to intervene in active cyber fraud and psychological coercion.
+              <p className="text-xs text-[#9e9c96] line-clamp-2 max-w-3xl leading-relaxed">
+                {primaryCase.description}
               </p>
+
+              <div className="flex flex-wrap items-center gap-4 pt-2 text-xs font-mono text-[#9e9c96]">
+                <div className="flex items-center gap-1.5">
+                  <User className="h-3.5 w-3.5 text-[#71706b]" />
+                  <span>Subject: <strong className="text-[#edeae1] font-normal">{primaryCase.callerName || 'Anonymous'}</strong></span>
+                </div>
+                {primaryCase.callerPhone && (
+                  <div className="flex items-center gap-1.5">
+                    <Phone className="h-3.5 w-3.5 text-[#71706b]" />
+                    <span>Phone: <code className="text-[#edeae1]">{primaryCase.callerPhone}</code></span>
+                  </div>
+                )}
+                <div className="flex items-center gap-1.5">
+                  <FileAudio className="h-3.5 w-3.5 text-[#71706b]" />
+                  <span>Duration: <strong className="text-[#edeae1] font-normal">{formatDuration(primaryCase.audioMetadata?.durationSeconds)}</strong></span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center shrink-0">
+              <Link
+                href={`/cases/${primaryCase.id}`}
+                className="inline-flex items-center gap-2 rounded bg-[#7d8c52] px-4 py-2.5 font-mono text-xs font-bold text-[#161f00] hover:bg-[#8da05a] transition-all shadow-sm"
+              >
+                <span>Open Case Workspace</span>
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Cases Directory Table */}
+      <div className="space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <h2 className="text-sm font-semibold text-[#edeae1] font-['Space_Grotesk']">
+            All Case Files ({filteredCases.length})
+          </h2>
 
           {/* Search & Filter Toolbar */}
-          <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 pt-2 border-t border-[#35373e]/40">
-            <div className="relative flex-1 max-w-sm">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+            <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#71706b]" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search caller name, phone, keywords..."
-                className="w-full bg-[#121315] border border-[#35373e] text-[#edeae1] placeholder:text-[#71706b] text-xs pl-8 pr-3 py-1.5 rounded focus:outline-none focus:border-[#7d8c52]"
+                placeholder="Filter by name, docket, phone..."
+                className="w-full sm:w-64 bg-[#18191c] border border-[#2d2f36] text-[#edeae1] placeholder:text-[#71706b] text-xs pl-8 pr-3 py-1.5 rounded focus:outline-none focus:border-[#7d8c52]"
               />
             </div>
 
-            {/* Filter Chips */}
-            <div className="flex items-center gap-2 font-mono text-xs overflow-x-auto pb-1">
-              <button
-                onClick={() => setFilterCategory('ALL')}
-                className={`rounded px-2.5 py-1 border transition-all ${
-                  filterCategory === 'ALL'
-                    ? 'border-[#8a9a5b] bg-[#7d8c52] text-[#161f00] font-bold'
-                    : 'border-[#35373e] bg-[#23252a] text-[#9e9c96]'
-                }`}
-              >
-                All Calls
-              </button>
-              <button
-                onClick={() => setFilterCategory('distressed_victim')}
-                className={`rounded px-2.5 py-1 border transition-all ${
-                  filterCategory === 'distressed_victim'
-                    ? 'border-[#b84a44] bg-[#401311] text-[#d96f68] font-bold'
-                    : 'border-[#35373e] bg-[#23252a] text-[#9e9c96]'
-                }`}
-              >
-                Victims
-              </button>
-              <button
-                onClick={() => setFilterCategory('suspected_fraudster')}
-                className={`rounded px-2.5 py-1 border transition-all ${
-                  filterCategory === 'suspected_fraudster'
-                    ? 'border-[#ffb964] bg-[#422006] text-[#ffb964] font-bold'
-                    : 'border-[#35373e] bg-[#23252a] text-[#9e9c96]'
-                }`}
-              >
-                Fraudsters
-              </button>
-              <button
-                onClick={() => setFilterCategory('informant')}
-                className={`rounded px-2.5 py-1 border transition-all ${
-                  filterCategory === 'informant'
-                    ? 'border-[#5a8264] bg-[#1a2e1f] text-[#8a9a5b] font-bold'
-                    : 'border-[#35373e] bg-[#23252a] text-[#9e9c96]'
-                }`}
-              >
-                Informants
-              </button>
+            <div className="flex items-center gap-1 font-mono text-xs">
+              {[
+                { id: 'ALL', label: 'All' },
+                { id: 'distressed_victim', label: 'Victims' },
+                { id: 'suspected_fraudster', label: 'Suspects' },
+                { id: 'informant', label: 'Informants' },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setFilterCategory(tab.id)}
+                  className={`px-2.5 py-1 rounded transition-colors text-xs ${
+                    filterCategory === tab.id
+                      ? 'bg-[#7d8c52] text-[#161f00] font-semibold'
+                      : 'bg-[#18191c] text-[#9e9c96] hover:text-[#edeae1] border border-[#2d2f36]'
+                  }`}
+                  type="button"
+                >
+                  {tab.label}
+                </button>
+              ))}
             </div>
           </div>
         </div>
 
-        {/* Call Cards List */}
-        <div className="space-y-3">
-          {filteredCalls.length === 0 ? (
-            <div className="p-8 text-center rounded-lg border border-[#35373e] bg-[#18191c] text-[#9e9c96] font-mono text-xs">
-              No calls currently matching selected criteria.
-            </div>
-          ) : (
-            filteredCalls.map((call) => (
-              <div
-                key={call.id}
-                className="rounded-lg border border-[#35373e] bg-[#18191c] p-4 hover:border-[#8a9a5b]/50 transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
-              >
-                {/* Left: Call metadata & Distress highlights */}
-                <div className="space-y-2 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    {getUrgencyBadge(call.urgencyScore, call.urgencyLevel)}
-                    {getCategoryBadge(call.callerCategory)}
-                    {isSyntheticCase(call) && (
-                      <span className="rounded bg-[#422006] px-2 py-0.5 font-mono text-[10px] font-bold text-[#ffb964] border border-[#ffb964]/40">
-                        SYNTHETIC DEMO
-                      </span>
-                    )}
-                    <span className="font-mono text-xs text-[#9e9c96]">{call.docketNumber}</span>
-                  </div>
-
-                  <div>
-                    <h3 className="text-sm font-bold text-[#edeae1] font-sans">
-                      {call.title}
-                    </h3>
-                    <p className="text-xs text-[#9e9c96] line-clamp-1 mt-0.5">
-                      {call.description}
-                    </p>
-                  </div>
-
-                  {/* Caller Identity & Emotion Profile Breakdown */}
-                  <div className="flex flex-wrap items-center gap-3 font-mono text-[11px] text-[#9e9c96] pt-1 border-t border-[#35373e]/40">
-                    <span>
-                      Caller: <strong className="text-[#edeae1]">{call.callerName || 'Anonymous'}</strong>
-                    </span>
-                    <span>|</span>
-                    <span>Phone: <code className="text-[#edeae1]">{call.callerPhone || 'Unlisted'}</code></span>
-                    {call.emotionProfile && (
-                      <>
-                        <span>|</span>
-                        <span>
-                          Primary Emotion:{' '}
-                          <strong className="text-[#d96f68] uppercase font-bold">
-                            {call.emotionProfile.primaryEmotion} ({Math.round((call.emotionProfile.emotions[call.emotionProfile.primaryEmotion as keyof typeof call.emotionProfile.emotions] || 0.9) * 100)}%)
-                          </strong>
-                        </span>
-                        {call.emotionProfile.acousticMetrics?.vocalTremorScore && (
-                          <>
-                            <span>|</span>
-                            <span>
-                              Tremor: <strong className="text-[#ffb964]">{call.emotionProfile.acousticMetrics.vocalTremorScore}/100</strong>
-                            </span>
-                          </>
-                        )}
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                {/* Right: Attend Action */}
-                <div className="flex md:flex-col items-end gap-2 shrink-0 w-full md:w-auto justify-end">
-                  <Link
-                    href={`/cases/${call.id}`}
-                    className="inline-flex items-center gap-1.5 rounded bg-[#23252a] px-3.5 py-2 font-mono text-xs font-bold text-[#edeae1] border border-[#35373e] hover:bg-[#7d8c52] hover:text-[#161f00] hover:border-[#7d8c52] transition-all"
-                  >
-                    Open Call Workspace <ArrowRight className="h-3.5 w-3.5" />
-                  </Link>
-                  <span className="font-mono text-[10px] text-[#71706b]">
-                    Logged: {new Date(call.createdAt).toLocaleTimeString()}
-                  </span>
-                </div>
-              </div>
-            ))
-          )}
+        {/* Minimal Case Files Table */}
+        <div className="border border-[#2d2f36] rounded-lg bg-[#18191c] overflow-hidden shadow-sm">
+          <div className="overflow-x-auto w-full">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-[#121315] border-b border-[#2d2f36] font-mono text-[11px] text-[#71706b] uppercase tracking-wider">
+                <tr>
+                  <th className="py-3 px-4 font-medium">Case ID</th>
+                  <th className="py-3 px-4 font-medium">Title & Subject</th>
+                  <th className="py-3 px-4 font-medium">Category</th>
+                  <th className="py-3 px-4 font-medium">Status</th>
+                  <th className="py-3 px-4 font-medium">Audio Info</th>
+                  <th className="py-3 px-4 text-right font-medium">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#2d2f36]/60 bg-[#18191c]">
+                {filteredCases.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-8 text-center text-xs text-[#71706b] font-mono">
+                      No case records found matching search criteria.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredCases.map((c) => (
+                    <tr key={c.id} className="hover:bg-[#202126] transition-colors">
+                      <td className="py-3.5 px-4 font-mono text-xs text-[#edeae1] whitespace-nowrap">
+                        {c.docketNumber || c.id}
+                      </td>
+                      <td className="py-3.5 px-4 max-w-sm">
+                        <div className="flex flex-col">
+                          <span className="font-medium text-[#edeae1] line-clamp-1">
+                            {c.title}
+                          </span>
+                          <span className="text-[11px] text-[#71706b] line-clamp-1">
+                            Caller: {c.callerName || 'Anonymous'} {c.callerPhone ? `• ${c.callerPhone}` : ''}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-4 whitespace-nowrap font-mono text-xs text-[#9e9c96]">
+                        {getCategoryLabel(c.callerCategory)}
+                      </td>
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        {getStatusBadge(c.status)}
+                      </td>
+                      <td className="py-3.5 px-4 font-mono text-[11px] text-[#71706b] whitespace-nowrap">
+                        {formatDuration(c.audioMetadata?.durationSeconds)}
+                        {c.audioMetadata?.filename ? ` • ${c.audioMetadata.filename}` : ''}
+                      </td>
+                      <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                        <Link
+                          href={`/cases/${c.id}`}
+                          className="px-2.5 py-1 rounded bg-[#23252a] hover:bg-[#7d8c52] hover:text-[#161f00] text-[#edeae1] font-mono text-[11px] font-medium inline-flex items-center gap-1 border border-[#35373e] transition-colors"
+                        >
+                          <span>Open Case</span>
+                          <ArrowRight className="h-3 w-3" />
+                        </Link>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

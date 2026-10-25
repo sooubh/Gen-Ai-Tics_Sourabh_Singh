@@ -1,20 +1,36 @@
 'use client';
 
-import React from 'react';
 import { Case, DISCLAIMER_LEGAL_EVIDENCE, DISCLAIMER_ADVISORY_VOCAL_METRICS } from '@/types';
 import { isSyntheticCase } from '@/lib/data/store';
 import { Printer, Download, X, Shield, FileText, CheckCircle2, AlertTriangle } from 'lucide-react';
 
-interface ReportModalProps {
+export interface ReportModalProps {
   isOpen: boolean;
   onClose: () => void;
   caseData?: Case | null;
+  currentOfficer?: {
+    id?: string;
+    name?: string;
+    badgeNumber?: string;
+  };
+  officerId?: string;
+  officerName?: string;
 }
 
-export function ReportModal({ isOpen, onClose, caseData }: ReportModalProps) {
+export function ReportModal({
+  isOpen,
+  onClose,
+  caseData,
+  currentOfficer,
+  officerId,
+  officerName,
+}: ReportModalProps) {
   if (!isOpen || !caseData) return null;
 
-  const isDemo = isSyntheticCase(caseData) || caseData.isSyntheticDemo === true || caseData.latestRun?.isSyntheticDemo === true;
+  const isDemo =
+    isSyntheticCase(caseData) ||
+    caseData.isSyntheticDemo === true ||
+    caseData.latestRun?.isSyntheticDemo === true;
 
   const verifiedEntities = (caseData.entities || []).filter(
     (e) =>
@@ -35,36 +51,48 @@ export function ReportModal({ isOpen, onClose, caseData }: ReportModalProps) {
   const confirmedTriggersCount = confirmedTriggers.length;
 
   const auditOfficer =
+    officerName ||
+    currentOfficer?.name ||
     caseData.officerName ||
     caseData.assignedOfficerName ||
     caseData.investigatingOfficer ||
-    'Det. S. Jenkins #4829';
+    'Attending Officer';
+
+  const badgeToken =
+    currentOfficer?.badgeNumber ||
+    officerId ||
+    caseData.officerId ||
+    'Badge On File';
 
   const audioDurationStr = caseData.audioMetadata?.durationSeconds
     ? `${Math.floor(caseData.audioMetadata.durationSeconds / 60)}:${Math.floor(caseData.audioMetadata.durationSeconds % 60).toString().padStart(2, '0')}`
-    : caseData.audioDuration || '18:45';
+    : caseData.audioDuration || (caseData.audioMetadata?.purged ? 'Purged' : 'N/A');
 
   const audioFormatStr =
     caseData.audioMetadata?.format ||
     caseData.audioMetadata?.mimeType ||
     caseData.audioFormat ||
-    'WAV / PCM 16-bit';
+    (caseData.audioMetadata?.purged ? 'Purged' : 'N/A');
 
   const audioHashStr =
     caseData.audioMetadata?.sha256Hash ||
     caseData.chainOfCustodyHash ||
-    'SHA256: 8a4f09c2...d7e1';
+    (caseData.audioMetadata?.purged ? 'PURGED (Audit Hash Recorded)' : 'N/A');
+
+  const hasRealEmotion = Boolean(
+    caseData.emotionProfile &&
+      (caseData.emotionProfile.primaryEmotion ||
+        (caseData.emotionProfile.emotions && Object.keys(caseData.emotionProfile.emotions).length > 0))
+  );
 
   const handlePrint = () => {
     window.print();
   };
 
   const handleExportCSV = () => {
-    // Generate sanitized CSV with formula injection defense
     const sanitize = (text: string | number | undefined | null) => {
       if (text === undefined || text === null) return '""';
       let str = String(text).replace(/"/g, '""');
-      // Neutralize CSV formula characters: =, +, -, @, \t, \r, %, | (even if preceded by whitespace)
       if (/^\s*[=+\-@\t\r%|]/.test(str)) {
         str = "'" + str;
       }
@@ -72,19 +100,33 @@ export function ReportModal({ isOpen, onClose, caseData }: ReportModalProps) {
     };
 
     const rows: string[] = [];
-    rows.push(['Report Type', 'VECNAVERSE Cybercrime Triage & SER Dossier'].map(sanitize).join(','));
+    rows.push(['Report Type', 'VECNAVERSE Cybercrime Triage & Forensic Dossier'].map(sanitize).join(','));
     rows.push(['Case ID', caseData.id].map(sanitize).join(','));
     rows.push(['Docket Number', caseData.docketNumber || `#${caseData.id}`].map(sanitize).join(','));
     rows.push(['Incident Title', caseData.title].map(sanitize).join(','));
-    rows.push(['Caller Category', caseData.callerCategory || 'unknown'].map(sanitize).join(','));
-    rows.push(['Caller Name', caseData.callerName || 'Unknown / Not Recorded'].map(sanitize).join(','));
-    rows.push(['Caller Phone', caseData.callerPhone || 'Unlisted ANI'].map(sanitize).join(','));
+    rows.push(['Status', caseData.status].map(sanitize).join(','));
+
+    if (caseData.callerCategory) {
+      rows.push(['Caller Category', caseData.callerCategory.replace(/_/g, ' ')].map(sanitize).join(','));
+    }
+    if (caseData.callerName) {
+      rows.push(['Caller Name', caseData.callerName].map(sanitize).join(','));
+    }
+    if (caseData.callerPhone) {
+      rows.push(['Caller Phone', caseData.callerPhone].map(sanitize).join(','));
+    }
+
     rows.push(['Audio Duration', audioDurationStr].map(sanitize).join(','));
     rows.push(['Audio Format', audioFormatStr].map(sanitize).join(','));
     rows.push(['Audio SHA256 Hash', audioHashStr].map(sanitize).join(','));
-    rows.push(['Status', caseData.status].map(sanitize).join(','));
-    rows.push(['Triage Urgency Score', `${caseData.urgencyScore ?? 50}/100`].map(sanitize).join(','));
-    rows.push(['Urgency Level', caseData.urgencyLevel || 'MEDIUM'].map(sanitize).join(','));
+
+    if (caseData.urgencyScore !== undefined) {
+      rows.push(['Triage Urgency Score', `${caseData.urgencyScore}/100`].map(sanitize).join(','));
+    }
+    if (caseData.urgencyLevel) {
+      rows.push(['Urgency Level', caseData.urgencyLevel].map(sanitize).join(','));
+    }
+
     rows.push(['Verified Entities Count', String(verifiedEntitiesCount)].map(sanitize).join(','));
     rows.push(['Confirmed Triggers Count', String(confirmedTriggersCount)].map(sanitize).join(','));
     rows.push(['Audit Officer', auditOfficer].map(sanitize).join(','));
@@ -97,76 +139,100 @@ export function ReportModal({ isOpen, onClose, caseData }: ReportModalProps) {
       rows.push(['Dataset Provenance', 'DEMO FIXTURE / EVALUATION DATA'].map(sanitize).join(','));
     }
 
-    if (caseData.emotionProfile) {
-      rows.push(['Primary Emotion', caseData.emotionProfile.primaryEmotion].map(sanitize).join(','));
-      rows.push(['Fear Metric', `${Math.round(caseData.emotionProfile.emotions.fear * 100)}%`].map(sanitize).join(','));
-      rows.push(['Distress Metric', `${Math.round(caseData.emotionProfile.emotions.distress * 100)}%`].map(sanitize).join(','));
-      rows.push(['Anger Metric', `${Math.round(caseData.emotionProfile.emotions.anger * 100)}%`].map(sanitize).join(','));
-      rows.push(['Nervousness Metric', `${Math.round(caseData.emotionProfile.emotions.nervousness * 100)}%`].map(sanitize).join(','));
-      rows.push(['Calm Metric', `${Math.round(caseData.emotionProfile.emotions.calm * 100)}%`].map(sanitize).join(','));
+    if (hasRealEmotion && caseData.emotionProfile) {
+      if (caseData.emotionProfile.primaryEmotion) {
+        rows.push(['Primary Emotion', caseData.emotionProfile.primaryEmotion].map(sanitize).join(','));
+      }
+      if (caseData.emotionProfile.emotions) {
+        const em = caseData.emotionProfile.emotions;
+        if (typeof em.fear === 'number') rows.push(['Fear Metric', `${Math.round(em.fear * 100)}%`].map(sanitize).join(','));
+        if (typeof em.distress === 'number') rows.push(['Distress Metric', `${Math.round(em.distress * 100)}%`].map(sanitize).join(','));
+        if (typeof em.anger === 'number') rows.push(['Anger Metric', `${Math.round(em.anger * 100)}%`].map(sanitize).join(','));
+        if (typeof em.nervousness === 'number') rows.push(['Nervousness Metric', `${Math.round(em.nervousness * 100)}%`].map(sanitize).join(','));
+        if (typeof em.calm === 'number') rows.push(['Calm Metric', `${Math.round(em.calm * 100)}%`].map(sanitize).join(','));
+      }
     }
-    rows.push(['Classification', caseData.classificationStandard || 'CJIS Tier 4 Enclave'].map(sanitize).join(','));
+
+    rows.push(['Classification', caseData.classificationStandard || 'Law Enforcement Sensitive'].map(sanitize).join(','));
     rows.push(['Generated At', new Date().toISOString()].map(sanitize).join(','));
     rows.push('');
 
-    rows.push(['--- EXTRACTED & VERIFIED ENTITIES ---'].map(sanitize).join(','));
-    rows.push(['Type', 'Spoken Form', 'Normalized / Detail', 'Confidence', 'Verification Status'].map(sanitize).join(','));
-    (caseData.entities || []).forEach((ent) => {
-      rows.push([
-        ent.type,
-        ent.value || ent.text || '',
-        ent.normalizedValue || ent.detail || '',
-        `${ent.confidence}%`,
-        ent.verificationStatus || ent.status || 'unverified',
-      ].map(sanitize).join(','));
-    });
-    rows.push('');
+    // Entities (only if real entities exist)
+    if (caseData.entities && caseData.entities.length > 0) {
+      rows.push(['--- EXTRACTED & VERIFIED ENTITIES ---'].map(sanitize).join(','));
+      rows.push(['Type', 'Spoken Form', 'Normalized / Detail', 'Confidence', 'Verification Status'].map(sanitize).join(','));
+      caseData.entities.forEach((ent) => {
+        rows.push([
+          ent.type,
+          ent.value || ent.text || '',
+          ent.normalizedValue || ent.detail || '',
+          ent.confidence !== undefined ? `${ent.confidence}%` : 'N/A',
+          ent.verificationStatus || ent.status || 'unverified',
+        ].map(sanitize).join(','));
+      });
+      rows.push('');
+    }
 
-    rows.push(['--- EMERGENCY & THREAT TRIGGERS ---'].map(sanitize).join(','));
-    rows.push(['Category', 'Severity', 'Quote', 'Time Offset', 'Confidence', 'Context', 'Status'].map(sanitize).join(','));
-    (caseData.triggers || []).forEach((trig) => {
-      const timeOffsetStr = trig.timeOffset || (trig.timestamp !== undefined ? `${Math.floor(trig.timestamp / 60)}:${Math.floor(trig.timestamp % 60).toString().padStart(2, '0')}` : '00:00');
-      rows.push([
-        trig.category || trig.type || '',
-        trig.severity,
-        trig.quote,
-        timeOffsetStr,
-        `${trig.confidence}%`,
-        trig.context || trig.contextTag || 'direct',
-        trig.verificationStatus || trig.status || 'pending',
-      ].map(sanitize).join(','));
-    });
-    rows.push('');
+    // Emergency Triggers (only if real triggers exist)
+    if (caseData.triggers && caseData.triggers.length > 0) {
+      rows.push(['--- EMERGENCY & THREAT TRIGGERS ---'].map(sanitize).join(','));
+      rows.push(['Category', 'Severity', 'Quote', 'Time Offset', 'Confidence', 'Context', 'Status'].map(sanitize).join(','));
+      caseData.triggers.forEach((trig) => {
+        const timeOffsetStr =
+          trig.timeOffset ||
+          (trig.timestamp !== undefined
+            ? `${Math.floor(trig.timestamp / 60)}:${Math.floor(trig.timestamp % 60).toString().padStart(2, '0')}`
+            : '00:00');
+        rows.push([
+          trig.category || trig.type || '',
+          trig.severity,
+          trig.quote,
+          timeOffsetStr,
+          trig.confidence !== undefined ? `${trig.confidence}%` : 'N/A',
+          trig.context || trig.contextTag || 'direct',
+          trig.verificationStatus || trig.status || 'pending',
+        ].map(sanitize).join(','));
+      });
+      rows.push('');
+    }
 
-    rows.push(['--- SYNCHRONIZED FORENSIC TRANSCRIPT EXCERPT ---'].map(sanitize).join(','));
-    rows.push(['Speaker', 'Time Offset', 'Transcript Content', 'Confidence'].map(sanitize).join(','));
-    (caseData.segments || []).forEach((seg) => {
-      const speakerName = typeof seg.speaker === 'string'
-        ? seg.speaker
-        : (seg.speaker?.provisionalLabel || seg.speaker?.speakerId || 'Speaker');
-      const timeStr = seg.startTime !== undefined
-        ? `${Math.floor(seg.startTime / 60)}:${Math.floor(seg.startTime % 60).toString().padStart(2, '0')}`
-        : '';
-      rows.push([
-        speakerName,
-        timeStr,
-        seg.editedText || seg.text || '',
-        `${seg.confidence || 95}%`,
-      ].map(sanitize).join(','));
-    });
-    rows.push('');
+    // Synchronized Transcript (only if real segments exist)
+    if (caseData.segments && caseData.segments.length > 0) {
+      rows.push(['--- SYNCHRONIZED FORENSIC TRANSCRIPT EXCERPT ---'].map(sanitize).join(','));
+      rows.push(['Speaker', 'Time Offset', 'Transcript Content', 'Confidence'].map(sanitize).join(','));
+      caseData.segments.forEach((seg) => {
+        const speakerName =
+          typeof seg.speaker === 'string'
+            ? seg.speaker
+            : seg.speaker?.provisionalLabel || seg.speaker?.speakerId || 'Speaker';
+        const timeStr =
+          seg.startTime !== undefined
+            ? `${Math.floor(seg.startTime / 60)}:${Math.floor(seg.startTime % 60).toString().padStart(2, '0')}`
+            : '';
+        rows.push([
+          speakerName,
+          timeStr,
+          seg.editedText || seg.text || '',
+          seg.confidence !== undefined ? `${seg.confidence}%` : 'N/A',
+        ].map(sanitize).join(','));
+      });
+      rows.push('');
+    }
 
-    rows.push(['--- ADVISORY VOCAL INDICATORS (NON-EVIDENTIARY) ---'].map(sanitize).join(','));
-    rows.push(['Indicator Type', 'Score', 'Variance Level', 'Description', 'Disclaimer'].map(sanitize).join(','));
-    (caseData.vocalIndicators || []).forEach((voc) => {
-      rows.push([
-        voc.title || voc.metricName || voc.type,
-        voc.score || voc.value || '',
-        voc.variance || voc.trend || '',
-        voc.description,
-        DISCLAIMER_ADVISORY_VOCAL_METRICS,
-      ].map(sanitize).join(','));
-    });
+    // Advisory Vocal Indicators (only if real indicators exist)
+    if (caseData.vocalIndicators && caseData.vocalIndicators.length > 0) {
+      rows.push(['--- ADVISORY VOCAL INDICATORS (NON-EVIDENTIARY) ---'].map(sanitize).join(','));
+      rows.push(['Indicator Type', 'Score', 'Variance Level', 'Description', 'Disclaimer'].map(sanitize).join(','));
+      caseData.vocalIndicators.forEach((voc) => {
+        rows.push([
+          voc.title || voc.metricName || voc.type,
+          voc.score ?? voc.value ?? '',
+          voc.variance || voc.trend || '',
+          voc.description,
+          DISCLAIMER_ADVISORY_VOCAL_METRICS,
+        ].map(sanitize).join(','));
+      });
+    }
 
     const csvContent = 'data:text/csv;charset=utf-8,' + encodeURIComponent(rows.join('\n'));
     const safeDocket = (caseData.docketNumber || caseData.id).replace(/[^a-zA-Z0-9_\-]/g, '_');
@@ -185,6 +251,7 @@ export function ReportModal({ isOpen, onClose, caseData }: ReportModalProps) {
           exportedAt: new Date().toISOString(),
           docketNumber: caseData.docketNumber || `#${caseData.id}`,
           incidentTitle: caseData.title,
+          status: caseData.status,
           callerCategory: caseData.callerCategory,
           callerName: caseData.callerName,
           callerPhone: caseData.callerPhone,
@@ -213,6 +280,7 @@ export function ReportModal({ isOpen, onClose, caseData }: ReportModalProps) {
     link.href = url;
     link.download = `case-${safeDocket}-dossier.json`;
     link.click();
+    document.body.appendChild(link);
     URL.revokeObjectURL(url);
   };
 
@@ -360,7 +428,7 @@ export function ReportModal({ isOpen, onClose, caseData }: ReportModalProps) {
             </div>
           </div>
 
-          {/* 2. Caller Information & SER Triage Telemetry */}
+          {/* 2. Caller Information */}
           <div className="mb-6 rounded border border-[#35373e] bg-[#18191c] p-3 text-xs">
             <h3 className="mb-2 font-mono text-xs font-semibold uppercase tracking-wider text-[#d96f68]">
               2. Caller Information & Speech Emotion Recognition (SER) Telemetry
@@ -369,51 +437,66 @@ export function ReportModal({ isOpen, onClose, caseData }: ReportModalProps) {
               <div className="p-2 rounded bg-[#121315] border border-[#35373e]">
                 <span className="text-[10px] text-[#71706b] uppercase font-mono block">Caller Name</span>
                 <span className="font-mono font-bold text-[#edeae1]">
-                  {caseData.callerName || 'Unknown / Not Recorded'}
+                  {caseData.callerName || 'Not Recorded'}
                 </span>
               </div>
               <div className="p-2 rounded bg-[#121315] border border-[#35373e]">
                 <span className="text-[10px] text-[#71706b] uppercase font-mono block">Caller Phone</span>
                 <span className="font-mono text-[#8a9a5b]">
-                  {caseData.callerPhone || 'Unlisted ANI'}
+                  {caseData.callerPhone || 'Unlisted'}
                 </span>
               </div>
               <div className="p-2 rounded bg-[#121315] border border-[#35373e]">
                 <span className="text-[10px] text-[#71706b] uppercase font-mono block">Caller Category</span>
                 <span className="font-mono font-bold text-[#edeae1] uppercase">
-                  {caseData.callerCategory ? caseData.callerCategory.replace(/_/g, ' ') : 'UNKNOWN'}
+                  {caseData.callerCategory ? caseData.callerCategory.replace(/_/g, ' ') : 'NOT SPECIFIED'}
                 </span>
               </div>
               <div className="p-2 rounded bg-[#121315] border border-[#35373e]">
                 <span className="text-[10px] text-[#71706b] uppercase font-mono block">Urgency Score</span>
                 <span className="font-mono font-bold text-[#d96f68]">
-                  {caseData.urgencyScore ?? 50}/100 [{caseData.urgencyLevel || 'MEDIUM'}]
+                  {caseData.urgencyScore !== undefined ? `${caseData.urgencyScore}/100` : 'Not Assessed'}
+                  {caseData.urgencyLevel ? ` [${caseData.urgencyLevel}]` : ''}
                 </span>
               </div>
             </div>
 
-            {caseData.emotionProfile && (
+            {hasRealEmotion && caseData.emotionProfile && (
               <div className="space-y-1.5 pt-2 border-t border-[#35373e]/50 font-mono text-[11px]">
-                <div className="flex items-center justify-between">
-                  <span className="text-[#9e9c96]">Primary Detected Emotion:</span>
-                  <span className="font-bold text-[#edeae1] uppercase">{caseData.emotionProfile.primaryEmotion}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[#d96f68]">Fear / Panic Hyperarousal:</span>
-                  <span className="font-bold">{Math.round(caseData.emotionProfile.emotions.fear * 100)}%</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[#ffb964]">Physiological Distress:</span>
-                  <span className="font-bold">{Math.round(caseData.emotionProfile.emotions.distress * 100)}%</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[#e06c75]">Agitation / Anger:</span>
-                  <span className="font-bold">{Math.round(caseData.emotionProfile.emotions.anger * 100)}%</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[#8a9a5b]">Baseline Calm:</span>
-                  <span className="font-bold">{Math.round(caseData.emotionProfile.emotions.calm * 100)}%</span>
-                </div>
+                {caseData.emotionProfile.primaryEmotion && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-[#9e9c96]">Primary Detected Emotion:</span>
+                    <span className="font-bold text-[#edeae1] uppercase">{caseData.emotionProfile.primaryEmotion}</span>
+                  </div>
+                )}
+                {caseData.emotionProfile.emotions && (
+                  <>
+                    {typeof caseData.emotionProfile.emotions.fear === 'number' && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-[#d96f68]">Fear / Panic:</span>
+                        <span className="font-bold">{Math.round(caseData.emotionProfile.emotions.fear * 100)}%</span>
+                      </div>
+                    )}
+                    {typeof caseData.emotionProfile.emotions.distress === 'number' && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-[#ffb964]">Physiological Distress:</span>
+                        <span className="font-bold">{Math.round(caseData.emotionProfile.emotions.distress * 100)}%</span>
+                      </div>
+                    )}
+                    {typeof caseData.emotionProfile.emotions.anger === 'number' && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-[#e06c75]">Agitation / Anger:</span>
+                        <span className="font-bold">{Math.round(caseData.emotionProfile.emotions.anger * 100)}%</span>
+                      </div>
+                    )}
+                    {typeof caseData.emotionProfile.emotions.calm === 'number' && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-[#8a9a5b]">Baseline Calm:</span>
+                        <span className="font-bold">{Math.round(caseData.emotionProfile.emotions.calm * 100)}%</span>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -547,7 +630,11 @@ export function ReportModal({ isOpen, onClose, caseData }: ReportModalProps) {
                     <span className="font-semibold text-[#edeae1]">
                       {typeof seg.speaker === 'string'
                         ? seg.speaker
-                        : (seg.speaker?.provisionalLabel || seg.speaker?.speakerId || seg.speakerLabel || seg.speakerId || 'Speaker')}
+                        : seg.speaker?.provisionalLabel ||
+                          seg.speaker?.speakerId ||
+                          seg.speakerLabel ||
+                          seg.speakerId ||
+                          'Speaker'}
                     </span>
                     <span>
                       {seg.startTime !== undefined
@@ -561,7 +648,7 @@ export function ReportModal({ isOpen, onClose, caseData }: ReportModalProps) {
             </div>
           </div>
 
-          {/* 6. Timeline Summary */}
+          {/* 6. Timeline Summary (only if events exist) */}
           {caseData.timeline && caseData.timeline.length > 0 && (
             <div className="mb-6">
               <h3 className="mb-2 font-mono text-xs font-semibold uppercase tracking-wider text-[#8a9a5b]">
@@ -595,14 +682,14 @@ export function ReportModal({ isOpen, onClose, caseData }: ReportModalProps) {
             <div className="mt-4 flex items-center justify-between border-t border-[#35373e] pt-3 text-[11px] text-[#71706b]">
               <span>Signature: __________________________</span>
               <span>Date: {new Date().toLocaleDateString()}</span>
-              <span>Badge / Token: #4829-SCI</span>
+              <span>Badge / Token: {badgeToken}</span>
             </div>
           </div>
         </div>
 
         {/* Modal Footer */}
         <div className="flex items-center justify-between border-t border-[#35373e] bg-[#18191c] p-3 text-xs text-[#9e9c96]">
-          <span>Classification: CJIS Tier 4 / TS-SCI</span>
+          <span>Classification: CJIS Tier 4 / Law Enforcement Restricted</span>
           <div className="flex items-center gap-2">
             <button
               onClick={handleExportCSV}

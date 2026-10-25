@@ -1,22 +1,17 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { store, isSyntheticCase } from '@/lib/data/store';
-import { Case, CaseStatus, CallerCategory } from '@/types';
+import { Case, CallerCategory } from '@/types';
 import {
-  FolderLock,
   Search,
-  Filter,
   PlusCircle,
   ArrowRight,
-  ShieldAlert,
-  Clock,
   HeartPulse,
   AlertTriangle,
   ShieldCheck,
-  AlertOctagon,
 } from 'lucide-react';
 
 function CasesContent() {
@@ -214,7 +209,7 @@ function CasesContent() {
                     <td className="py-3.5 px-3.5 font-mono text-[11px]">
                       {c.emotionProfile ? (
                         <span className="text-[#d96f68] font-bold uppercase">
-                          {c.emotionProfile.primaryEmotion} ({Math.round(c.emotionProfile.emotions[c.emotionProfile.primaryEmotion as keyof typeof c.emotionProfile.emotions] * 100)}%)
+                          {c.emotionProfile.primaryEmotion} ({Math.round(((c.emotionProfile.emotions[c.emotionProfile.primaryEmotion as keyof typeof c.emotionProfile.emotions] ?? 0.8) * 100))}%)
                         </span>
                       ) : (
                         <span className="text-[#9e9c96]">Analyzing</span>

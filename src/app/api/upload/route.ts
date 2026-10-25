@@ -12,7 +12,6 @@ import {
   detectAudioSignature,
   extractWavDuration,
   estimateAudioDuration,
-  ALLOWED_MIME_TYPES,
   ALLOWED_EXTENSIONS,
 } from '@/lib/audio/preflight';
 import {
@@ -23,6 +22,7 @@ import {
   sanitizeFileName,
 } from '@/lib/storage/private-storage';
 import { store } from '@/lib/data/store';
+import { getServerSession } from '@/lib/auth/session';
 
 export const runtime = 'nodejs';
 
@@ -196,19 +196,24 @@ export async function POST(req: NextRequest) {
     const caseId = formData.get('caseId');
     if (caseId && typeof caseId === 'string' && caseId.trim() !== '') {
       try {
-        store.attachAudio(caseId.trim(), {
-          filename: safeOriginalName,
-          sizeBytes: buffer.length,
-          durationSeconds,
-          mimeType: preflight.mimeType || signature.mimeType || 'audio/wav',
-          format: preflight.format || signature.description || 'Audio Stream',
-          sha256Hash,
-          uploadedAt: new Date().toISOString(),
-          expiresAt: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
-          retentionHours: 24,
-          storagePath: saved.storagePath,
-          purged: false,
-        });
+        const session = await getServerSession(req);
+        store.attachAudio(
+          caseId.trim(),
+          {
+            filename: safeOriginalName,
+            sizeBytes: buffer.length,
+            durationSeconds,
+            mimeType: preflight.mimeType || signature.mimeType || 'audio/wav',
+            format: preflight.format || signature.description || 'Audio Stream',
+            sha256Hash,
+            uploadedAt: new Date().toISOString(),
+            expiresAt: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
+            retentionHours: 24,
+            storagePath: saved.storagePath,
+            purged: false,
+          },
+          session || undefined
+        );
       } catch (err) {
         console.warn(`[API/upload] Note: Could not attach to case #${caseId}:`, err);
       }

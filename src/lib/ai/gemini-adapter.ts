@@ -16,8 +16,15 @@ import {
   PROHIBITED_INFERENCE_TERMS,
   STANDARD_ACOUSTIC_CAVEAT,
   STANDARD_FORENSIC_DSP_DISCLAIMER,
-  TriggerContext,
 } from './types';
+import {
+  FullVoiceEmotionAnalysis,
+  FullVoiceEmotionAnalysisSchema,
+} from './emotion-schemas';
+import {
+  calculateAudioCost,
+  enforceCostAndDurationGuardrails,
+} from './cost-controller';
 
 // ==============================================================================
 // Error Hierarchy (REC-19, API-X-API34: Safe categories without leaking secrets)
@@ -80,12 +87,23 @@ export class GeminiMediaError extends GeminiError {
 // Configuration Helpers & Model Selection
 // ==============================================================================
 
-export const VERIFIED_GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash'] as const;
-export type VerifiedGeminiModel = typeof VERIFIED_GEMINI_MODELS[number];
+export const VERIFIED_GEMINI_MODELS = [
+  'gemini-3.8-flash',
+  'gemini-3.8-live',
+  'gemini-2.5-flash',
+  'gemini-2.0-flash',
+] as const;
+export type VerifiedGeminiModel = (typeof VERIFIED_GEMINI_MODELS)[number];
 
 export function normalizeGeminiModel(modelName?: string): VerifiedGeminiModel {
   if (!modelName) return 'gemini-2.5-flash';
   const clean = modelName.trim().toLowerCase();
+  if (clean === 'gemini-3.8-live' || clean.includes('3.8-live')) {
+    return 'gemini-3.8-live';
+  }
+  if (clean === 'gemini-3.8-flash' || clean.includes('3.8-flash') || clean.includes('3.8')) {
+    return 'gemini-3.8-flash';
+  }
   if (clean === 'gemini-2.0-flash' || clean.includes('2.0')) {
     return 'gemini-2.0-flash';
   }
@@ -652,6 +670,229 @@ Analyze this audio file thoroughly according to all instructions and schema requ
       mimeType: detectedMime,
       fileName: path.basename(resolvedPath),
     });
+  }
+
+  /**
+   * Analyzes voice emotion on recorded audio using Gemini Flash (default: gemini-3.8-flash).
+   * Strictly detects the 6 target emotions: anger, sadness, fear, happiness, stress, and neutral.
+   * Returns validated FullVoiceEmotionAnalysis JSON with timestamps, transcript, primary/secondary emotions,
+   * vocal cues, and uncertainty indicators.
+   */
+  public async analyzeVoiceEmotion(
+    filePathOrBuffer: string | Buffer,
+    options: {
+      mimeType?: string;
+      durationSeconds?: number;
+      forceModel?: string;
+      signal?: AbortSignal;
+      currentSessionCost?: number;
+    } = {}
+  ): Promise<FullVoiceEmotionAnalysis> {
+    if (!this.client || !this.config.apiKey) {
+      throw new GeminiConfigurationError(
+        'Gemini API key is not configured on the server. Please add GEMINI_API_KEY to your .env.local file to analyze voice emotion.'
+      );
+    }
+
+    if (options.signal?.aborted) {
+      throw new Error('Voice emotion analysis aborted by client');
+    }
+
+    let buffer: Buffer;
+    let format = 'audio/wav';
+
+    if (typeof filePathOrBuffer === 'string') {
+      const resolved = resolveAudioFilePath(filePathOrBuffer);
+      if (!resolved) {
+        throw new GeminiMediaError(`Audio file not found on disk at path: ${filePathOrBuffer}`);
+      }
+      const stat = await fs.promises.stat(resolved);
+      if (stat.size === 0) {
+        throw new GeminiMediaError(`Audio file is empty (0 bytes) at path: ${filePathOrBuffer}`);
+      }
+      buffer = await fs.promises.readFile(resolved);
+      const ext = path.extname(resolved).toLowerCase();
+      if (ext === '.mp3') format = 'audio/mpeg';
+      else if (ext === '.flac') format = 'audio/flac';
+      else if (ext === '.ogg') format = 'audio/ogg';
+      else if (ext === '.m4a') format = 'audio/m4a';
+      else if (ext === '.webm') format = 'audio/webm';
+      else if (ext === '.aac') format = 'audio/aac';
+    } else {
+      buffer = filePathOrBuffer;
+      if (buffer.length === 0) {
+        throw new GeminiMediaError('Audio buffer is empty (0 bytes).');
+      }
+      format = options.mimeType || 'audio/wav';
+    }
+
+    const durationSeconds = options.durationSeconds || Math.max(1, Math.round(buffer.length / 32000));
+    const modelId = options.forceModel ? normalizeGeminiModel(options.forceModel) : 'gemini-3.8-flash';
+
+    // Enforce cost & duration guardrails (e.g. max 900 seconds)
+    enforceCostAndDurationGuardrails(durationSeconds, modelId, options.currentSessionCost, {
+      throwOnError: true,
+    });
+
+    const costEstimate = calculateAudioCost(durationSeconds, modelId);
+
+    const systemPrompt = `
+You are an expert Speech Emotion Recognition (SER) engine for a cybercrime investigation helpline.
+Analyze this recorded audio strictly across these 6 target emotions:
+- anger
+- sadness
+- fear
+- happiness
+- stress
+- neutral
+
+Requirements:
+1. Provide timestamps in milliseconds (start_ms, end_ms) and seconds (start_time_seconds, end_time_seconds) for each speech segment.
+2. Provide verbatim transcript of spoken audio where available.
+3. Classify primary_emotion and optional secondary_emotion.
+4. Normalize emotion_scores for all 6 target emotions between 0.0 and 1.0.
+5. Identify audible vocal cues (pitch shifts, tremor, rapid speech, shouting, sobbing, long pauses) with timestamp_ms and severity ('low' | 'medium' | 'high' | 'critical').
+6. Provide uncertainty indicators: confidence_score (0.0 to 1.0), audio_quality ('clear' | 'noisy' | 'distorted' | 'low_volume'), ambiguity_detected (boolean), and caveats.
+7. Disclaimers: Voice emotion analysis is advisory and preliminary; not a lie detector or proof of guilt.
+
+Output JSON format strictly matching this structure:
+{
+  "session_id": "session-id-string",
+  "overall": {
+    "primary_emotion": "anger | sadness | fear | happiness | stress | neutral",
+    "secondary_emotion": "anger | sadness | fear | happiness | stress | neutral | null",
+    "urgency_score": 75,
+    "urgency_level": "low | medium | high | critical",
+    "emotion_scores": {
+      "anger": 0.1,
+      "sadness": 0.1,
+      "fear": 0.7,
+      "happiness": 0.0,
+      "stress": 0.8,
+      "neutral": 0.1
+    },
+    "dominant_cues": [
+      {
+        "cue_type": "vocal_tremor",
+        "description": "Noticeable vocal tremor during financial demand description",
+        "severity": "high",
+        "timestamp_ms": 1200
+      }
+    ],
+    "uncertainty": {
+      "confidence_score": 0.88,
+      "audio_quality": "clear",
+      "ambiguity_detected": false,
+      "caveats": ["Advisory indicator only; not forensic proof of guilt."]
+    }
+  },
+  "segments": [
+    {
+      "segment_id": "seg-1",
+      "start_ms": 0,
+      "end_ms": 2500,
+      "start_time_seconds": 0,
+      "end_time_seconds": 2.5,
+      "transcript": "Exact spoken words",
+      "speaker_label": "SPEAKER_01",
+      "primary_emotion": "fear",
+      "secondary_emotion": "stress",
+      "emotion_scores": {
+        "anger": 0.05,
+        "sadness": 0.1,
+        "fear": 0.85,
+        "happiness": 0.0,
+        "stress": 0.75,
+        "neutral": 0.05
+      },
+      "vocal_cues": [],
+      "uncertainty": {
+        "confidence_score": 0.9,
+        "audio_quality": "clear",
+        "ambiguity_detected": false,
+        "caveats": []
+      }
+    }
+  ],
+  "metadata": {
+    "model_id": "${modelId}",
+    "duration_seconds": ${durationSeconds},
+    "processed_at": "${new Date().toISOString()}",
+    "cost_estimate_usd": ${costEstimate},
+    "audio_format": "${format}",
+    "is_live_stream": false
+  }
+}
+`;
+
+    try {
+      const response = await this.client.models.generateContent({
+        model: modelId,
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              {
+                inlineData: {
+                  data: buffer.toString('base64'),
+                  mimeType: format,
+                },
+              },
+              { text: systemPrompt },
+            ],
+          },
+        ],
+        config: {
+          responseMimeType: 'application/json',
+        },
+      });
+
+      if (options.signal?.aborted) {
+        throw new Error('Voice emotion analysis aborted by client');
+      }
+
+      const rawJson = response.text;
+      if (!rawJson) {
+        throw new GeminiResponseValidationError('Gemini returned empty response for voice emotion analysis');
+      }
+
+      const parsed = this.extractJson(rawJson);
+      parsed.metadata = {
+        ...parsed.metadata,
+        model_id: modelId,
+        duration_seconds: durationSeconds,
+        processed_at: new Date().toISOString(),
+        cost_estimate_usd: costEstimate,
+        audio_format: format,
+        is_live_stream: modelId.includes('live'),
+      };
+
+      const validated = FullVoiceEmotionAnalysisSchema.safeParse(parsed);
+      if (!validated.success) {
+        throw new GeminiResponseValidationError(
+          `Voice emotion schema validation failed: ${validated.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join(', ')}`,
+          validated.error.format()
+        );
+      }
+
+      return validated.data;
+    } catch (err: any) {
+      if (err instanceof GeminiError) throw err;
+      if (options.signal?.aborted) throw err;
+      const isRateLimit =
+        err?.status === 429 ||
+        /rate\s*limit|quota|resource\s*exhausted|429/i.test(String(err?.message || err));
+      if (isRateLimit) {
+        throw new GeminiRateLimitError(
+          `Gemini voice emotion analysis rate limit or quota exceeded: ${err?.message || 'Quota limit reached'}`
+        );
+      }
+      throw new GeminiError(
+        `Gemini voice emotion analysis failed: ${err?.message || 'Unknown provider error'}`,
+        'EMOTION_ANALYSIS_FAILED',
+        err?.status || 500
+      );
+    }
   }
 
   /**

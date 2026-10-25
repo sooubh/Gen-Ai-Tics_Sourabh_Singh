@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import { LiveMonitorView } from '@/components/LiveMonitorView';
 
 export default function LiveMonitorPage() {

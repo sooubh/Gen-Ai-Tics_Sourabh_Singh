@@ -22,6 +22,12 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
+  /* Standard Firefox and mobile scrollbars */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #2d2f36 #121315;
+  }
+
   /* Custom subtle scrollbar */
   ::-webkit-scrollbar {
     width: 6px;

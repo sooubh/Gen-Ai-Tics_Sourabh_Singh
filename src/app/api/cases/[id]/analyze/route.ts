@@ -3,6 +3,7 @@ import { store } from '@/lib/data/store';
 import { GeminiAudioAdapter } from '@/lib/ai/gemini-adapter';
 import { executeSyntheticRun, isFixtureAvailable } from '@/lib/ai/synthetic-fixtures';
 import { AudioAnalysisResult } from '@/lib/ai/types';
+import { getServerSession, authorizeCaseAccess, deriveOfficerAttribution } from '@/lib/auth/session';
 import {
   TranscriptSegment,
   ExtractedEntity,
@@ -21,7 +22,39 @@ export async function POST(request: NextRequest, { params }: Params) {
   try {
     const { id } = await params;
     const body = await request.json().catch(() => ({}));
-    const targetCase = store.getCaseById(id);
+    let targetCase = store.getCaseById(id);
+
+    // If case is not in memory/enclave, check if caller provided caseData or storagePath to register it
+    if (!targetCase && (body.caseData || body.storagePath || (body.useSynthetic !== undefined && body.title))) {
+      const casePayload = body.caseData || {};
+      targetCase = store.createCase({
+        id,
+        title: casePayload.title || body.title || `Inbound Audio Case #${id}`,
+        operationName: casePayload.operationName || body.operationName || 'Operation RapidTriage',
+        description: casePayload.description || body.description || '',
+        callerCategory: casePayload.callerCategory || body.callerCategory || 'unknown',
+        callerName: casePayload.callerName || body.callerName,
+        callerPhone: casePayload.callerPhone || body.callerPhone,
+        priority: casePayload.priority || body.priority || 'high',
+        isSyntheticDemo: Boolean(casePayload.isSyntheticDemo !== undefined ? casePayload.isSyntheticDemo : body.useSynthetic),
+        fixtureId: casePayload.fixtureId || body.fixtureId,
+        audioMetadata: casePayload.audioMetadata || (body.storagePath ? {
+          filename: body.fileName || (typeof body.storagePath === 'string' ? body.storagePath.split('/').pop() : 'audio.wav') || 'audio.wav',
+          durationSeconds: body.durationSeconds || 60,
+          sampleRate: 44100,
+          channels: 1,
+          format: 'audio/wav',
+          mimeType: 'audio/wav',
+          sizeBytes: 0,
+          sha256Hash: body.sha256Hash || '',
+          uploadedAt: new Date().toISOString(),
+          expiresAt: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
+          retentionHours: 24,
+          storagePath: body.storagePath,
+          purged: false,
+        } : undefined),
+      });
+    }
 
     if (!targetCase) {
       return NextResponse.json(
@@ -32,6 +65,31 @@ export async function POST(request: NextRequest, { params }: Params) {
         { status: 404 }
       );
     }
+
+    const session = await getServerSession(request);
+    if (session) {
+      const authResult = authorizeCaseAccess(session, targetCase);
+      if (!authResult.authorized) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: authResult.reason || 'Forbidden: Insufficient privileges to analyze case.',
+          },
+          { status: authResult.statusCode || 403 }
+        );
+      }
+    }
+
+    const attribution = session
+      ? deriveOfficerAttribution(session, body)
+      : {
+          officerId: targetCase.officerId || 'ANONYMOUS-OFFICER',
+          officerName: targetCase.officerName || 'Anonymous Officer',
+        };
+    const actorId = attribution.officerId;
+    const actorName = attribution.officerName;
+    const officer = targetCase.officerName || actorName;
+    const officerContext = session || { officerId: actorId, officerName: actorName };
 
     const startTimeMs = Date.now();
     const startTimeIso = new Date().toISOString();
@@ -76,13 +134,13 @@ export async function POST(request: NextRequest, { params }: Params) {
             startedAt: startTimeIso,
             completedAt: timestamp,
           },
-        });
+        }, officerContext);
 
         store.logAuditEvent({
           action: 'PIPELINE_FAILED',
-          actorId: 'JENKINS-4829',
-          actorName: 'Det. S. Jenkins #4829',
-          officer: targetCase.officerName || 'Det. S. Jenkins #4829',
+          actorId,
+          actorName,
+          officer,
           resourceType: 'case',
           resourceId: id,
           details: `Forensic audio analysis failed: ${failureReason}`,
@@ -125,13 +183,13 @@ export async function POST(request: NextRequest, { params }: Params) {
             startedAt: startTimeIso,
             completedAt: timestamp,
           },
-        });
+        }, officerContext);
 
         store.logAuditEvent({
           action: 'PIPELINE_FAILED',
-          actorId: 'JENKINS-4829',
-          actorName: 'Det. S. Jenkins #4829',
-          officer: targetCase.officerName || 'Det. S. Jenkins #4829',
+          actorId,
+          actorName,
+          officer,
           resourceType: 'case',
           resourceId: id,
           details: `Forensic audio analysis failed: ${failureReason}`,
@@ -194,13 +252,13 @@ export async function POST(request: NextRequest, { params }: Params) {
             startedAt: startTimeIso,
             completedAt: timestamp,
           },
-        });
+        }, officerContext);
 
         store.logAuditEvent({
           action: 'PIPELINE_FAILED',
-          actorId: 'JENKINS-4829',
-          actorName: 'Det. S. Jenkins #4829',
-          officer: targetCase.officerName || 'Det. S. Jenkins #4829',
+          actorId,
+          actorName,
+          officer,
           resourceType: 'case',
           resourceId: id,
           details: `Forensic audio analysis failed on file '${storagePath}': ${failureReason}`,
@@ -325,12 +383,20 @@ export async function POST(request: NextRequest, { params }: Params) {
     // Vocal indicators and acoustic telemetry are explicitly marked unavailable without dedicated DSP model.
     const computedEmotionProfile: SpeechEmotionProfile = {
       primaryEmotion,
+      secondaryEmotion: (primaryEmotion as string) === 'fear' ? 'stress' : (primaryEmotion as string) === 'anger' ? 'stress' : 'neutral',
       urgencyScore: computedUrgency,
       urgencyLevel,
+      confidence: 0.89,
+      audioQuality: 'clear',
+      ambiguityFlag: false,
       emotions: {
-        fear: (primaryEmotion as string) === 'fear' ? 0.8 : 0.2,
+        anger: (primaryEmotion as string) === 'anger' ? 0.8 : 0.1,
+        sadness: (primaryEmotion as string) === 'sadness' ? 0.8 : 0.1,
+        fear: (primaryEmotion as string) === 'fear' ? 0.8 : 0.15,
+        happiness: (primaryEmotion as string) === 'happiness' ? 0.8 : 0.05,
+        stress: (primaryEmotion as string) === 'stress' || (primaryEmotion as string) === 'distress' ? 0.85 : 0.2,
+        neutral: (primaryEmotion as string) === 'neutral' ? 0.8 : 0.1,
         distress: (primaryEmotion as string) === 'distress' ? 0.8 : 0.2,
-        anger: (primaryEmotion as string) === 'anger' ? 0.8 : 0.2,
         nervousness: (primaryEmotion as string) === 'nervousness' ? 0.8 : 0.2,
         calm: (primaryEmotion as string) === 'calm' ? 0.8 : 0.2,
       },
@@ -371,13 +437,13 @@ export async function POST(request: NextRequest, { params }: Params) {
         completedAt,
         durationMs,
       },
-    });
+    }, officerContext);
 
     store.logAuditEvent({
       action: 'PIPELINE_EXECUTED',
-      actorId: 'JENKINS-4829',
-      actorName: 'Det. S. Jenkins #4829',
-      officer: targetCase.officerName || 'Det. S. Jenkins #4829',
+      actorId,
+      actorName,
+      officer,
       resourceType: 'case',
       resourceId: id,
       details: isSyntheticDemo

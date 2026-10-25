@@ -1,19 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { store } from '@/lib/data/store';
+import { escapeCsvField } from '@/lib/export/csv-utils';
+import { getServerSession, authorizeCaseAccess } from '@/lib/auth/session';
 
 interface Params {
   params: Promise<{ id: string }>;
-}
-
-export function escapeCsvField(val: any): string {
-  if (val === undefined || val === null) return '""';
-  let str = String(val).replace(/"/g, '""');
-  // Formula injection defense - detects formula triggers even if preceded by whitespace
-  // Covers =, +, -, @, \t, \r, %, |
-  if (/^\s*[=+\-@\t\r%|]/.test(str)) {
-    str = "'" + str;
-  }
-  return `"${str}"`;
 }
 
 export async function GET(request: NextRequest, { params }: Params) {
@@ -28,6 +19,17 @@ export async function GET(request: NextRequest, { params }: Params) {
         { error: `Case ${id} not found` },
         { status: 404 }
       );
+    }
+
+    const session = await getServerSession(request);
+    if (session) {
+      const authResult = authorizeCaseAccess(session, caseData);
+      if (!authResult.authorized) {
+        return NextResponse.json(
+          { error: authResult.reason || 'Forbidden: Insufficient privileges to export case.' },
+          { status: authResult.statusCode || 403 }
+        );
+      }
     }
 
     // Genuine docket fields & verification counts
@@ -58,7 +60,8 @@ export async function GET(request: NextRequest, { params }: Params) {
       caseData.assignedOfficerName ||
       caseData.investigatingOfficer ||
       (caseData.reviews && caseData.reviews.length > 0 ? caseData.reviews[caseData.reviews.length - 1].officerName : '') ||
-      'Det. S. Jenkins #4829';
+      session?.user?.name ||
+      'Anonymous Officer';
 
     if (format === 'csv') {
       const rows: string[] = [];

@@ -1,19 +1,15 @@
 import { describe, it, expect } from 'vitest';
-import * as path from 'path';
 import * as fs from 'fs';
 import { executeSyntheticRun, listSyntheticFixtures } from '../src/lib/ai/synthetic-fixtures';
 import {
   PROHIBITED_INFERENCE_TERMS,
-  AudioAnalysisResultSchema,
   AnalysisRunSchema,
-  STANDARD_FORENSIC_DSP_DISCLAIMER,
 } from '../src/lib/ai/types';
 import {
   GeminiAudioAdapter,
   normalizeGeminiModel,
   resolveAudioFilePath,
   GeminiMediaError,
-  VERIFIED_GEMINI_MODELS,
 } from '../src/lib/ai/gemini-adapter';
 
 describe('AI Pipeline & Synthetic Fixture Engine (PRD-FR-003, PRD-FR-009, PRD-FR-011)', () => {

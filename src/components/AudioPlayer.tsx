@@ -158,13 +158,30 @@ export function AudioPlayer({
     return `${mins.toString().padStart(2, '0')}:${remSecs.toString().padStart(2, '0')}.${ms.toString().padStart(3, '0')}`;
   };
 
-  const handleTimelineClick = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleSeekFromClientX = (clientX: number) => {
     if (!timelineRef.current) return;
     const rect = timelineRef.current.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
+    const clickX = clientX - rect.left;
     const percent = Math.max(0, Math.min(1, clickX / rect.width));
     const targetTime = percent * duration;
     onSeek(targetTime);
+  };
+
+  const handleTimelineClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    handleSeekFromClientX(e.clientX);
+  };
+
+  const handleTimelineTouch = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (e.touches && e.touches[0]) {
+      handleSeekFromClientX(e.touches[0].clientX);
+    }
+  };
+
+  const handleVolumeFromClientX = (clientX: number, target: HTMLElement) => {
+    const rect = target.getBoundingClientRect();
+    const newVol = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    setVolume(newVol);
+    setIsMuted(false);
   };
 
   const handleRewind5 = () => {
@@ -217,48 +234,53 @@ export function AudioPlayer({
       )}
 
       {/* Stream Header */}
-      <div className="flex items-center justify-between border-b border-[#35373e]/40 pb-1 text-xs text-[#9e9c96]">
-        <div className="flex items-center gap-2">
-          <Activity className="h-4 w-4 text-[#8a9a5b]" />
-          <span className="font-mono text-xs uppercase tracking-wider text-[#edeae1] font-semibold">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-2 border-b border-[#35373e]/40 pb-2 text-xs text-[#9e9c96]">
+        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-wrap">
+          <Activity className="h-4 w-4 text-[#8a9a5b] flex-shrink-0" />
+          <span className="font-mono text-xs uppercase tracking-wider text-[#edeae1] font-semibold whitespace-nowrap">
             Forensic Audio Stream
           </span>
-          <span className="rounded bg-[#23252a] px-1.5 py-0.5 font-mono text-[10px] text-[#9e9c96] border border-[#35373e]">
+          <span
+            className="rounded bg-[#23252a] px-1.5 py-0.5 font-mono text-[10px] text-[#9e9c96] border border-[#35373e] truncate max-w-[140px] sm:max-w-[200px] md:max-w-none"
+            title={filename}
+          >
             {filename}
           </span>
           <span className="hidden font-mono text-[10px] text-[#71706b] sm:inline">
             {format}
           </span>
         </div>
-        <div className="flex items-center gap-2 font-mono text-xs">
+        <div className="flex items-center gap-2 font-mono text-xs tabular-nums flex-shrink-0 self-end sm:self-auto">
           <span className="font-semibold text-[#8a9a5b]">{formatTimeFull(currentTime)}</span>
           <span className="text-[#71706b]">/</span>
           <span className="text-[#9e9c96]">{formatTimeFull(duration)}</span>
         </div>
       </div>
 
-      {/* Interactive Waveform Timeline */}
+      {/* Interactive Waveform Timeline with Touch & Click Scrubbing */}
       <div
         ref={timelineRef}
         onClick={handleTimelineClick}
-        className="relative w-full cursor-pointer select-none rounded border border-[#35373e] bg-[#0d0e10] p-2 overflow-hidden flex flex-col gap-1"
+        onTouchStart={handleTimelineTouch}
+        onTouchMove={handleTimelineTouch}
+        className="relative w-full cursor-pointer select-none rounded border border-[#35373e] bg-[#0d0e10] p-2 overflow-hidden flex flex-col gap-1 touch-none"
       >
         {/* Time ruler ticks */}
-        <div className="flex items-center justify-between border-b border-[#35373e]/30 pb-0.5 font-mono text-[10px] text-[#71706b]">
+        <div className="flex items-center justify-between border-b border-[#35373e]/30 pb-0.5 font-mono text-[10px] text-[#71706b] tabular-nums select-none overflow-hidden">
           <span>00:00</span>
-          <span>03:00</span>
-          <span className="font-semibold text-[#8a9a5b]">
+          <span className="hidden sm:inline">03:00</span>
+          <span className="font-semibold text-[#8a9a5b] truncate max-w-[120px]">
             {formatTimeFull(currentTime).slice(0, 5)} [CUE]
           </span>
-          <span>06:00</span>
-          <span>09:00</span>
-          <span>12:00</span>
-          <span>15:00</span>
+          <span className="hidden md:inline">06:00</span>
+          <span className="hidden lg:inline">09:00</span>
+          <span className="hidden md:inline">12:00</span>
+          <span className="hidden sm:inline">15:00</span>
           <span>{formatTimeFull(duration).slice(0, 5)}</span>
         </div>
 
         {/* Waveform SVG Display */}
-        <div className="relative h-20 w-full flex items-center justify-center">
+        <div className="relative h-16 sm:h-20 w-full flex items-center justify-center">
           <svg className="h-full w-full" preserveAspectRatio="none" viewBox="0 0 1000 80">
             <defs>
               <linearGradient id="proWaveWarm" x1="0%" x2="100%" y1="0%" y2="0%">
@@ -314,10 +336,10 @@ export function AudioPlayer({
 
           {/* Threat Annotation Badge */}
           <div
-            className="absolute top-1.5 z-10 flex items-center gap-1 rounded border border-[#b84a44]/80 bg-[#0d0e10]/95 px-1.5 py-0.5 font-mono text-[9px] font-medium text-[#d96f68] shadow-sm"
+            className="absolute top-1.5 z-10 flex items-center gap-1 rounded border border-[#b84a44]/80 bg-[#0d0e10]/95 px-1.5 py-0.5 font-mono text-[9px] font-medium text-[#d96f68] shadow-sm pointer-events-none select-none max-w-[calc(100%-12px)] truncate"
             style={{ left: `${threatPercent}%` }}
           >
-            <span className="h-1 w-1 rounded-full bg-[#d96f68] animate-pulse" />
+            <span className="h-1 w-1 rounded-full bg-[#d96f68] animate-pulse flex-shrink-0" />
             <span>THREAT {formatTimeFull(threatTimestamp).slice(0, 5)}</span>
           </div>
         </div>
@@ -325,58 +347,65 @@ export function AudioPlayer({
 
       {/* Transport Controls Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
-        <div className="flex items-center gap-1">
+        {/* Playback & Seek Controls */}
+        <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap">
           <button
+            type="button"
             onClick={() => onSeek(Math.max(0, currentTime - 10))}
-            className="rounded border border-[#35373e] bg-[#23252a] p-1.5 text-[#edeae1] hover:bg-[#2d2f36] transition-colors"
+            className="rounded border border-[#35373e] bg-[#23252a] p-1 sm:p-1.5 text-[#edeae1] hover:bg-[#2d2f36] active:bg-[#35373e] transition-colors focus:outline-none focus:ring-1 focus:ring-[#8a9a5b]"
             title="Skip Back 10s"
           >
             <SkipBack className="h-3.5 w-3.5 text-[#9e9c96]" />
           </button>
           <button
+            type="button"
             onClick={handleRewind5}
-            className="rounded border border-[#35373e] bg-[#23252a] p-1.5 text-[#edeae1] hover:bg-[#2d2f36] transition-colors"
+            className="rounded border border-[#35373e] bg-[#23252a] p-1 sm:p-1.5 text-[#edeae1] hover:bg-[#2d2f36] active:bg-[#35373e] transition-colors focus:outline-none focus:ring-1 focus:ring-[#8a9a5b]"
             title="Rewind 5s"
           >
             <RotateCcw className="h-3.5 w-3.5 text-[#9e9c96]" />
           </button>
           <button
+            type="button"
             onClick={onPlayToggle}
-            className="flex items-center gap-1.5 rounded bg-[#7d8c52] px-3 py-1.5 text-xs font-semibold text-[#161f00] hover:bg-[#8a9a5b] shadow-sm transition-all"
+            className="flex items-center gap-1 sm:gap-1.5 rounded bg-[#7d8c52] px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs font-semibold text-[#161f00] hover:bg-[#8a9a5b] active:bg-[#6c7b46] shadow-sm transition-all focus:outline-none focus:ring-1 focus:ring-[#edeae1]"
             title={isPlaying ? 'Pause Audio' : 'Play Audio'}
           >
             {isPlaying ? (
               <>
                 <Pause className="h-3.5 w-3.5 fill-current" />
-                <span className="font-mono">{formatTimeFull(currentTime).slice(0, 5)}</span>
+                <span className="font-mono tabular-nums">{formatTimeFull(currentTime).slice(0, 5)}</span>
               </>
             ) : (
               <>
                 <Play className="h-3.5 w-3.5 fill-current" />
-                <span className="font-mono">{formatTimeFull(currentTime).slice(0, 5)}</span>
+                <span className="font-mono tabular-nums">{formatTimeFull(currentTime).slice(0, 5)}</span>
               </>
             )}
           </button>
           <button
+            type="button"
             onClick={handleForward5}
-            className="rounded border border-[#35373e] bg-[#23252a] p-1.5 text-[#edeae1] hover:bg-[#2d2f36] transition-colors"
+            className="rounded border border-[#35373e] bg-[#23252a] p-1 sm:p-1.5 text-[#edeae1] hover:bg-[#2d2f36] active:bg-[#35373e] transition-colors focus:outline-none focus:ring-1 focus:ring-[#8a9a5b]"
             title="Forward 5s"
           >
             <RotateCw className="h-3.5 w-3.5 text-[#9e9c96]" />
           </button>
           <button
+            type="button"
             onClick={() => onSeek(Math.min(duration, currentTime + 10))}
-            className="rounded border border-[#35373e] bg-[#23252a] p-1.5 text-[#edeae1] hover:bg-[#2d2f36] transition-colors"
+            className="rounded border border-[#35373e] bg-[#23252a] p-1 sm:p-1.5 text-[#edeae1] hover:bg-[#2d2f36] active:bg-[#35373e] transition-colors focus:outline-none focus:ring-1 focus:ring-[#8a9a5b]"
             title="Skip Forward 10s"
           >
             <SkipForward className="h-3.5 w-3.5 text-[#9e9c96]" />
           </button>
 
-          <div className="mx-1 h-4 w-px bg-[#35373e]" />
+          <div className="mx-0.5 sm:mx-1 h-4 w-px bg-[#35373e]" />
 
           <button
+            type="button"
             onClick={() => setIsLoopingCue(!isLoopingCue)}
-            className={`flex items-center gap-1 rounded border px-2 py-1 font-mono text-[11px] transition-colors ${
+            className={`flex items-center gap-1 rounded border px-2 py-1 font-mono text-[10px] sm:text-[11px] transition-colors focus:outline-none focus:ring-1 focus:ring-[#8a9a5b] ${
               isLoopingCue
                 ? 'border-[#7d8c52] bg-[#7d8c52]/20 text-[#8a9a5b]'
                 : 'border-[#35373e] bg-[#23252a] text-[#9e9c96] hover:bg-[#2d2f36]'
@@ -387,14 +416,15 @@ export function AudioPlayer({
           </button>
         </div>
 
-        {/* Speed & Volume */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-0.5 rounded border border-[#35373e] bg-[#0d0e10] p-0.5 font-mono text-[11px]">
+        {/* Speed & Volume Controls Group */}
+        <div className="flex items-center justify-between sm:justify-end gap-2.5 sm:gap-3 w-full sm:w-auto pt-1 sm:pt-0 border-t sm:border-t-0 border-[#35373e]/40">
+          <div className="flex items-center gap-0.5 rounded border border-[#35373e] bg-[#0d0e10] p-0.5 font-mono text-[10px] sm:text-[11px]">
             {[0.75, 1.0, 1.25, 1.5].map((speed) => (
               <button
                 key={speed}
+                type="button"
                 onClick={() => handleSpeedChange(speed)}
-                className={`rounded px-1.5 py-0.5 transition-colors ${
+                className={`rounded px-1.5 py-0.5 transition-colors focus:outline-none ${
                   playbackRate === speed
                     ? 'border border-[#35373e] bg-[#23252a] font-bold text-[#8a9a5b]'
                     : 'text-[#71706b] hover:text-[#edeae1]'
@@ -407,27 +437,26 @@ export function AudioPlayer({
 
           <div className="flex items-center gap-1.5 text-[#9e9c96]">
             <button
+              type="button"
               onClick={() => setIsMuted(!isMuted)}
-              className="hover:text-[#8a9a5b] transition-colors"
+              className="p-1 hover:text-[#8a9a5b] transition-colors focus:outline-none"
               title={isMuted ? 'Unmute' : 'Mute'}
             >
               {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
             </button>
             <div
-              onClick={(e) => {
-                const rect = e.currentTarget.getBoundingClientRect();
-                const newVol = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-                setVolume(newVol);
-                setIsMuted(false);
-              }}
-              className="h-1 w-14 cursor-pointer overflow-hidden rounded-full bg-[#292a2c]"
+              onClick={(e) => handleVolumeFromClientX(e.clientX, e.currentTarget)}
+              onTouchStart={(e) => e.touches[0] && handleVolumeFromClientX(e.touches[0].clientX, e.currentTarget)}
+              onTouchMove={(e) => e.touches[0] && handleVolumeFromClientX(e.touches[0].clientX, e.currentTarget)}
+              className="h-1.5 w-12 sm:w-16 cursor-pointer overflow-hidden rounded-full bg-[#292a2c] touch-none"
+              title="Volume"
             >
               <div
-                className="h-full bg-[#8a9a5b]"
+                className="h-full bg-[#8a9a5b] rounded-full transition-all duration-75"
                 style={{ width: isMuted ? '0%' : `${volume * 100}%` }}
               />
             </div>
-            <span className="font-mono text-[10px] text-[#71706b]">
+            <span className="font-mono text-[10px] text-[#71706b] tabular-nums min-w-[28px] text-right">
               {isMuted ? '0%' : `${Math.round(volume * 100)}%`}
             </span>
           </div>

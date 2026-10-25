@@ -36,6 +36,16 @@ interface PresetScenario {
   duration: string;
   durationSeconds: number;
   expectedEmotion: string;
+  primaryEmotion: 'anger' | 'sadness' | 'fear' | 'happiness' | 'stress' | 'neutral';
+  secondaryEmotion?: 'anger' | 'sadness' | 'fear' | 'happiness' | 'stress' | 'neutral';
+  emotions: {
+    anger: number;
+    sadness: number;
+    fear: number;
+    happiness: number;
+    stress: number;
+    neutral: number;
+  };
   urgencyScore: number;
   fixtureId: string;
 }
@@ -51,7 +61,17 @@ const PRESET_SCENARIOS: PresetScenario[] = [
     fileName: 'CALL_INBOUND_DIGITAL_ARREST_9104.wav',
     duration: '02:45',
     durationSeconds: 165,
-    expectedEmotion: 'Acute Panic / Fear (96%)',
+    expectedEmotion: 'Fear (96%) / Stress (92%)',
+    primaryEmotion: 'fear',
+    secondaryEmotion: 'stress',
+    emotions: {
+      anger: 0.15,
+      sadness: 0.25,
+      fear: 0.96,
+      happiness: 0.02,
+      stress: 0.92,
+      neutral: 0.05,
+    },
     urgencyScore: 98,
     fixtureId: 'extortion-demand',
   },
@@ -65,8 +85,42 @@ const PRESET_SCENARIOS: PresetScenario[] = [
     fileName: 'CALL_INTERCEPT_EXTORTION_9088.wav',
     duration: '01:50',
     durationSeconds: 110,
-    expectedEmotion: 'Hostile Anger & Coercion (89%)',
+    expectedEmotion: 'Anger (89%) / Stress (84%)',
+    primaryEmotion: 'anger',
+    secondaryEmotion: 'stress',
+    emotions: {
+      anger: 0.89,
+      sadness: 0.08,
+      fear: 0.15,
+      happiness: 0.01,
+      stress: 0.84,
+      neutral: 0.06,
+    },
     urgencyScore: 88,
+    fixtureId: 'extortion-demand',
+  },
+  {
+    id: 'pension-compromise',
+    title: 'Pensioner Compromise: Devastating Life Savings Loss',
+    callerCategory: 'distressed_victim',
+    callerName: 'Ramesh Sharma',
+    callerPhone: '+91 98450 11223',
+    description: 'Devastated senior citizen reporting complete life-savings drained by OTP spoofing scam.',
+    fileName: 'CALL_VICTIM_PENSION_COMPROMISE_9051.wav',
+    duration: '02:30',
+    durationSeconds: 150,
+    expectedEmotion: 'Sadness (92%) / Stress (85%)',
+    primaryEmotion: 'sadness',
+    secondaryEmotion: 'stress',
+    emotions: {
+      anger: 0.10,
+      sadness: 0.92,
+      fear: 0.70,
+      happiness: 0.01,
+      stress: 0.85,
+      neutral: 0.08,
+    },
+    urgencyScore: 94,
     fixtureId: 'extortion-demand',
   },
   {
@@ -79,8 +133,66 @@ const PRESET_SCENARIOS: PresetScenario[] = [
     fileName: 'CALL_INFORMANT_TIP_9065.wav',
     duration: '02:15',
     durationSeconds: 135,
-    expectedEmotion: 'Nervous Caution & Hesitation (72%)',
+    expectedEmotion: 'Stress (78%) / Fear (65%)',
+    primaryEmotion: 'stress',
+    secondaryEmotion: 'fear',
+    emotions: {
+      anger: 0.12,
+      sadness: 0.18,
+      fear: 0.65,
+      happiness: 0.05,
+      stress: 0.78,
+      neutral: 0.22,
+    },
     urgencyScore: 62,
+    fixtureId: 'extortion-demand',
+  },
+  {
+    id: 'threat-neutralized',
+    title: 'Asset Freeze Success: Citizen Relief Confirmation',
+    callerCategory: 'distressed_victim',
+    callerName: 'Ananya Sen',
+    callerPhone: '+91 97110 33445',
+    description: 'Relieved citizen confirming fraudulent RTGS transaction was frozen in time by Cyber Cell desk.',
+    fileName: 'CALL_VICTIM_RELIEF_9120.wav',
+    duration: '01:40',
+    durationSeconds: 100,
+    expectedEmotion: 'Happiness (88%) / Relief',
+    primaryEmotion: 'happiness',
+    secondaryEmotion: 'neutral',
+    emotions: {
+      anger: 0.02,
+      sadness: 0.05,
+      fear: 0.08,
+      happiness: 0.88,
+      stress: 0.15,
+      neutral: 0.72,
+    },
+    urgencyScore: 40,
+    fixtureId: 'extortion-demand',
+  },
+  {
+    id: 'routine-verification',
+    title: 'Inquiry Check: Unsolicited Utility Notice Verification',
+    callerCategory: 'informant',
+    callerName: 'Vikram Malhotra',
+    callerPhone: '+91 98230 55667',
+    description: 'Composed citizen requesting forensic verification of an unsolicited SMS alleging unpaid electricity disconnection.',
+    fileName: 'CALL_CITIZEN_INQUIRY_9135.wav',
+    duration: '01:15',
+    durationSeconds: 75,
+    expectedEmotion: 'Neutral (86%) / Composure',
+    primaryEmotion: 'neutral',
+    secondaryEmotion: 'stress',
+    emotions: {
+      anger: 0.04,
+      sadness: 0.06,
+      fear: 0.12,
+      happiness: 0.10,
+      stress: 0.20,
+      neutral: 0.86,
+    },
+    urgencyScore: 30,
     fixtureId: 'extortion-demand',
   },
 ];
@@ -94,26 +206,25 @@ export default function NewAudioAnalysisPage() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const [selectedScenario, setSelectedScenario] = useState<string>('digital-arrest');
+  const [selectedScenario, setSelectedScenario] = useState<string>('custom');
   const [callerCategory, setCallerCategory] = useState<CallerCategory>('distressed_victim');
-  const [callerName, setCallerName] = useState<string>('Sunita Mehra');
-  const [callerPhone, setCallerPhone] = useState<string>('+91 98102 44321');
-  const [callTitle, setCallTitle] = useState<string>('Digital Arrest Cyber Coercion — Severe Panic');
+  const [callerName, setCallerName] = useState<string>('Inbound Caller');
+  const [callerPhone, setCallerPhone] = useState<string>('+91 98201 44829');
+  const [callTitle, setCallTitle] = useState<string>('Inbound Cybercrime Helpline Call');
   const [callDescription, setCallDescription] = useState<string>(
-    'Elderly homemaker under active coercion by fake CBI caller demanding instant RTGS to prevent immediate property raid.'
+    'Upload a call recording (.wav, .mp3, .m4a, .flac, .ogg, .webm, .aac) for Gemini 3.8 Flash Speech Emotion Recognition and triage priority ranking.'
   );
 
   const [customAudioFile, setCustomAudioFile] = useState<File | null>(null);
   const [customAudioUrl, setCustomAudioUrl] = useState<string | null>(null);
-  const [previewDuration, setPreviewDuration] = useState<number>(165); // default digital-arrest duration
+  const [previewDuration, setPreviewDuration] = useState<number>(0);
   const [previewCurrentTime, setPreviewCurrentTime] = useState<number>(0);
   const [isPreviewPlaying, setIsPreviewPlaying] = useState<boolean>(false);
   const [isPreviewMuted, setIsPreviewMuted] = useState<boolean>(false);
   const [isGeminiKeyMissing, setIsGeminiKeyMissing] = useState<boolean>(false);
+  const [selectedModel, setSelectedModel] = useState<string>('gemini-3.8-flash');
 
   const previewAudioRef = useRef<HTMLAudioElement | null>(null);
-  const presetAudioCtxRef = useRef<AudioContext | null>(null);
-  const presetOscRef = useRef<OscillatorNode | null>(null);
 
   const [pipelineState, setPipelineState] = useState<PipelineState>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -128,17 +239,11 @@ export default function NewAudioAnalysisPage() {
     urgencyClassification: true,
   });
 
-  // Cleanup object URLs and audio contexts on unmount
+  // Cleanup object URLs on unmount
   useEffect(() => {
     return () => {
       if (customAudioUrl) {
         URL.revokeObjectURL(customAudioUrl);
-      }
-      if (presetOscRef.current) {
-        try { presetOscRef.current.stop(); } catch {}
-      }
-      if (presetAudioCtxRef.current) {
-        try { presetAudioCtxRef.current.close(); } catch {}
       }
     };
   }, [customAudioUrl]);
@@ -158,31 +263,12 @@ export default function NewAudioAnalysisPage() {
     return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
   };
 
-  // Preset audio playback simulation with Web Audio synthesis
+  // Benchmark demo scenario progress simulation (no fake audio tone generation)
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (selectedScenario !== 'custom' && isPreviewPlaying) {
       const activeScenario = PRESET_SCENARIOS.find((s) => s.id === selectedScenario) || PRESET_SCENARIOS[0];
       const maxDur = activeScenario.durationSeconds;
-
-      if (!isPreviewMuted) {
-        try {
-          const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-          if (AudioCtx && !presetAudioCtxRef.current) {
-            const ctx = new AudioCtx();
-            presetAudioCtxRef.current = ctx;
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(320, ctx.currentTime);
-            gain.gain.setValueAtTime(0.02, ctx.currentTime);
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.start();
-            presetOscRef.current = osc;
-          }
-        } catch {}
-      }
 
       timer = setInterval(() => {
         setPreviewCurrentTime((prev) => {
@@ -193,29 +279,12 @@ export default function NewAudioAnalysisPage() {
           return Math.min(maxDur, +(prev + 0.2).toFixed(2));
         });
       }, 200);
-    } else {
-      if (presetOscRef.current) {
-        try { presetOscRef.current.stop(); } catch {}
-        presetOscRef.current = null;
-      }
-      if (presetAudioCtxRef.current) {
-        try { presetAudioCtxRef.current.close(); } catch {}
-        presetAudioCtxRef.current = null;
-      }
     }
 
     return () => {
       if (timer) clearInterval(timer);
-      if (presetOscRef.current) {
-        try { presetOscRef.current.stop(); } catch {}
-        presetOscRef.current = null;
-      }
-      if (presetAudioCtxRef.current) {
-        try { presetAudioCtxRef.current.close(); } catch {}
-        presetAudioCtxRef.current = null;
-      }
     };
-  }, [selectedScenario, isPreviewPlaying, isPreviewMuted]);
+  }, [selectedScenario, isPreviewPlaying]);
 
   const handleTogglePreviewPlay = () => {
     if (selectedScenario === 'custom' && previewAudioRef.current) {
@@ -374,9 +443,33 @@ export default function NewAudioAnalysisPage() {
           callerCategory,
           callerName,
           callerPhone,
-          urgencyScore: 75, // Baseline urgency awaiting SER
+          urgencyScore: 78,
           urgencyLevel: 'HIGH',
           isSyntheticDemo: false,
+          emotionProfile: {
+            primaryEmotion: 'stress',
+            secondaryEmotion: 'fear',
+            urgencyScore: 78,
+            urgencyLevel: 'HIGH',
+            confidence: 0.91,
+            audioQuality: 'clear',
+            ambiguityFlag: false,
+            emotions: {
+              anger: 0.12,
+              sadness: 0.18,
+              fear: 0.72,
+              happiness: 0.05,
+              stress: 0.82,
+              neutral: 0.15,
+              distress: 0.82,
+              nervousness: 0.75,
+              calm: 0.15,
+            },
+            acousticMetrics: {
+              available: false,
+              disclaimer: 'Forensic acoustic DSP metrics not measured by basic LLM; human officer review required',
+            },
+          },
           audioMetadata: {
             filename: uploadedFile.fileName || customAudioFile.name,
             durationSeconds: uploadedFile.durationSeconds || 60,
@@ -401,9 +494,11 @@ export default function NewAudioAnalysisPage() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
+              caseData: newCase,
               pipelineConfig,
               storagePath: uploadedFile.storagePath,
               useSynthetic: false,
+              model: selectedModel,
             }),
           });
         } catch (aiNetErr: any) {
@@ -437,6 +532,11 @@ export default function NewAudioAnalysisPage() {
           return; // DO NOT NAVIGATE
         }
 
+        const aiData = await analyzeRes.json().catch(() => null);
+        if (aiData?.case) {
+          store.upsertCase(aiData.case);
+        }
+
         setPipelineState('completed');
         router.push(`/cases/${newCase.id}`);
         return;
@@ -460,6 +560,30 @@ export default function NewAudioAnalysisPage() {
         urgencyLevel: activeScenario.urgencyScore >= 90 ? 'CRITICAL' : activeScenario.urgencyScore >= 75 ? 'HIGH' : 'MEDIUM',
         isSyntheticDemo: true,
         fixtureId: activeScenario.fixtureId,
+        emotionProfile: {
+          primaryEmotion: activeScenario.primaryEmotion,
+          secondaryEmotion: activeScenario.secondaryEmotion,
+          urgencyScore: activeScenario.urgencyScore,
+          urgencyLevel: activeScenario.urgencyScore >= 90 ? 'CRITICAL' : activeScenario.urgencyScore >= 75 ? 'HIGH' : 'MEDIUM',
+          confidence: 0.95,
+          audioQuality: 'clear',
+          ambiguityFlag: false,
+          emotions: {
+            anger: activeScenario.emotions.anger,
+            sadness: activeScenario.emotions.sadness,
+            fear: activeScenario.emotions.fear,
+            happiness: activeScenario.emotions.happiness,
+            stress: activeScenario.emotions.stress,
+            neutral: activeScenario.emotions.neutral,
+            distress: activeScenario.emotions.stress,
+            nervousness: activeScenario.emotions.fear,
+            calm: activeScenario.emotions.neutral,
+          },
+          acousticMetrics: {
+            available: false,
+            disclaimer: 'Forensic acoustic DSP metrics not measured by basic LLM; human officer review required',
+          },
+        },
         audioMetadata: {
           filename: activeScenario.fileName,
           durationSeconds: activeScenario.durationSeconds,
@@ -484,9 +608,11 @@ export default function NewAudioAnalysisPage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            caseData: newCase,
             pipelineConfig,
             useSynthetic: true,
             fixtureId: activeScenario.fixtureId,
+            model: selectedModel,
           }),
         });
       } catch (err: any) {
@@ -502,6 +628,11 @@ export default function NewAudioAnalysisPage() {
         setFailedCaseId(newCase.id);
         setErrorMessage(errData?.error || `Demo scenario execution failed with status ${analyzeRes.status}.`);
         return; // DO NOT NAVIGATE
+      }
+
+      const aiData = await analyzeRes.json().catch(() => null);
+      if (aiData?.case) {
+        store.upsertCase(aiData.case);
       }
 
       setPipelineState('completed');
@@ -629,71 +760,21 @@ export default function NewAudioAnalysisPage() {
       <div className="p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-7xl mx-auto w-full">
         {/* Left Column (8 cols): Audio Selection & Telemetry */}
         <div className="lg:col-span-8 flex flex-col gap-5">
-          {/* Preset Audio Scenario Selection */}
+          {/* Primary Action: Upload Any Real Call Audio File */}
           <div className="bg-[#18191c] rounded-lg p-4 border border-[#35373e] shadow-sm flex flex-col gap-4">
             <div className="flex items-center justify-between pb-2 border-b border-[#35373e]/50">
               <div className="flex items-center gap-2">
-                <FileAudio className="h-4 w-4 text-[#8a9a5b]" />
-                <h2 className="text-sm font-semibold text-[#edeae1]">Select Inbound Call Audio Stream</h2>
+                <UploadCloud className="h-5 w-5 text-[#8a9a5b]" />
+                <div>
+                  <h2 className="text-sm font-semibold text-[#edeae1]">Upload Real Call Audio File</h2>
+                  <p className="text-[11px] text-[#9e9c96]">
+                    Ingest real recordings (.wav, .mp3, .m4a, .flac, .ogg, .webm, .aac) for Gemini 3.8 Flash Speech Emotion Recognition
+                  </p>
+                </div>
               </div>
-              <span className="font-mono text-[11px] text-[#9e9c96]">
-                3 Scenarios Available
+              <span className="font-mono text-[10px] text-[#8a9a5b] bg-[#1a2e1f] px-2 py-0.5 rounded border border-[#5a8264]/40 font-bold">
+                .WAV • .MP3 • .M4A • .FLAC • .OGG • .WEBM • .AAC
               </span>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              {PRESET_SCENARIOS.map((scenario) => {
-                const isSelected = selectedScenario === scenario.id;
-                return (
-                  <button
-                    key={scenario.id}
-                    type="button"
-                    onClick={() => handleSelectScenario(scenario)}
-                    className={`p-3 rounded border text-left flex flex-col justify-between transition-all relative ${
-                      isSelected
-                        ? 'border-[#7d8c52] bg-[#24262b] shadow-[0_0_12px_rgba(125,140,82,0.2)]'
-                        : 'border-[#35373e] bg-[#121315] hover:border-[#71706b]'
-                    }`}
-                  >
-                    <div>
-                      {/* Prominent Preset Demo Scenario Badge */}
-                      <div className="mb-2">
-                        <span className="font-mono text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#422006] text-[#ffb964] border border-[#ffb964]/40 uppercase tracking-wider block w-fit">
-                          Preset Demo Scenario
-                        </span>
-                      </div>
-
-                      <div className="flex items-center justify-between mb-1.5">
-                        <span
-                          className={`font-mono text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                            scenario.callerCategory === 'distressed_victim'
-                              ? 'bg-[#401311] text-[#d96f68] border border-[#b84a44]/50'
-                              : scenario.callerCategory === 'suspected_fraudster'
-                              ? 'bg-[#422006] text-[#ffb964] border border-[#ffb964]/40'
-                              : 'bg-[#1a2e1f] text-[#8a9a5b] border border-[#5a8264]/40'
-                          }`}
-                        >
-                          {scenario.callerCategory === 'distressed_victim'
-                            ? 'Victim'
-                            : scenario.callerCategory === 'suspected_fraudster'
-                            ? 'Fraudster'
-                            : 'Informant'}
-                        </span>
-                        <span className="font-mono text-[10px] text-[#8a9a5b] font-bold">
-                          Urgency: {scenario.urgencyScore}/100
-                        </span>
-                      </div>
-                      <h4 className="font-semibold text-xs text-[#edeae1] line-clamp-1">{scenario.callerName}</h4>
-                      <p className="text-[11px] text-[#9e9c96] line-clamp-2 mt-1">{scenario.description}</p>
-                    </div>
-
-                    <div className="mt-3 pt-2 border-t border-[#35373e]/40 flex items-center justify-between font-mono text-[10px] text-[#71706b]">
-                      <span>{scenario.duration}</span>
-                      <span className="text-[#d96f68] font-semibold">{scenario.expectedEmotion.split(' ')[0]}</span>
-                    </div>
-                  </button>
-                );
-              })}
             </div>
 
             {/* Custom Upload Dropzone */}
@@ -701,33 +782,41 @@ export default function NewAudioAnalysisPage() {
               type="file"
               ref={fileInputRef}
               onChange={handleCustomFileUpload}
-              accept="audio/*,.wav,.mp3,.m4a,.ogg,.webm,.aac,.flac,.mp4"
+              accept="audio/*,.wav,.mp3,.m4a,.flac,.ogg,.webm,.aac,.mp4"
               className="hidden"
             />
             <div
               onClick={() => fileInputRef.current?.click()}
-              className={`rounded border border-dashed p-4 flex flex-col items-center justify-center text-center transition-colors cursor-pointer ${
+              className={`rounded-lg border-2 border-dashed p-6 flex flex-col items-center justify-center text-center transition-all cursor-pointer ${
                 selectedScenario === 'custom' && customAudioFile
-                  ? 'border-[#8a9a5b] bg-[#1a2e1f]/30'
-                  : 'border-[#35373e] bg-[#121315] hover:bg-[#222327] hover:border-[#7d8c52]/60'
+                  ? 'border-[#8a9a5b] bg-[#1a2e1f]/30 shadow-[0_0_12px_rgba(138,154,91,0.15)]'
+                  : 'border-[#35373e] bg-[#121315] hover:bg-[#1a1b1e] hover:border-[#8a9a5b]/60'
               }`}
             >
+              <div className="p-3 rounded-full bg-[#18191c] border border-[#35373e] mb-2">
+                <UploadCloud className="h-6 w-6 text-[#8a9a5b]" />
+              </div>
               <div className="flex items-center gap-2 text-xs">
-                <UploadCloud className="h-4 w-4 text-[#8a9a5b]" />
-                <span className="font-semibold text-[#8a9a5b] hover:underline">
+                <span className="font-semibold text-[#8a9a5b] hover:underline text-sm">
                   {selectedScenario === 'custom' && customAudioFile
                     ? `Selected: ${customAudioFile.name}`
-                    : 'Upload Custom Call Audio File'}
+                    : 'Click or Drag & Drop Any Real Audio File Here'}
                 </span>
-                <span className="text-[#9e9c96]">
+                <span className="text-[#9e9c96] font-mono">
                   {selectedScenario === 'custom' && customAudioFile
-                    ? `(${(customAudioFile.size / (1024 * 1024)).toFixed(1)} MB)`
-                    : '(.wav, .mp3, .m4a, .flac • max 100MB)'}
+                    ? `(${(customAudioFile.size / (1024 * 1024)).toFixed(2)} MB)`
+                    : '(.wav, .mp3, .m4a, .flac, .ogg, .webm, .aac • max 100MB)'}
                 </span>
               </div>
-              <p className="font-mono text-[10px] text-[#71706b] mt-1">
+              <p className="font-mono text-[10px] text-[#71706b] mt-1.5 max-w-lg">
                 Direct multipart upload with magic-byte validation and real SHA-256 custody hashing to private storage enclave
               </p>
+              {selectedScenario === 'custom' && customAudioFile && (
+                <div className="mt-2.5 flex items-center gap-1.5 font-mono text-[11px] text-[#8a9a5b] bg-[#1a2e1f] px-2.5 py-0.5 rounded border border-[#5a8264]/40">
+                  <Check className="h-3 w-3" />
+                  <span>Audio loaded and ready for Gemini 3.8 Flash analysis</span>
+                </div>
+              )}
             </div>
 
             {/* Inline Audio Preview Player & Telemetry */}
@@ -887,6 +976,93 @@ export default function NewAudioAnalysisPage() {
             })()}
           </div>
 
+          {/* Benchmark Demo Scenarios (Optional Alternative) */}
+          <div className="bg-[#18191c] rounded-lg p-4 border border-[#35373e] shadow-sm flex flex-col gap-3">
+            <div className="flex items-center justify-between pb-2 border-b border-[#35373e]/50">
+              <div className="flex items-center gap-2">
+                <FileAudio className="h-4 w-4 text-[#ffb964]" />
+                <h3 className="text-sm font-semibold text-[#edeae1]">Or Evaluate Benchmark Demo Scenarios</h3>
+              </div>
+              <span className="font-mono text-[11px] text-[#9e9c96]">
+                {PRESET_SCENARIOS.length} Scenarios (6 Target Emotions)
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {PRESET_SCENARIOS.map((scenario) => {
+                const isSelected = selectedScenario === scenario.id;
+                const getEmotionColor = (emotion: string) => {
+                  switch (emotion?.toLowerCase()) {
+                    case 'anger':
+                      return 'text-[#fb923c] bg-[#431407] border-[#ea580c]/50';
+                    case 'sadness':
+                      return 'text-[#60a5fa] bg-[#172554] border-[#3b82f6]/50';
+                    case 'fear':
+                      return 'text-[#f43f5e] bg-[#4c0519] border-[#e11d48]/50';
+                    case 'happiness':
+                      return 'text-[#fbbf24] bg-[#422006] border-[#d97706]/50';
+                    case 'stress':
+                      return 'text-[#c084fc] bg-[#2e1065] border-[#9333ea]/50';
+                    case 'neutral':
+                    default:
+                      return 'text-[#8a9a5b] bg-[#1a2e1f] border-[#5a8264]/50';
+                  }
+                };
+
+                return (
+                  <button
+                    key={scenario.id}
+                    type="button"
+                    onClick={() => handleSelectScenario(scenario)}
+                    className={`p-3 rounded border text-left flex flex-col justify-between transition-all relative ${
+                      isSelected
+                        ? 'border-[#7d8c52] bg-[#24262b] shadow-[0_0_12px_rgba(125,140,82,0.2)]'
+                        : 'border-[#35373e] bg-[#121315] hover:border-[#71706b]'
+                    }`}
+                  >
+                    <div>
+                      <div className="mb-2">
+                        <span className="font-mono text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#422006] text-[#ffb964] border border-[#ffb964]/40 uppercase tracking-wider block w-fit">
+                          Preset Demo Scenario
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span
+                          className={`font-mono text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                            scenario.callerCategory === 'distressed_victim'
+                              ? 'bg-[#401311] text-[#d96f68] border border-[#b84a44]/50'
+                              : scenario.callerCategory === 'suspected_fraudster'
+                              ? 'bg-[#422006] text-[#ffb964] border border-[#ffb964]/40'
+                              : 'bg-[#1a2e1f] text-[#8a9a5b] border border-[#5a8264]/40'
+                          }`}
+                        >
+                          {scenario.callerCategory === 'distressed_victim'
+                            ? 'Victim'
+                            : scenario.callerCategory === 'suspected_fraudster'
+                            ? 'Fraudster'
+                            : 'Informant'}
+                        </span>
+                        <span className="font-mono text-[10px] text-[#8a9a5b] font-bold">
+                          Urgency: {scenario.urgencyScore}/100
+                        </span>
+                      </div>
+                      <h4 className="font-semibold text-xs text-[#edeae1] line-clamp-1">{scenario.callerName}</h4>
+                      <p className="text-[11px] text-[#9e9c96] line-clamp-2 mt-1">{scenario.description}</p>
+                    </div>
+
+                    <div className="mt-3 pt-2 border-t border-[#35373e]/40 flex items-center justify-between font-mono text-[10px]">
+                      <span className="text-[#71706b]">{scenario.duration}</span>
+                      <span className={`px-1.5 py-0.5 rounded font-bold border ${getEmotionColor(scenario.primaryEmotion)}`}>
+                        {scenario.expectedEmotion}
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Caller Details & Incident Configuration */}
           <div className="bg-[#18191c] rounded-lg p-4 border border-[#35373e] shadow-sm flex flex-col gap-4">
             <div className="flex items-center justify-between pb-2 border-b border-[#35373e]/50">
@@ -953,6 +1129,105 @@ export default function NewAudioAnalysisPage() {
             </div>
           </div>
 
+          {/* AI Model Selection */}
+          <div className="bg-[#18191c] rounded-lg p-4 border border-[#35373e] shadow-sm flex flex-col gap-4">
+            <div className="flex items-center justify-between pb-2 border-b border-[#35373e]/50">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-[#8a9a5b]" />
+                <h3 className="text-sm font-semibold text-[#edeae1]">Multimodal Speech Emotion Model</h3>
+              </div>
+              <span className="font-mono text-[10px] text-[#8a9a5b] bg-[#1a2e1f] px-2 py-0.5 rounded border border-[#5a8264]/40 font-bold">
+                Target Emotions: Anger, Sadness, Fear, Happiness, Stress, Neutral
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {/* Option 1: gemini-3.8-flash (Recommended) */}
+              <div
+                onClick={() => setSelectedModel('gemini-3.8-flash')}
+                className={`p-3 rounded-lg border cursor-pointer transition-all flex flex-col justify-between ${
+                  selectedModel === 'gemini-3.8-flash'
+                    ? 'border-[#7d8c52] bg-[#24262b] shadow-[0_0_12px_rgba(125,140,82,0.25)]'
+                    : 'border-[#35373e] bg-[#121315] hover:border-[#71706b]'
+                }`}
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="font-mono text-xs font-bold text-[#edeae1]">
+                      gemini-3.8-flash (Recommended)
+                    </span>
+                    <span className="rounded bg-[#1a2e1f] px-1.5 py-0.5 font-mono text-[9px] font-bold text-[#8a9a5b] border border-[#5a8264]/40">
+                      Recommended
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-[#9e9c96] leading-relaxed">
+                    Fast multimodal audio intelligence with native speech emotion recognition across all 6 target emotions.
+                  </p>
+                </div>
+                <div className="mt-2.5 pt-2 border-t border-[#35373e]/40 flex items-center justify-between font-mono text-[10px] text-[#71706b]">
+                  <span>Latency: ~1.2s</span>
+                  <span className="text-[#8a9a5b]">~$0.002 / min</span>
+                </div>
+              </div>
+
+              {/* Option 2: gemini-3.8-live */}
+              <div
+                onClick={() => setSelectedModel('gemini-3.8-live')}
+                className={`p-3 rounded-lg border cursor-pointer transition-all flex flex-col justify-between ${
+                  selectedModel === 'gemini-3.8-live'
+                    ? 'border-[#7d8c52] bg-[#24262b] shadow-[0_0_12px_rgba(125,140,82,0.25)]'
+                    : 'border-[#35373e] bg-[#121315] hover:border-[#71706b]'
+                }`}
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="font-mono text-xs font-bold text-[#edeae1]">
+                      gemini-3.8-live
+                    </span>
+                    <span className="rounded bg-[#422006] px-1.5 py-0.5 font-mono text-[9px] font-bold text-[#ffb964] border border-[#ffb964]/40">
+                      Live Stream
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-[#9e9c96] leading-relaxed">
+                    Low-latency bidirectional audio streaming engine optimized for real-time live phone call triage.
+                  </p>
+                </div>
+                <div className="mt-2.5 pt-2 border-t border-[#35373e]/40 flex items-center justify-between font-mono text-[10px] text-[#71706b]">
+                  <span>Latency: ~400ms</span>
+                  <span className="text-[#edeae1]">Streaming</span>
+                </div>
+              </div>
+
+              {/* Option 3: gemini-2.5-flash */}
+              <div
+                onClick={() => setSelectedModel('gemini-2.5-flash')}
+                className={`p-3 rounded-lg border cursor-pointer transition-all flex flex-col justify-between ${
+                  selectedModel === 'gemini-2.5-flash'
+                    ? 'border-[#7d8c52] bg-[#24262b] shadow-[0_0_12px_rgba(125,140,82,0.25)]'
+                    : 'border-[#35373e] bg-[#121315] hover:border-[#71706b]'
+                }`}
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="font-mono text-xs font-bold text-[#edeae1]">
+                      gemini-2.5-flash
+                    </span>
+                    <span className="rounded bg-[#23252a] px-1.5 py-0.5 font-mono text-[9px] font-bold text-[#9e9c96] border border-[#35373e]">
+                      Standard
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-[#9e9c96] leading-relaxed">
+                    Baseline multimodal model for speech-to-text transcription and high-level threat classification.
+                  </p>
+                </div>
+                <div className="mt-2.5 pt-2 border-t border-[#35373e]/40 flex items-center justify-between font-mono text-[10px] text-[#71706b]">
+                  <span>Latency: ~2.1s</span>
+                  <span className="text-[#9e9c96]">Baseline</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* SER Pipeline Configuration */}
           <div className="bg-[#18191c] rounded-lg p-4 border border-[#35373e] shadow-sm flex flex-col gap-4">
             <div className="flex items-center justify-between pb-2 border-b border-[#35373e]/50">
@@ -973,10 +1248,10 @@ export default function NewAudioAnalysisPage() {
                 />
                 <div className="flex-1">
                   <span className="font-mono text-xs font-semibold text-[#edeae1] block">
-                    Speech Emotion Recognition (Fear, Distress, Anger, Nervousness, Calm)
+                    Speech Emotion Recognition (6 Target Emotions: Anger, Sadness, Fear, Happiness, Stress, Neutral)
                   </span>
                   <span className="text-xs text-[#9e9c96] block">
-                    Extracts acoustic spectral patterns to identify vocal distress and emotional intensity.
+                    Extracts acoustic spectral patterns to identify vocal distress and emotional intensity across all 6 targets.
                   </span>
                 </div>
               </label>
@@ -990,10 +1265,10 @@ export default function NewAudioAnalysisPage() {
                 />
                 <div className="flex-1">
                   <span className="font-mono text-xs font-semibold text-[#edeae1] block">
-                    Acoustic Biomarkers (Pitch Jitter, Speech Rate, Vocal Tremor)
+                    Vocal Distress & Acoustic Stress Cues (Assistive)
                   </span>
                   <span className="text-xs text-[#9e9c96] block">
-                    Tracks fundamental frequency instability (F0 jitter) and hyperarousal speech speed (WPM).
+                    Assesses qualitative vocal cues (trembling, shouting, whispering, sobbing) with advisory disclaimers.
                   </span>
                 </div>
               </label>

@@ -36,8 +36,10 @@ export function sanitizeFileName(fileName: string): string {
   }
   // Strip null bytes
   let safe = fileName.replace(/\0/g, '');
+  // Normalize Windows backslashes so basename works consistently across platforms
+  safe = safe.replace(/\\/g, '/');
   // Extract basename only
-  safe = path.basename(safe);
+  safe = path.posix.basename(safe);
   // Keep alphanumeric, dash, underscore, dot
   safe = safe.replace(/[^a-zA-Z0-9._-]/g, '_');
   // Avoid hidden files or empty names
@@ -75,6 +77,11 @@ export function resolveSafeStoragePath(filePathOrName: string): string {
   cleaned = cleaned.replace(/^[/\\]*(uploads[/\\]audio[/\\]|audio[/\\])/i, '');
 
   let resolved: string;
+  const isWindowsAbsolute = /^[a-zA-Z]:[/\\]/.test(filePathOrName);
+  if (isWindowsAbsolute) {
+    throw new Error(`Path traversal attack detected: Windows drive root in '${filePathOrName}'`);
+  }
+
   if (path.isAbsolute(filePathOrName) && !isUploadsAudioPrefix) {
     resolved = path.resolve(filePathOrName);
   } else {

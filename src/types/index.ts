@@ -104,16 +104,28 @@ export interface CaseReviewRecord {
 
 export type CallerCategory = 'distressed_victim' | 'suspected_fraudster' | 'informant' | 'unknown';
 
+export type TargetEmotion = 'anger' | 'sadness' | 'fear' | 'happiness' | 'stress' | 'neutral';
+
+export type AudioQualityLevel = 'clear' | 'noisy' | 'distorted' | 'low_volume';
+
 export interface SpeechEmotionProfile {
-  primaryEmotion: 'fear' | 'distress' | 'anger' | 'nervousness' | 'calm' | 'neutral';
+  primaryEmotion: 'fear' | 'distress' | 'anger' | 'nervousness' | 'calm' | 'neutral' | 'sadness' | 'happiness' | 'stress';
+  secondaryEmotion?: 'fear' | 'distress' | 'anger' | 'nervousness' | 'calm' | 'neutral' | 'sadness' | 'happiness' | 'stress' | string;
   urgencyScore: number; // 0 - 100
   urgencyLevel: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+  confidence?: number; // 0.0 - 1.0 or 0 - 100
+  audioQuality?: AudioQualityLevel | string;
+  ambiguityFlag?: boolean;
   emotions: {
+    anger: number; // 0.0 - 1.0
     fear: number; // 0.0 - 1.0
     distress: number; // 0.0 - 1.0
-    anger: number; // 0.0 - 1.0
     nervousness: number; // 0.0 - 1.0
     calm: number; // 0.0 - 1.0
+    sadness?: number; // 0.0 - 1.0
+    happiness?: number; // 0.0 - 1.0
+    stress?: number; // 0.0 - 1.0
+    neutral?: number; // 0.0 - 1.0
   };
   acousticMetrics: {
     pitchJitterHz?: number;
@@ -570,6 +582,7 @@ export interface VocalIndicator {
   intervalEnd?: number;
   segmentId?: string;
   confidence?: number;
+  severity?: 'critical' | 'high' | 'medium' | 'low';
   description?: string;
   isAdvisory: true; // Strictly literal true; can never be false or omitted
   advisoryDisclaimer?: string; // Mandatory explicit legal/forensic disclaimer

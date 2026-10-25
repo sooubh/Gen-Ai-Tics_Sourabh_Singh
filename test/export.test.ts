@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { escapeCsvField, GET as exportGet } from '../src/app/api/cases/[id]/export/route';
+import { GET as exportGet } from '../src/app/api/cases/[id]/export/route';
+import { escapeCsvField } from '../src/lib/export/csv-utils';
 import { store } from '../src/lib/data/store';
 import { NextRequest } from 'next/server';
 

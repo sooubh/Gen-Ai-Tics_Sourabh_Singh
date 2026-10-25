@@ -3,8 +3,6 @@
 // Privacy-first temporary audio retention with verified deletion
 // ==============================================================================
 
-import fs from 'fs';
-import path from 'path';
 import { store } from '@/lib/data/store';
 
 export const DEFAULT_RETENTION_HOURS = Number(process.env.AUDIO_RETENTION_HOURS || 24);

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
@@ -8,8 +8,6 @@ import {
   validateAudioPreflight,
   detectAudioSignature,
   computeSha256,
-  ALLOWED_EXTENSIONS,
-  ALLOWED_MIME_TYPES,
 } from '../src/lib/audio/preflight';
 import {
   savePrivateAudioFile,
@@ -18,7 +16,6 @@ import {
   sanitizeFileName,
   deletePrivateAudioFile,
   getStorageBaseDir,
-  ensureStorageDir,
 } from '../src/lib/storage/private-storage';
 
 /**

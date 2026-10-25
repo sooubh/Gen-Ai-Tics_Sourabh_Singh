@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import fs from 'fs';
-import path from 'path';
 import {
   getServerSession,
   authorizeCaseAccess,
@@ -13,11 +12,9 @@ import {
 import { store } from '../src/lib/data/store';
 import { POST as retentionPost } from '../src/app/api/cases/[id]/retention/route';
 import { POST as reviewPost } from '../src/app/api/cases/[id]/review/route';
-import { PATCH as casePatch, GET as caseGet } from '../src/app/api/cases/[id]/route';
 import {
   savePrivateAudioFile,
   deletePrivateAudioFile,
-  getStorageBaseDir,
 } from '../src/lib/storage/private-storage';
 
 describe('Independent Verification: Security & Authentication Boundaries (Agent E)', () => {
@@ -355,7 +352,7 @@ describe('Independent Verification: Security & Authentication Boundaries (Agent 
       });
 
       // Mock store.purgeAudio to simulate storage disk failure / unconfirmed deletion
-      const purgeSpy = vi.spyOn(store, 'purgeAudio').mockImplementation(() => {
+      vi.spyOn(store, 'purgeAudio').mockImplementation(() => {
         throw new Error('EACCES: permission denied, unlink failed');
       });
 

@@ -3,12 +3,8 @@ import { NextRequest } from 'next/server';
 import { store } from '../src/lib/data/store';
 import { POST as analyzePost } from '../src/app/api/cases/[id]/analyze/route';
 import { GeminiAudioAdapter } from '../src/lib/ai/gemini-adapter';
-import { executeSyntheticRun, getSyntheticFixture } from '../src/lib/ai/synthetic-fixtures';
-import {
-  STANDARD_ACOUSTIC_CAVEAT,
-  STANDARD_FORENSIC_DSP_DISCLAIMER,
-  PROHIBITED_INFERENCE_TERMS,
-} from '../src/lib/ai/types';
+import { executeSyntheticRun } from '../src/lib/ai/synthetic-fixtures';
+import { PROHIBITED_INFERENCE_TERMS } from '../src/lib/ai/types';
 
 describe('Independent Verification: AI Pipeline Integrity & Non-Fabrication (Agent E)', () => {
   const originalGeminiApiKey = process.env.GEMINI_API_KEY;
