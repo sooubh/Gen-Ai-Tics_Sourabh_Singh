@@ -6,25 +6,69 @@
 
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
 
 export const PRIVATE_STORAGE_REL_DIR = 'uploads/audio';
 
+let _activeStorageBaseDir: string | null = null;
+
+export function resetStorageBaseDir(): void {
+  _activeStorageBaseDir = null;
+}
+
 /**
  * Returns the absolute path to the private audio storage root directory.
+ * Automatically adapts to serverless environments (Vercel, AWS Lambda)
+ * where process.cwd() is read-only (/var/task) and only os.tmpdir() (/tmp) is writable.
  */
 export function getStorageBaseDir(): string {
-  return path.resolve(process.cwd(), 'uploads', 'audio');
+  if (_activeStorageBaseDir) {
+    return _activeStorageBaseDir;
+  }
+
+  // 1. Explicit env configuration
+  if (process.env.UPLOAD_DIR) {
+    _activeStorageBaseDir = path.resolve(process.env.UPLOAD_DIR);
+    return _activeStorageBaseDir;
+  }
+
+  // 2. Serverless / Vercel detection (/var/task is read-only on AWS Lambda / Vercel)
+  const isServerless =
+    Boolean(process.env.VERCEL) ||
+    Boolean(process.env.AWS_LAMBDA_FUNCTION_NAME) ||
+    process.cwd().startsWith('/var/task');
+
+  if (isServerless) {
+    _activeStorageBaseDir = path.join(os.tmpdir(), 'uploads', 'audio');
+    return _activeStorageBaseDir;
+  }
+
+  // 3. Local development fallback
+  _activeStorageBaseDir = path.resolve(process.cwd(), 'uploads', 'audio');
+  return _activeStorageBaseDir;
 }
 
 /**
  * Ensures the private audio storage directory exists on disk.
+ * Falls back to os.tmpdir() if process.cwd() is read-only.
  */
 export function ensureStorageDir(): string {
-  const baseDir = getStorageBaseDir();
-  if (!fs.existsSync(baseDir)) {
-    fs.mkdirSync(baseDir, { recursive: true });
+  let baseDir = getStorageBaseDir();
+  try {
+    if (!fs.existsSync(baseDir)) {
+      fs.mkdirSync(baseDir, { recursive: true });
+    }
+    return baseDir;
+  } catch (err: any) {
+    // If mkdirSync failed on process.cwd() (e.g. read-only filesystem /var/task on Vercel),
+    // automatically switch and fallback to os.tmpdir()
+    const serverlessFallback = path.join(os.tmpdir(), 'uploads', 'audio');
+    if (!fs.existsSync(serverlessFallback)) {
+      fs.mkdirSync(serverlessFallback, { recursive: true });
+    }
+    _activeStorageBaseDir = serverlessFallback;
+    return serverlessFallback;
   }
-  return baseDir;
 }
 
 /**

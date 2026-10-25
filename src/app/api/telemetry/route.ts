@@ -2,20 +2,19 @@ import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 import { store } from '@/lib/data/store';
+import { getStorageBaseDir, ensureStorageDir } from '@/lib/storage/private-storage';
 
 export async function GET() {
   try {
     const stats = store.getDashboardStats();
     const hasApiKey = Boolean(process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY.trim().length > 0);
 
-    // Verify uploads directory existence and writability
-    const uploadsDir = path.join(process.cwd(), 'uploads');
+    // Verify uploads directory existence and writability (safe on serverless/Vercel)
+    let uploadsDir = getStorageBaseDir();
     let uploadsWritable = false;
     let uploadsError: string | null = null;
     try {
-      if (!fs.existsSync(uploadsDir)) {
-        fs.mkdirSync(uploadsDir, { recursive: true });
-      }
+      uploadsDir = ensureStorageDir();
       const probeFile = path.join(uploadsDir, `.health-probe-${Date.now()}`);
       fs.writeFileSync(probeFile, 'vecnaverse-probe');
       fs.unlinkSync(probeFile);

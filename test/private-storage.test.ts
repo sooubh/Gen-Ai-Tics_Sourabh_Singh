@@ -1,9 +1,11 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'fs';
+import os from 'os';
 import crypto from 'crypto';
 import {
   getStorageBaseDir,
   ensureStorageDir,
+  resetStorageBaseDir,
   sanitizeFileName,
   resolveSafeStoragePath,
   isPathSafe,
@@ -64,6 +66,27 @@ describe('Private Audio Storage Isolation & Verification Suite', () => {
       expect(isPathSafe('/uploads/audio/valid-intercept.wav')).toBe(true);
       expect(isPathSafe('../../outside.wav')).toBe(false);
       expect(isPathSafe('sub/../../outside.wav')).toBe(false);
+    });
+
+    it('adapts to Vercel and serverless read-only filesystem by using os.tmpdir()', () => {
+      const origVercel = process.env.VERCEL;
+      try {
+        process.env.VERCEL = '1';
+        resetStorageBaseDir();
+        const baseDir = getStorageBaseDir();
+        expect(baseDir).toContain('uploads');
+        expect(baseDir).toContain('audio');
+        expect(baseDir.startsWith(os.tmpdir())).toBe(true);
+        const ensured = ensureStorageDir();
+        expect(fs.existsSync(ensured)).toBe(true);
+      } finally {
+        if (origVercel !== undefined) {
+          process.env.VERCEL = origVercel;
+        } else {
+          delete process.env.VERCEL;
+        }
+        resetStorageBaseDir();
+      }
     });
   });
 

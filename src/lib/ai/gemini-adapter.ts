@@ -10,6 +10,7 @@
 import { GoogleGenAI } from '@google/genai';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as os from 'os';
 import {
   AudioAnalysisResult,
   AudioAnalysisResultSchema,
@@ -173,6 +174,16 @@ export function resolveAudioFilePath(filePath: string): string | null {
   if (fs.existsSync(fromUploadsAudio)) {
     try {
       if (fs.statSync(fromUploadsAudio).isFile()) return fromUploadsAudio;
+    } catch {
+      // ignore
+    }
+  }
+
+  // 5. Inside os.tmpdir()/uploads/audio/ for Vercel and serverless execution
+  const fromTmpUploadsAudio = path.join(os.tmpdir(), 'uploads', 'audio', path.basename(filePath));
+  if (fs.existsSync(fromTmpUploadsAudio)) {
+    try {
+      if (fs.statSync(fromTmpUploadsAudio).isFile()) return fromTmpUploadsAudio;
     } catch {
       // ignore
     }

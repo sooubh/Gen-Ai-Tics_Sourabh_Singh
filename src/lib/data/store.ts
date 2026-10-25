@@ -11,12 +11,25 @@ const getNodeModules = () => {
       return {
         fs: req('fs'),
         path: req('path'),
+        os: req('os'),
       };
     } catch {
-      return { fs: null, path: null };
+      return { fs: null, path: null, os: null };
     }
   }
-  return { fs: null, path: null };
+  return { fs: null, path: null, os: null };
+};
+
+const resolveEnclaveDataDir = (nodePath: any, nodeOs: any): string => {
+  const isServerless =
+    Boolean(process.env.VERCEL) ||
+    Boolean(process.env.AWS_LAMBDA_FUNCTION_NAME) ||
+    (typeof process !== 'undefined' && process.cwd().startsWith('/var/task'));
+
+  if (isServerless && nodeOs && typeof nodeOs.tmpdir === 'function') {
+    return nodePath.join(nodeOs.tmpdir(), 'vecnaverse-data');
+  }
+  return nodePath.join(process.cwd(), 'data');
 };
 
 import {
@@ -67,10 +80,10 @@ class CaseStore {
       }
     }
 
-    const { fs: nodeFs, path: nodePath } = getNodeModules();
+    const { fs: nodeFs, path: nodePath, os: nodeOs } = getNodeModules();
     if (nodeFs && nodePath) {
       try {
-        const dataDir = nodePath.join(process.cwd(), 'data');
+        const dataDir = resolveEnclaveDataDir(nodePath, nodeOs);
         const dbFile = nodePath.join(dataDir, 'db.json');
         if (!nodeFs.existsSync(dataDir)) {
           nodeFs.mkdirSync(dataDir, { recursive: true });
@@ -122,10 +135,10 @@ class CaseStore {
     }
 
     // 2. Server Disk persistence support
-    const { fs: nodeFs, path: nodePath } = getNodeModules();
+    const { fs: nodeFs, path: nodePath, os: nodeOs } = getNodeModules();
     if (nodeFs && nodePath) {
       try {
-        const dataDir = nodePath.join(process.cwd(), 'data');
+        const dataDir = resolveEnclaveDataDir(nodePath, nodeOs);
         const dbFile = nodePath.join(dataDir, 'db.json');
         if (!nodeFs.existsSync(dataDir)) {
           nodeFs.mkdirSync(dataDir, { recursive: true });
@@ -214,10 +227,10 @@ class CaseStore {
   }
 
   public reloadFromDisk() {
-    const { fs: nodeFs, path: nodePath } = getNodeModules();
+    const { fs: nodeFs, path: nodePath, os: nodeOs } = getNodeModules();
     if (nodeFs && nodePath) {
       try {
-        const dataDir = nodePath.join(process.cwd(), 'data');
+        const dataDir = resolveEnclaveDataDir(nodePath, nodeOs);
         const dbFile = nodePath.join(dataDir, 'db.json');
         if (nodeFs.existsSync(dbFile)) {
           const raw = nodeFs.readFileSync(dbFile, 'utf-8');
